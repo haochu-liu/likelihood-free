@@ -165,3 +165,38 @@ legend("topright",
        lty = c(1, 2, 4, 1),
        lwd = 2)
 ```
+
+### Different M
+
+Let's choose different values of $M$ to see how it affects the posterior given by BSL. In the same example, we consider $M = 2, 5, 10, 15, 20, 25, 30, 50, 100$. And plot their density curves.
+
+```{r}
+#| echo: true
+M_df <- data.frame(values = c(2, 5, 10, 15, 20, 25, 30, 50, 100),
+                   acc = NA,
+                   ESS = NA,
+                   var = NA)
+theta_matrix <- matrix(NA, nrow=9, ncol=50000)
+
+for (j in 1:9) {
+  M <- M_df$values[j]
+  sl_vec <- rep(NA, 100)
+  for (i in 1:100) {
+    stats_M <- sample_func(init_theta, M)
+    sl_vec[i] <- dmvnorm(x=obs,
+                         mean=stats_M$mean,
+                         sigma=stats_M$sigma,
+                         log=TRUE)
+  }
+  M_df$var[j] <- var(sl_vec)
+  chain <- SL_MCMC(M, iter, obs, init_theta, prior_func, sample_func, 0.1,
+                   acc_rate=TRUE)
+  M_df$acc[j] <- chain$acc_rate
+  theta_matrix[j, ] <- chain$theta[1, ]
+  mcmc_chain <- as.mcmc(chain$theta[1, ])
+  M_df$ESS[j] <- effectiveSize(mcmc_chain) / 50000 * 100
+  print(paste0("Finish iteration ", j))
+}
+```
+
+
