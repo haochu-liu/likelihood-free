@@ -102,7 +102,7 @@ plot(1:iter, theta_seq[1, ], type = "l", xlab="Iterations", ylab="Theta")
 
 We have $\pi(\theta) = Gamma(\theta; 2, 0.5)$ as the prior. From the assumption, the model is $p(s|\theta) = Poisson(s; 20\theta)$. The posterior is $\pi(\theta|s) = Gamma(\theta; 2+s, 20.5)$.
 
-Since we know the exact model $y_i \sim NB(5, 0.5)$, let us assume that the model is $NB(5, p)$ with $5(1-p)/p = \theta$ and true parameter $p^* = 0.5$. We can have the exact model as $p^*(s|\theta) = NB(100, \frac{5}{\theta + 5})$ and $\theta^* = 5$. The posterior $\pi^*(\theta|s)$ can be simulated by MCMC.
+Since we know the true model $y_i \sim NB(5, 0.5)$, let us assume that the model is $NB(5, p)$ with $5(1-p)/p = \theta$ and true parameter $p^* = 0.5$. We can have the true model as $p^*(s|\theta) = NB(100, \frac{5}{\theta + 5})$ and $\theta^* = 5$. The posterior $\pi^*(\theta|s)$ can be simulated by MCMC.
 
 ```{r}
 #| echo: true
@@ -133,6 +133,8 @@ posterior_star_coda <- coda.samples(
 
 posterior_star <- as.data.frame(as.matrix(posterior_star_coda))
 ```
+
+The density functions are plotted below:
 
 ```{r}
 #| echo: true
