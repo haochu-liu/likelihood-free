@@ -52,7 +52,7 @@ SL_MCMC <- function(M, iter, obs, init_theta, prior_func, sample_func, sigma,
   if (acc_rate) {
     print(paste0("Acceptance rate: ", accept_num/iter))
     return(list(theta = theta_matrix,
-                acc_rate = acc_rate))
+                acc_rate = accept_num/iter))
   } else {
     return(theta_matrix)
   }

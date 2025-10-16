@@ -168,17 +168,17 @@ legend("topright",
 
 ### Different M
 
-Let's choose different values of $M$ to see how it affects the posterior given by BSL. In the same example, we consider $M = 2, 5, 10, 15, 20, 25, 30, 50, 100$. And plot their density curves.
+Let's choose different values of $M$ to see how it affects the posterior given by BSL. In the same example, we consider $M = 5, 10, 15, 20, 25, 30, 50, 100$. And plot their density curves.
 
 ```{r}
 #| echo: true
-M_df <- data.frame(values = c(2, 5, 10, 15, 20, 25, 30, 50, 100),
+M_df <- data.frame(values = c(5, 10, 15, 20, 25, 30, 50, 100),
                    acc = NA,
                    ESS = NA,
                    var = NA)
-theta_matrix <- matrix(NA, nrow=9, ncol=50000)
+theta_matrix <- matrix(NA, nrow=8, ncol=50000)
 
-for (j in 1:9) {
+for (j in 1:8) {
   M <- M_df$values[j]
   sl_vec <- rep(NA, 100)
   for (i in 1:100) {
@@ -199,4 +199,28 @@ for (j in 1:9) {
 }
 ```
 
+```{r}
+#| echo: true
+print(M_df)
+```
 
+```{r}
+#| echo: true
+density1 <- density(theta_matrix[1, ])
+plot(density1,
+     main = "Posterior functions",
+     xlab = "Theta",
+     ylab = "Density",
+     col = 1,
+     lwd = 2)
+for (i in 2:8) {
+  density2 <- density(theta_matrix[i, ])
+  lines(density2, col = i, lwd = 2)
+}
+lines(x_values, y_values, col = 9, lwd = 2, lty = 2)
+legend("topright",
+       legend = c(paste("M =", M_df$values), "Exact posterior"),
+       col = 1:9,
+       lwd = 2,
+       cex = 0.8)
+```
