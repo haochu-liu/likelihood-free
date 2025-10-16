@@ -1,6 +1,26 @@
 ---
-title: "negative_binomial"
+title: "MCMC BSL with negative binomial example"
+author: "Haochu"
 format: html
+editor: visual
 ---
 
+```{r}
+#| label: load-packages
+#| include: false
 
+library(mvtnorm)
+source("BSL/SL_MCMC.R")
+set.seed(100)
+```
+
+## Example
+
+### Description
+
+### Code
+
+```{r}
+#| echo: true
+
+```
