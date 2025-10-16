@@ -26,8 +26,7 @@ Assume the true distribution of $y_i$ is unknown, we model the $y_i$ as independ
 
 We set the prior for $\theta$ is Gamma($2, 0.5$).
 
-In this toy example,
-$$
+In this toy example, $$
 \begin{align*}
 y_1, \dots, y_{20} &\sim NB(5, 0.5),\\
 s_{obs} = \sum_{i=1}^{20} y_i &\sim NB(100, 0.5),\\
@@ -35,8 +34,7 @@ s_{obs} = \sum_{i=1}^{20} y_i &\sim NB(100, 0.5),\\
 z_1, \dots, z_{20} |\theta &\sim Poisson(\theta),\\
 s |\theta= \sum_{i=1}^{20} z_i |\theta &\sim Poisson(20\theta).
 \end{align*}
-$$
-### Code
+$$ \### Code
 
 ```{r}
 #| echo: true
@@ -108,67 +106,32 @@ Since we know the exact model $y_i \sim NB(5, 0.5)$, let us assume that the mode
 
 ```{r}
 #| echo: true
+prior_a <- 2
+prior_b <- 0.5
 
-library(ggplot2)
-
-# --- 1. Simulate Example Data and Define Prior Parameters ---
-set.seed(42)
-true_mu <- 10
-r_known <- 5 # Negative Binomial 'size' parameter (assumed fixed/known)
-data_obs <- rnbinom(100, size = r_known, mu = true_mu)
-
-# Define Gamma Prior Hyperparameters for mu
-prior_mean <- 5
-prior_var <- 25
-prior_a <- prior_mean^2 / prior_var # shape
-prior_b <- prior_mean / prior_var   # rate
-
-# --- 2. Prepare Data for JAGS ---
 jags_data <- list(
-  y = data_obs,
-  N = length(data_obs),
-  r = r_known,
+  y = obs,
+  N = 1,
+  r = 100,
   prior_a = prior_a,
   prior_b = prior_b
 )
 
-# --- 3. Run the JAGS Model ---
 model_fit <- jags.model(
-  file = "nb_gamma_model.txt", # Your model file
+  file = "negative_binomial.txt",
   data = jags_data,
   n.chains = 3,
-  n.adapt = 1000 # Burn-in/Adaptation phase
+  n.adapt = 1000
 )
 
-# Generate posterior samples
-posterior_samples_coda <- coda.samples(
+posterior_star_coda <- coda.samples(
   model = model_fit,
-  variable.names = "mu", # Parameter to get posterior for
+  variable.names = "theta",
   n.iter = 10000,
   thin = 10
 )
 
-# --- 4. Plot the Posterior Density Curve ---
-# Convert coda object to a data frame for plotting with ggplot2
-posterior_df <- as.data.frame(as.matrix(posterior_samples_coda))
-
-ggplot(posterior_df, aes(x = mu)) +
-  geom_density(aes(fill = "Posterior"), alpha = 0.5) +
-  # Add the Gamma Prior curve for comparison
-  stat_function(
-    fun = dgamma,
-    args = list(shape = prior_a, rate = prior_b),
-    aes(color = "Prior"),
-    lwd = 1
-  ) +
-  labs(
-    title = "Posterior Density (JAGS) vs. Gamma Prior",
-    x = expression(mu),
-    y = "Density"
-  ) +
-  scale_fill_manual(name = "Distribution", values = "blue") +
-  scale_color_manual(name = "Distribution", values = "red") +
-  theme_minimal()
+posterior_star <- as.data.frame(as.matrix(posterior_star_coda))
 ```
 
 ```{r}
@@ -180,18 +143,23 @@ x_values <- seq(min(theta_seq[1, 10000:iter]),
 y_values <- dgamma(x_values,
                    shape=(2 + obs),
                    rate=(0.5 + 20))
+posterior_star_density <- density(posterior_star$theta)
+y_prior_values <- dgamma(x_values,
+                   shape=2,
+                   rate=0.5)
+
 plot(theta_density,
-     main = "BSL posterior",
+     main = "Density functions",
      xlab = "Theta",
      ylab = "Density",
      col = "black",
      lwd = 2)
 lines(x_values, y_values, col = "blue", lwd = 2, lty = 2)
+lines(posterior_star_density, col = "red", lwd = 2, lty = 4)
+lines(x_values, y_prior_values, col = "gray", lwd = 2, lty = 1)
 legend("topright",
-       c("Synthetic posterior", "Exact posterior"),
-       col = c("black", "blue"),
-       lty = c(1, 2),
+       c("Synthetic posterior", "Exact posterior", "True posterior", "Prior"),
+       col = c("black", "blue", "red", "gray"),
+       lty = c(1, 2, 4, 1),
        lwd = 2)
 ```
-
-
