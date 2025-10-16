@@ -10,6 +10,8 @@ editor: visual
 #| include: false
 
 library(mvtnorm)
+library(rjags)
+library(coda)
 source("../BSL/SL_MCMC.R")
 set.seed(100)
 ```
@@ -89,6 +91,107 @@ Run `SL_MCMC` for a Markov chain with length $50000$.
 theta_seq <- SL_MCMC(M, iter, obs, init_theta, prior_func, sample_func, 0.1)
 ```
 
+### Plots
 
+#### Trace plot
+
+```{r}
+#| echo: true
+plot(1:iter, theta_seq[1, ], type = "l", xlab="Iterations", ylab="Theta")
+```
+
+#### Density plot
+
+We have $\pi(\theta) = Gamma(\theta; 2, 0.5)$ as the prior. From the assumption, the model is $p(s|\theta) = Poisson(s; 20\theta)$. The posterior is $\pi(\theta|s) = Gamma(\theta; 2+s, 20.5)$.
+
+Since we know the exact model $y_i \sim NB(5, 0.5)$, let us assume that the model is $NB(5, p)$ with $5(1-p)/p = \theta$ and true parameter $p^* = 0.5$. We can have the exact model as $p^*(s|\theta) = NB(100, \frac{5}{\theta + 5})$ and $\theta^* = 5$. The posterior $\pi^*(\theta|s)$ can be simulated by MCMC.
+
+```{r}
+#| echo: true
+
+library(ggplot2)
+
+# --- 1. Simulate Example Data and Define Prior Parameters ---
+set.seed(42)
+true_mu <- 10
+r_known <- 5 # Negative Binomial 'size' parameter (assumed fixed/known)
+data_obs <- rnbinom(100, size = r_known, mu = true_mu)
+
+# Define Gamma Prior Hyperparameters for mu
+prior_mean <- 5
+prior_var <- 25
+prior_a <- prior_mean^2 / prior_var # shape
+prior_b <- prior_mean / prior_var   # rate
+
+# --- 2. Prepare Data for JAGS ---
+jags_data <- list(
+  y = data_obs,
+  N = length(data_obs),
+  r = r_known,
+  prior_a = prior_a,
+  prior_b = prior_b
+)
+
+# --- 3. Run the JAGS Model ---
+model_fit <- jags.model(
+  file = "nb_gamma_model.txt", # Your model file
+  data = jags_data,
+  n.chains = 3,
+  n.adapt = 1000 # Burn-in/Adaptation phase
+)
+
+# Generate posterior samples
+posterior_samples_coda <- coda.samples(
+  model = model_fit,
+  variable.names = "mu", # Parameter to get posterior for
+  n.iter = 10000,
+  thin = 10
+)
+
+# --- 4. Plot the Posterior Density Curve ---
+# Convert coda object to a data frame for plotting with ggplot2
+posterior_df <- as.data.frame(as.matrix(posterior_samples_coda))
+
+ggplot(posterior_df, aes(x = mu)) +
+  geom_density(aes(fill = "Posterior"), alpha = 0.5) +
+  # Add the Gamma Prior curve for comparison
+  stat_function(
+    fun = dgamma,
+    args = list(shape = prior_a, rate = prior_b),
+    aes(color = "Prior"),
+    lwd = 1
+  ) +
+  labs(
+    title = "Posterior Density (JAGS) vs. Gamma Prior",
+    x = expression(mu),
+    y = "Density"
+  ) +
+  scale_fill_manual(name = "Distribution", values = "blue") +
+  scale_color_manual(name = "Distribution", values = "red") +
+  theme_minimal()
+```
+
+```{r}
+#| echo: true
+theta_density <- density(theta_seq[1, 10000:iter])
+x_values <- seq(min(theta_seq[1, 10000:iter]),
+                max(theta_seq[1, 10000:iter]),
+                length.out = 1000)
+y_values <- dgamma(x_values,
+                   shape=(2 + obs),
+                   rate=(0.5 + 20))
+plot(theta_density,
+     main = "BSL posterior",
+     xlab = "Theta",
+     ylab = "Density",
+     col = "black",
+     lwd = 2)
+lines(x_values, y_values, col = "blue", lwd = 2, lty = 2)
+legend("topright",
+       c("Synthetic posterior", "Exact posterior"),
+       col = c("black", "blue"),
+       lty = c(1, 2),
+       lwd = 2)
+```
 
 
