@@ -54,8 +54,13 @@ SL_AM <- function(M, iter, burn_in, obs, init_theta, prior_func, sample_func,
 
   # Compute sample mean and variance for adaptive method
   s_d <- 2.38^2 / n_theta
-  mean_old <- as.matrix(rowMeans(theta_matrix[, 1:burn_in]))
-  cov_sigma <- s_d*cov(t(theta_matrix[, 1:burn_in])) + s_d*epsilon*diag(n_theta)
+  if (n_theta == 1) {
+    mean_old <- as.matrix(mean(theta_matrix[, 1:burn_in]))
+    cov_sigma <- s_d*var(theta_matrix[, 1:burn_in]) + s_d*epsilon*diag(n_theta)
+  } else {
+    mean_old <- as.matrix(rowMeans(theta_matrix[, 1:burn_in]))
+    cov_sigma <- s_d*cov(t(theta_matrix[, 1:burn_in])) + s_d*epsilon*diag(n_theta)
+  }
   accept_num_after <- 0
 
   # Adaptive M-H

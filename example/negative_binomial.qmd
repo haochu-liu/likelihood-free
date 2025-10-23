@@ -13,6 +13,7 @@ library(mvtnorm)
 library(rjags)
 library(coda)
 source("../BSL/SL_MCMC.R")
+source("../BSL/SL_AM.R")
 set.seed(100)
 ```
 
@@ -86,7 +87,8 @@ Run `SL_MCMC` for a Markov chain with length $50000$.
 
 ```{r}
 #| echo: true
-theta_seq <- SL_MCMC(M, iter, obs, init_theta, prior_func, sample_func, 0.1)
+theta_seq <- SL_MCMC(M, iter, obs, init_theta, prior_func, sample_func, 0.1,
+                     acc_rate=TRUE)
 ```
 
 ### Plots
@@ -95,7 +97,7 @@ theta_seq <- SL_MCMC(M, iter, obs, init_theta, prior_func, sample_func, 0.1)
 
 ```{r}
 #| echo: true
-plot(1:iter, theta_seq[1, ], type = "l", xlab="Iterations", ylab="Theta")
+plot(1:iter, theta_seq$theta[1, ], type = "l", xlab="Iterations", ylab="Theta")
 ```
 
 #### Density plot
@@ -138,9 +140,9 @@ The density functions are plotted below:
 
 ```{r}
 #| echo: true
-theta_density <- density(theta_seq[1, 10000:iter])
-x_values <- seq(min(theta_seq[1, 10000:iter]),
-                max(theta_seq[1, 10000:iter]),
+theta_density <- density(theta_seq$theta[1, 10000:iter])
+x_values <- seq(min(theta_seq$theta[1, 10000:iter]),
+                max(theta_seq$theta[1, 10000:iter]),
                 length.out = 1000)
 y_values <- dgamma(x_values,
                    shape=(2 + obs),
@@ -165,6 +167,18 @@ legend("topright",
        lty = c(1, 2, 4, 1),
        lwd = 2)
 ```
+
+### AM BSL
+
+Use adaptive M-H algorithm to tune the proposal of M-H. Run `SL_AM` with a same setup as `SL_MCMC`.
+
+```{r}
+#| echo: true
+theta_seq <- SL_AM(M, iter, 5000, obs, init_theta, prior_func, sample_func,
+                   0.1, 0.01, acc_rate=TRUE)
+```
+
+
 
 ### Different M
 
