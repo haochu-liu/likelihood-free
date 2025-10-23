@@ -174,13 +174,111 @@ Use adaptive M-H algorithm to tune the proposal of M-H. Run `SL_AM` with a same 
 
 ```{r}
 #| echo: true
-theta_seq <- SL_AM(M, iter, 5000, obs, init_theta, prior_func, sample_func,
-                   0.1, 0.01, acc_rate=TRUE)
+theta_seq_AM <- SL_AM(M, iter, 5000, obs, init_theta, prior_func, sample_func,
+                      0.1, 0.01, acc_rate=TRUE)
 ```
 
+Its trace plot is
 
+```{r}
+#| echo: true
+plot(1:iter, theta_seq_AM$theta[1, ], type = "l", xlab="Iterations", ylab="Theta")
+```
+
+Compare the effective sample sizes for both two methods:
+
+```{r}
+#| echo: true
+print("M-H algorithm:")
+print(paste0("Acceptance rate: ", theta_seq$acc_rate))
+mcmc_chain <- as.mcmc(theta_seq$theta[1, ])
+print(paste0("ESS: ", effectiveSize(mcmc_chain)))
+print("Adaptive M-H algorithm:")
+print(paste0("Acceptance rate: ", theta_seq_AM$acc_rate))
+print(paste0("Acceptance rate after the burn-in period: ", theta_seq_AM$acc_rate2))
+mcmc_chain_AM <- as.mcmc(theta_seq_AM$theta[1, ])
+print(paste0("ESS: ", effectiveSize(mcmc_chain_AM)))
+```
 
 ### Different M
+
+#### Different M and parameter
+
+We consider three different values, $M = 5, 20, 50$. And compare the variance of log-likelihood for different parameter values.
+
+```{r}
+#| echo: true
+M_vec <- c(5, 20, 50)
+theta_vec <- seq(2, 6, length.out = 401)
+
+var_mat <- matrix(NA, nrow=401, ncol=3)
+var_likelihood_mat <- matrix(NA, nrow=401, ncol=3)
+for (i in 1:3) {
+  M <- M_vec[i]
+  for (j in 1:401) {
+    theta <- theta_vec[j]
+    sl_vec <- rep(NA, 100)
+    sl_likelihood_Vec <- rep(NA, 100)
+    for (k in 1:100) {
+      stats_M <- sample_func(theta, M)
+      sl_vec[k] <- dmvnorm(x=obs,
+                           mean=stats_M$mean,
+                           sigma=stats_M$sigma,
+                           log=TRUE)
+      sl_likelihood_Vec[k] <- dmvnorm(x=obs,
+                                      mean=stats_M$mean,
+                                      sigma=stats_M$sigma,
+                                      log=FALSE)
+    }
+    var_mat[j, i] <- var(sl_vec)
+    var_likelihood_mat[j, i] <- var(sl_likelihood_Vec)
+  }
+  print(paste0("Finish iterations for M = ", M))
+}
+```
+
+```{r}
+#| echo: true
+f_values <- dgamma(theta_vec,
+                   shape=(2 + obs),
+                   rate=(0.5 + 20))
+
+par(mar = c(5, 4, 4, 4) + 0.1)
+
+plot(theta_vec, log(var_mat[, 1]),
+     type = "l",
+     col = "darkblue",
+     xlab = "Theta",
+     ylab = "log(Var(log-likelihood))",
+     ylim = range(log(var_mat)),
+     lwd = 2)
+lines(theta_vec, log(var_mat[, 2]), col = "darkgreen", type = "l", lwd = 2)
+lines(theta_vec, log(var_mat[, 3]), col = "darkred", type = "l", lwd = 2)
+
+par(new = TRUE)
+
+plot(theta_vec, f_values,
+     type = "l",
+     col = "black",
+     xlab = "",
+     ylab = "",
+     ylim = range(f_values),
+     axes = FALSE,
+     lwd = 2)
+
+axis(side = 4, col = "black", col.axis = "black")
+
+mtext("Density", side = 4, line = 3, col = "black")
+
+legend("topright",
+       legend = c("M = 5", "M = 20", "M = 50", "Exact posterior"),
+       col = c("darkblue", "darkgreen", "darkred", "black"),
+       lty = 1,
+       lwd = 2,
+       bty = "n")
+```
+
+#### Different M for posterior
 
 Let's choose different values of $M$ to see how it affects the posterior given by BSL. In the same example, we consider $M = 5, 10, 15, 20, 25, 30, 50, 100$. And plot their density curves.
 
@@ -208,7 +306,7 @@ for (j in 1:8) {
   M_df$acc[j] <- chain$acc_rate
   theta_matrix[j, ] <- chain$theta[1, ]
   mcmc_chain <- as.mcmc(chain$theta[1, ])
-  M_df$ESS[j] <- effectiveSize(mcmc_chain) / 50000 * 100
+  M_df$ESS[j] <- effectiveSize(mcmc_chain)
   print(paste0("Finish iteration ", j))
 }
 ```
@@ -238,3 +336,5 @@ legend("topright",
        lwd = 2,
        cex = 0.8)
 ```
+
+
