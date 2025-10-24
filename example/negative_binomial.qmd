@@ -254,6 +254,8 @@ plot(theta_vec, log(var_mat[, 1]),
      lwd = 2)
 lines(theta_vec, log(var_mat[, 2]), col = "darkgreen", type = "l", lwd = 2)
 lines(theta_vec, log(var_mat[, 3]), col = "darkred", type = "l", lwd = 2)
+lines(theta_vec, rep(log(1), 401), col = "gray", type = "l", lwd = 2)
+lines(theta_vec, rep(log(3), 401), col = "gray", type = "l", lwd = 2)
 
 par(new = TRUE)
 
@@ -336,5 +338,3 @@ legend("topright",
        lwd = 2,
        cex = 0.8)
 ```
-
-
