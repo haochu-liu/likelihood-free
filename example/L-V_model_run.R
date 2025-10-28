@@ -21,3 +21,8 @@ ggplot(results, aes(x = Time)) +
   labs(title = "Lotka-Volterra Simulation",
        y = "Population Size", x = "Time") +
   scale_color_manual(values = c("Prey" = "darkred", "Predator" = "darkblue"), name = "Species")
+
+stats <- L_V_summary_stats(results)
+print(stats)
+
+
