@@ -1,4 +1,4 @@
-#' Lotka-Volterra Model Simulation
+#' Lotka-Volterra Model simulation
 #'
 #' Simulate Lotka-Volterra model with Gillespie's method.
 #'
