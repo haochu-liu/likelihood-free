@@ -1,9 +1,10 @@
 library(ggplot2)
+library(GGally)
 
 
-theta <- c(1.0, 0.005, 0.6)
+theta <- c(1.0, 0.01, 0.6)
 state <- c(100, 50)
-time_points <- c(0, Measurement_times)
+time_points <- c(0, seq(2, 64, by=2))
 S <- matrix(c(
   1, 0,
   -1, 1,
@@ -25,4 +26,12 @@ ggplot(results, aes(x = Time)) +
 stats <- L_V_summary_stats(results)
 print(stats)
 
+stats_mat <- matrix(NA, nrow=9, ncol=100)
+for (i in 1:100) {
+  set.seed(i)
+  results <- Lotka_Volterra(theta, state, time_points, S)
+  stats_mat[, i] <- L_V_summary_stats(results)
+  print(paste0("Finish iteration ", i))
+}
 
+ggpairs(as.data.frame(stats_mat[, 1:25]))
