@@ -1,0 +1,79 @@
+---
+title: "Lotka-Volterra"
+author: "Haochu"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(mvtnorm)
+library(ggplot2)
+library(GGally)
+source("../BSL/SL_MCMC.R")
+source("../BSL/SL_AM.R")
+source("Lotka-Volterra.R")
+source("L-V_summary_stats.R")
+set.seed(100)
+```
+
+## Lotka-Volterra Model
+
+### Description
+
+
+
+### Code
+
+```{r}
+#| echo: true
+theta <- c(1.0, 0.005, 0.6)
+state <- c(100, 50)
+time_points <- c(0, seq(2, 64, by=2))
+S <- matrix(c(
+  1, 0,
+  -1, 1,
+  0, -1
+), nrow = 3, byrow = TRUE)
+
+results <- Lotka_Volterra(theta, state, time_points, S)
+
+ggplot(results, aes(x = Time)) +
+  geom_line(aes(y = Prey, color = "Prey")) +
+  geom_line(aes(y = Predator, color = "Predator")) +
+  geom_point(aes(y = Prey, color = "Prey")) +
+  geom_point(aes(y = Predator, color = "Predator")) +
+  labs(title = "Lotka-Volterra Simulation",
+       y = "Population Size", x = "Time") +
+  scale_color_manual(values = c("Prey" = "darkred", "Predator" = "darkblue"), name = "Species")
+```
+
+### Summary statistics
+
+
+
+```{r}
+#| echo: true
+stats <- L_V_summary_stats(results)
+print(stats)
+```
+
+```{r}
+#| echo: true
+stats_mat <- matrix(NA, nrow=100, ncol=9)
+for (i in 1:100) {
+  results <- Lotka_Volterra(theta, state, time_points, S)
+  stats_mat[i, ] <- L_V_summary_stats(results)
+  if (i %% 10 == 0) {print(paste0("Finish iteration ", i))}
+}
+
+stats_df <- as.data.frame(stats_mat)
+colnames(stats_df) <- c("mean.prey", "mean.predator",
+                        "log(var).prey", "log(var).predator",
+                        "acf_lag1.prey", "acf_lag2.prey",
+                        "acf_lag1.predator", "acf_lag2.predator",
+                        "cross_corr")
+ggpairs(stats_df)
+```
