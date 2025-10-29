@@ -23,13 +23,20 @@ set.seed(100)
 
 ### Description
 
+Let X represent the number of predators and Y the number of prey. We have:
 
+-   $Y$ increases by one with rate $\theta_1Y$.
+
+-   $Y$ decreases by one and $X$ increases by one with rate $\theta_2XY$.
+
+-   $X$ decreases by one with rate $\theta_3X$.
+Set the initial population size as $X=50, Y=100$. Let the true parameter be $(\theta_1, \theta_2, \theta_3) = (1, 0.01, 0.6)$.
 
 ### Code
 
 ```{r}
 #| echo: true
-theta <- c(1.0, 0.005, 0.6)
+theta <- c(1.0, 0.01, 0.6)
 state <- c(100, 50)
 time_points <- c(0, seq(2, 64, by=2))
 S <- matrix(c(
@@ -51,8 +58,6 @@ ggplot(results, aes(x = Time)) +
 ```
 
 ### Summary statistics
-
-
 
 ```{r}
 #| echo: true
@@ -77,3 +82,7 @@ colnames(stats_df) <- c("mean.prey", "mean.predator",
                         "cross_corr")
 ggpairs(stats_df)
 ```
+
+## BSL MCMC
+
+
