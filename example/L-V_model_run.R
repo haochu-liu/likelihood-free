@@ -26,12 +26,17 @@ ggplot(results, aes(x = Time)) +
 stats <- L_V_summary_stats(results)
 print(stats)
 
-stats_mat <- matrix(NA, nrow=9, ncol=100)
+stats_mat <- matrix(NA, nrow=100, ncol=9)
 for (i in 1:100) {
-  set.seed(i)
   results <- Lotka_Volterra(theta, state, time_points, S)
-  stats_mat[, i] <- L_V_summary_stats(results)
-  print(paste0("Finish iteration ", i))
+  stats_mat[i, ] <- L_V_summary_stats(results)
+  if (i %% 10 == 0) {print(paste0("Finish iteration ", i))}
 }
 
-ggpairs(as.data.frame(stats_mat[, 1:25]))
+stats_df <- as.data.frame(stats_mat)
+colnames(stats_df) <- c("mean.prey", "mean.predator",
+                        "log(var).prey", "log(var).predator",
+                        "acf_lag1.prey", "acf_lag2.prey",
+                        "acf_lag1.predator", "acf_lag2.predator",
+                        "cross_corr")
+ggpairs(stats_df)
