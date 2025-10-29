@@ -2,7 +2,7 @@ library(ggplot2)
 library(GGally)
 
 
-theta <- c(1.0, 0.01, 0.6)
+theta <- c(1.0, 0.005, 0.6)
 state <- c(100, 50)
 time_points <- c(0, seq(2, 64, by=2))
 S <- matrix(c(
