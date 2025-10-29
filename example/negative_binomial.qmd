@@ -27,7 +27,8 @@ Assume the true distribution of $y_i$ is unknown, we model the $y_i$ as independ
 
 We set the prior for $\theta$ is Gamma($2, 0.5$).
 
-In this toy example, $$
+In this toy example,
+$$
 \begin{align*}
 y_1, \dots, y_{20} &\sim NB(5, 0.5),\\
 s_{obs} = \sum_{i=1}^{20} y_i &\sim NB(100, 0.5),\\
@@ -35,7 +36,8 @@ s_{obs} = \sum_{i=1}^{20} y_i &\sim NB(100, 0.5),\\
 z_1, \dots, z_{20} |\theta &\sim Poisson(\theta),\\
 s |\theta= \sum_{i=1}^{20} z_i |\theta &\sim Poisson(20\theta).
 \end{align*}
-$$ \### Code
+$$
+### Code
 
 ```{r}
 #| echo: true
