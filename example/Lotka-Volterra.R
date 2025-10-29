@@ -43,6 +43,24 @@ Lotka_Volterra <- function(theta, state, time_points, S) {
     state <- state + S[j, ]
     time <- time_new
     i <- i + 1
+
+    # Switch to deterministic model when predators extinct
+    if ((state[1] > 0) & (state[2] == 0)) {
+      # Deterministic exponential growth
+      t_extinction <- time
+      remaining_prey <- state[1]
+      remaining_time <- time_points[time_points > t_extinction]
+      for (time in remaining_time) {
+        dt <- time - t_extinction
+        prey_t <- remaining_prey * exp(theta[1] * dt)
+        results[measurement_index, 2] <- c(prey_t)
+        measurement_index <- measurement_index + 1
+      }
+
+      # Stop and exit
+      time <- time_final
+      break
+    }
   }
   return(results)
 }
