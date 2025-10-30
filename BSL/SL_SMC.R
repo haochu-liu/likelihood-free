@@ -39,15 +39,17 @@ SL_MCMC <- function(M, alpha, N, theta_d, obs, prior_func, sample_func, sigma,
     # Binary search 100 times
     gamma_new <- (1 + gamma_old) / 2
     for (i in 1:100) {
-      # Reweight
+      # Log-likelihood
+      log_likelihood <- rep(NA, N)
       for (n in 1:N) {
-        weight_vec[n] <- dmvnorm(x=obs,
-                                 mean=mu_mat[, n],
-                                 sigma=as.matrix(sigma_array[, , n]),
-                                 log=TRUE) * (gamma_new - gamma_old)
-        weight_vec <- weight_vec - logSumExp(weight_vec)
+        log_likelihood[n] <- dmvnorm(x=obs,
+                                     mean=mu_mat[, n],
+                                     sigma=as.matrix(sigma_array[, , n]),
+                                     log=TRUE)
       }
-
+      # Reweight
+      weight_vec <- (gamma_new - gamma_old) * log_likelihood
+      weight_vec <- weight_vec - logSumExp(weight_vec)
       ess_new <- ESS_weight(weight_vec)
 
       if (ess_new < (log(alpha)+ess_flat)) {
@@ -58,13 +60,8 @@ SL_MCMC <- function(M, alpha, N, theta_d, obs, prior_func, sample_func, sigma,
         gamma_new <- (gamma_new + 1) / 2
         # Try gamma_new = 1 once
         if (i == 1) {
-          for (n in 1:N) {
-            weight_vec[n] <- dmvnorm(x=obs,
-                                     mean=mu_mat[, n],
-                                     sigma=as.matrix(sigma_array[, , n]),
-                                     log=TRUE) * (1 - gamma_old)
-            weight_vec <- weight_vec - logSumExp(weight_vec)
-          }
+          weight_vec <- (gamma_new - gamma_old) * log_likelihood
+          weight_vec <- weight_vec - logSumExp(weight_vec)
           ess_new <- ESS_weight(weight_vec)
           if (ess_new >= (log(alpha)+ess_flat)) {
             gamma_new <- 1
@@ -83,6 +80,10 @@ SL_MCMC <- function(M, alpha, N, theta_d, obs, prior_func, sample_func, sigma,
     prob_vec <- exp(weight_vec)
     resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
     theta_mat <- theta_mat[, resample_index]
+    mu_mat <- mu_mat[, resample_index]
+    sigma_array <- sigma_array[, , resample_index]
+
+    # Move
 
   }
 }
