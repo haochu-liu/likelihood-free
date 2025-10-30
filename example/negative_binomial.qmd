@@ -37,6 +37,7 @@ z_1, \dots, z_{20} |\theta &\sim Poisson(\theta),\\
 s |\theta= \sum_{i=1}^{20} z_i |\theta &\sim Poisson(20\theta).
 \end{align*}
 $$
+
 ### Code
 
 ```{r}
@@ -340,3 +341,82 @@ legend("topright",
        lwd = 2,
        cex = 0.8)
 ```
+
+## SMC BSL
+
+
+
+## Efficiency
+
+```{r}
+#| echo: true
+efficiency_df <- as.data.frame(matrix(NA, nrow=3, ncol=5))
+rownames(efficiency_df) <- c("BSL_MCMC", "BSL_AM", "BSL_SMC")
+colnames(efficiency_df) <- c("time(sec)", "ESS/sec",
+                             "V_QL*sec", "V_QU*sec", "V_E*sec")
+```
+
+Run 100 chains from BSL MCMC.
+
+```{r}
+#| echo: true
+R = 100
+
+time_vec <- rep(NA, R)
+ess_vec <- rep(NA, R)
+ql_vec <- rep(NA, R)
+qu_vec <- rep(NA, R)
+e_vec <- rep(NA, R)
+for (r in 1:R) {
+  time_result <- system.time(
+  chain_r <- SL_MCMC(M, iter, obs, init_theta, prior_func, sample_func,
+                     0.1)
+  )
+  time_vec[r] <- time_result["elapsed"]
+  mcmc_chain <- as.mcmc(chain_r[1, (iter-1000):iter])
+  ess_vec[r] <- effectiveSize(mcmc_chain)
+  ql_vec[r] <- quantile(chain_r[1, (iter-1000):iter], probs=0.25)
+  qu_vec[r] <- quantile(chain_r[1, (iter-1000):iter], probs=0.75)
+  e_vec[r] <- mean(chain_r[1, (iter-1000):iter])
+  
+  if (r %% 10 == 0) {print(paste0("Finish iteration ", r))}
+}
+efficiency_df$`time(sec)`[1] <- mean(time_vec)
+efficiency_df$`ESS/sec`[1] <- mean(ess_vec / time_vec)
+efficiency_df$`V_QL*sec`[1] <- var(ql_vec) * mean(time_vec)
+efficiency_df$`V_QU*sec`[1] <- var(qu_vec) * mean(time_vec)
+efficiency_df$`V_E*sec`[1] <- var(e_vec) * mean(time_vec)
+```
+
+Run 100 chains from BSL AM.
+
+```{r}
+#| echo: true
+time_vec <- rep(NA, R)
+ess_vec <- rep(NA, R)
+ql_vec <- rep(NA, R)
+qu_vec <- rep(NA, R)
+e_vec <- rep(NA, R)
+for (r in 1:R) {
+  time_result <- system.time(
+  chain_r <- SL_AM(M, iter, 5000, obs, init_theta, prior_func, sample_func,
+                   0.1, 0.01)
+  )
+  time_vec[r] <- time_result["elapsed"]
+  mcmc_chain <- as.mcmc(chain_r[1, (iter-1000):iter])
+  ess_vec[r] <- effectiveSize(mcmc_chain)
+  ql_vec[r] <- quantile(chain_r[1, (iter-1000):iter], probs=0.25)
+  qu_vec[r] <- quantile(chain_r[1, (iter-1000):iter], probs=0.75)
+  e_vec[r] <- mean(chain_r[1, (iter-1000):iter])
+  
+  if (r %% 10 == 0) {print(paste0("Finish iteration ", r))}
+}
+efficiency_df$`time(sec)`[2] <- mean(time_vec)
+efficiency_df$`ESS/sec`[2] <- mean(ess_vec / time_vec)
+efficiency_df$`V_QL*sec`[2] <- var(ql_vec) * mean(time_vec)
+efficiency_df$`V_QU*sec`[2] <- var(qu_vec) * mean(time_vec)
+efficiency_df$`V_E*sec`[2] <- var(e_vec) * mean(time_vec)
+```
+
+
+
