@@ -11,6 +11,7 @@
 #' @param sigma A scale parameter for the Gaussian proposal in move step.
 #' @param history Default history = FALSE, if TRUE, return all particles in history.
 #' @return A vector of parameters from the BSL posterior.
-SL_MCMC <- function() {
+SL_MCMC <- function(M, alpha, N, obs, prior_func, sample_func, sigma,
+                    history=FALSE) {
 
 }
