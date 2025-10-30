@@ -28,4 +28,4 @@ sigma <- 0.1
 theta_history=FALSE
 
 results <- SL_SMC(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
-                  sample_func, sigma)
+                  sample_func, sigma, gamma_history=TRUE)
