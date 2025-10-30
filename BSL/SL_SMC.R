@@ -40,21 +40,25 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   }
 
   while (gamma_old < 1) {
+    # Log-likelihood for current parameters
+    log_likelihood <- rep(NA, N)
+    for (n in 1:N) {
+      log_likelihood[n] <- dmvnorm(x=obs,
+                                   mean=mu_mat[, n],
+                                   sigma=as.matrix(sigma_array[, , n]),
+                                   log=TRUE)
+    }
+
     # Binary search 100 times
     gamma_new <- (1 + gamma_old) / 2
+    # Reweight
+    weight_vec <- (gamma_new - gamma_old) * log_likelihood
+    weight_vec <- weight_vec - logSumExp(weight_vec)
+    ess_new <- ESS_weight(weight_vec)
     for (i in 1:100) {
-      # Log-likelihood
-      log_likelihood <- rep(NA, N)
-      for (n in 1:N) {
-        log_likelihood[n] <- dmvnorm(x=obs,
-                                     mean=mu_mat[, n],
-                                     sigma=as.matrix(sigma_array[, , n]),
-                                     log=TRUE)
+      if (abs(ess_new - (log(alpha)+ess_flat)) < 0.01) {
+        break
       }
-      # Reweight
-      weight_vec <- (gamma_new - gamma_old) * log_likelihood
-      weight_vec <- weight_vec - logSumExp(weight_vec)
-      ess_new <- ESS_weight(weight_vec)
 
       if (ess_new < (log(alpha)+ess_flat)) {
         # ESS too small
@@ -69,16 +73,17 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
           ess_new <- ESS_weight(weight_vec)
           if (ess_new >= (log(alpha)+ess_flat)) {
             gamma_new <- 1
-            break
           }
         }
       }
 
-      if (abs(ess_new - (log(alpha)+ess_flat)) < 0.01) {
-        break
-      }
-    }
+      # Reweight
+      weight_vec <- (gamma_new - gamma_old) * log_likelihood
+      weight_vec <- weight_vec - logSumExp(weight_vec)
+      ess_new <- ESS_weight(weight_vec)
 
+      if (gamma_new == 1) {break}
+    }
 
     # Resample
     prob_vec <- exp(weight_vec)
