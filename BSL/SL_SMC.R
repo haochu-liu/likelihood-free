@@ -12,9 +12,11 @@
 #' @param sample_func A function which takes theta and M and return sample mean and variance.
 #' @param sigma A scale parameter for the Gaussian proposal in move step.
 #' @param theta_history Default theta_history = FALSE, if TRUE, return all particles in history.
+#' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
 #' @return A vector of parameters from the BSL posterior.
 SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
-                   sample_func, sigma, theta_history=FALSE) {
+                   sample_func, sigma,
+                   theta_history=FALSE, gamma_history=FALSE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
   if (theta_history) {
@@ -27,7 +29,9 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   q_sigma <- sigma * diag(theta_d)
   gamma_old <- 0
   iter <- 1
-  gamma_vec <- c(gamma_old)
+  if (gamma_history) {
+    gamma_vec <- c(gamma_old)
+  }
 
   # Initialization
   for (n in 1:N) {
@@ -128,10 +132,11 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   }
 
   if (theta_history) {
-    return(list(theta = theta_history_mat,
-                gamma = gamma_vec))
-  } else {
+    return(theta_history_mat)
+  } else if (gamma_history) {
     return(list(theta = theta_mat,
                 gamma = gamma_vec))
+  } else {
+    return(theta_mat)
   }
 }
