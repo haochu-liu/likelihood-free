@@ -12,8 +12,11 @@ editor: visual
 library(mvtnorm)
 library(rjags)
 library(coda)
+library(matrixStats)
 source("../BSL/SL_MCMC.R")
 source("../BSL/SL_AM.R")
+source("../BSL/SL_SMC.R")
+source("../BSL/ESS_weight.R")
 set.seed(100)
 ```
 
@@ -27,8 +30,7 @@ Assume the true distribution of $y_i$ is unknown, we model the $y_i$ as independ
 
 We set the prior for $\theta$ is Gamma($2, 0.5$).
 
-In this toy example,
-$$
+In this toy example, $$
 \begin{align*}
 y_1, \dots, y_{20} &\sim NB(5, 0.5),\\
 s_{obs} = \sum_{i=1}^{20} y_i &\sim NB(100, 0.5),\\
@@ -344,8 +346,6 @@ legend("topright",
 
 ## SMC BSL
 
-
-
 ## Efficiency
 
 ```{r}
@@ -443,6 +443,3 @@ for (i in 1:50) {
 }
 plot(1:50, ess_different)
 ```
-
-
-
