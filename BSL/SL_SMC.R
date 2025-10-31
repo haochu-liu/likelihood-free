@@ -121,7 +121,9 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
 
     # Update
     gamma_old <- gamma_new
-    gamma_vec <- c(gamma_vec, gamma_old)
+    if (gamma_history) {
+      gamma_vec <- c(gamma_vec, gamma_old)
+    }
     if (theta_history) {
       theta_history_mat[(1+(iter-1)*theta_d):(iter*theta_d), ] <- theta_mat
     }

@@ -30,8 +30,7 @@ Assume the true distribution of $y_i$ is unknown, we model the $y_i$ as independ
 
 We set the prior for $\theta$ is Gamma($2, 0.5$).
 
-In this toy example,
-$$
+In this toy example, $$
 \begin{align*}
 y_1, \dots, y_{20} &\sim NB(5, 0.5),\\
 s_{obs} = \sum_{i=1}^{20} y_i &\sim NB(100, 0.5),\\
@@ -364,7 +363,7 @@ sample_func <- function(theta, M) {
 }
 
 alpha <- 0.9
-N <- 100
+N <- 10000
 theta_d <- 1
 sigma <- 0.1
 ```
@@ -377,7 +376,24 @@ theta_smc <- SL_SMC(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
 
 ```{r}
 #| echo: true
+density_mcmc <- density(theta_seq$theta[1, 40000:50000])
+density_am <- density(theta_seq_AM$theta[1, 40000:50000])
+density_smc <- density(theta_smc$theta[1, ])
 
+plot(density_mcmc,
+     main = "Posterior functions",
+     xlab = "Theta",
+     ylab = "Density",
+     col = "red", lwd = 2)
+lines(density_am, col = "blue", lwd = 2)
+lines(density_smc, col = "green", lwd = 2)
+lines(x_values, y_values, col = "black", lwd = 2, lty = 2)
+legend("topright",
+       legend = c("BSL-MCMC", "BSL-AM", "BSL-SMC", "Exact posterior"),
+       col = c("red", "blue", "green", "black"),
+       lwd = 2,
+       lty = c(1, 1, 1, 2),
+       cex = 0.8)
 ```
 
 ## Efficiency
@@ -395,6 +411,7 @@ Run 100 chains from BSL MCMC.
 ```{r}
 #| echo: true
 R = 100
+M <- 25
 
 time_vec <- rep(NA, R)
 ess_vec <- rep(NA, R)
@@ -450,6 +467,36 @@ efficiency_df$`ESS/sec`[2] <- mean(ess_vec / time_vec)
 efficiency_df$`V_QL*sec`[2] <- var(ql_vec) * mean(time_vec)
 efficiency_df$`V_QU*sec`[2] <- var(qu_vec) * mean(time_vec)
 efficiency_df$`V_E*sec`[2] <- var(e_vec) * mean(time_vec)
+```
+
+```{r}
+#| echo: true
+time_vec <- rep(NA, R)
+ql_vec <- rep(NA, R)
+qu_vec <- rep(NA, R)
+e_vec <- rep(NA, R)
+N <- 1000
+for (r in 1:R) {
+  time_result <- system.time(
+  chain_r <- SL_SMC(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
+                    sample_func, sigma)
+  )
+  time_vec[r] <- time_result["elapsed"]
+  ql_vec[r] <- quantile(chain_r[1, ], probs=0.25)
+  qu_vec[r] <- quantile(chain_r[1, ], probs=0.75)
+  e_vec[r] <- mean(chain_r[1, ])
+  
+  if (r %% 10 == 0) {print(paste0("Finish iteration ", r))}
+}
+efficiency_df$`time(sec)`[3] <- mean(time_vec)
+efficiency_df$`V_QL*sec`[3] <- var(ql_vec) * mean(time_vec)
+efficiency_df$`V_QU*sec`[3] <- var(qu_vec) * mean(time_vec)
+efficiency_df$`V_E*sec`[3] <- var(e_vec) * mean(time_vec)
+```
+
+```{r}
+#| echo: true
+print(efficiency_df)
 ```
 
 ### Chain length and ESS
