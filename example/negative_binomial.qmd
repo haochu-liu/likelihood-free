@@ -30,7 +30,8 @@ Assume the true distribution of $y_i$ is unknown, we model the $y_i$ as independ
 
 We set the prior for $\theta$ is Gamma($2, 0.5$).
 
-In this toy example, $$
+In this toy example,
+$$
 \begin{align*}
 y_1, \dots, y_{20} &\sim NB(5, 0.5),\\
 s_{obs} = \sum_{i=1}^{20} y_i &\sim NB(100, 0.5),\\
@@ -345,6 +346,39 @@ legend("topright",
 ```
 
 ## SMC BSL
+
+```{r}
+#| echo: true
+prior_sampler <- function(){
+  return(rgamma(1, shape=2, rate=0.5))
+}
+
+prior_func <- function(theta){
+  dgamma(theta, shape=2, rate=0.5, log=TRUE)
+}
+
+sample_func <- function(theta, M) {
+  s <- rpois(M, theta*20)
+  return(list(mean=c(mean(s)),
+              sigma=matrix(var(s), ncol=1, nrow=1)))
+}
+
+alpha <- 0.9
+N <- 100
+theta_d <- 1
+sigma <- 0.1
+```
+
+```{r}
+#| echo: true
+theta_smc <- SL_SMC(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
+                    sample_func, sigma, gamma_history=TRUE)
+```
+
+```{r}
+#| echo: true
+
+```
 
 ## Efficiency
 
