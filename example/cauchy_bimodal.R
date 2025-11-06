@@ -44,3 +44,5 @@ sample_func <- function(theta, M) {
               sigma=matrix(var(s), ncol=1, nrow=1)))
 }
 
+
+
