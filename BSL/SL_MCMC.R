@@ -8,16 +8,15 @@
 #' @param init_theta A vector of the initial parameter sampled from the prior.
 #' @param prior_func A density function of prior (log density).
 #' @param sample_func A function which takes theta and M and return sample mean and variance.
-#' @param sigma A scale parameter for the Gaussian proposal.
+#' @param q_sigma A scale matrix for the Gaussian proposal.
 #' @param acc_rate Default acc_rate = FALSE, if TRUE, print acceptance rate and return it.
 #' @return A sequence of parameters from the BSL posterior.
-SL_MCMC <- function(M, iter, obs, init_theta, prior_func, sample_func, sigma,
+SL_MCMC <- function(M, iter, obs, init_theta, prior_func, sample_func, q_sigma,
                     acc_rate=FALSE) {
   # Initial setup
   n_theta <- length(init_theta)
   n_obs <- length(obs)
   theta_matrix <- matrix(NA, nrow=n_theta, ncol=iter)
-  q_sigma <- sigma * diag(n_theta)
   accept_num <- 0
   i <- 1
 
