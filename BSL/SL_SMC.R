@@ -10,12 +10,12 @@
 #' @param prior_sampler A function to draw samples form prior.
 #' @param prior_func A density function of prior (log density).
 #' @param sample_func A function which takes theta and M and return sample mean and variance.
-#' @param sigma A scale parameter for the Gaussian proposal in move step.
+#' @param q_sigma A scale matrix for the Gaussian proposal.
 #' @param theta_history Default theta_history = FALSE, if TRUE, return all particles in history.
 #' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
 #' @return A vector of parameters from the BSL posterior.
 SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
-                   sample_func, sigma,
+                   sample_func, q_sigma,
                    theta_history=FALSE, gamma_history=FALSE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
@@ -26,7 +26,6 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   sigma_array <- array(data = NA, dim = c(length(obs), length(obs), N))
   weight_vec <- rep(-log(N), N)
   ess_flat <- ESS_weight(weight_vec)
-  q_sigma <- sigma * diag(theta_d)
   gamma_old <- 0
   iter <- 1
   if (gamma_history) {
