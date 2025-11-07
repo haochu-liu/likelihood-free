@@ -117,3 +117,15 @@ plot(theta_density,
      ylab = "Density",
      col = "black",
      lwd = 2)
+
+theta_smc_c <- SL_SMC_CESS(M, alpha, N, theta_d, s_obs, prior_sampler, prior_func,
+                           sample_func, q_sigma, gamma_history=TRUE)
+
+theta_density <- density(theta_smc_c$theta[1, ])
+
+plot(theta_density,
+     main = "Density functions",
+     xlab = "Theta",
+     ylab = "Density",
+     col = "black",
+     lwd = 2)
