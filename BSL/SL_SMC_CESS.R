@@ -15,9 +15,9 @@
 #' @param theta_history Default theta_history = FALSE, if TRUE, return all particles in history.
 #' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
 #' @return A vector of parameters from the BSL posterior.
-SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
-                   sample_func, q_sigma,
-                   theta_history=FALSE, gamma_history=FALSE) {
+SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
+                        sample_func, q_sigma,
+                        theta_history=FALSE, gamma_history=FALSE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
   if (theta_history) {
@@ -25,12 +25,14 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   }
   mu_mat <- matrix(NA, nrow=length(obs), ncol=N)
   sigma_array <- array(data = NA, dim = c(length(obs), length(obs), N))
-  weight_vec <- rep(-log(N), N)
-  ess_flat <- ESS_weight(weight_vec)
+  weight_old <- rep(-log(N), N)
+  ess_flat <- ESS_weight_more(weight_old, weight_old)
+  cess_old <- CESS_weight_more(weight_old, weight_old)
   gamma_old <- 0
   iter <- 1
   if (gamma_history) {
     gamma_vec <- c(gamma_old)
+    ess_vec <- c(ess_flat)
   }
 
   # Initialization
@@ -56,15 +58,15 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     # Binary search 100 times
     gamma_new <- (1 + gamma_old) / 2
     # Reweight
-    weight_vec <- (gamma_new - gamma_old) * log_likelihood
-    weight_vec <- weight_vec - logSumExp(weight_vec)
-    ess_new <- ESS_weight(weight_vec)
+    weight_new <- (gamma_new - gamma_old) * log_likelihood
+    weight_new <- weight_new - logSumExp(weight_new)
+    cess_new <- CESS_weight_more(weight_old, weight_new)
     for (i in 1:100) {
-      if (abs(ess_new - (log(alpha)+ess_flat)) < 0.01) {
+      if (abs(cess_new - (log(alpha)+cess_old)) < 0.01) {
         break
       }
 
-      if (ess_new < (log(alpha)+ess_flat)) {
+      if (cess_new < (log(alpha)+cess_old)) {
         # ESS too small
         gamma_new <- (gamma_new + gamma_old) / 2
       } else {
@@ -72,31 +74,35 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
         gamma_new <- (gamma_new + 1) / 2
         # Try gamma_new = 1 once
         if (i == 1) {
-          weight_vec <- (gamma_new - gamma_old) * log_likelihood
-          weight_vec <- weight_vec - logSumExp(weight_vec)
-          ess_new <- ESS_weight(weight_vec)
-          if (ess_new >= (log(alpha)+ess_flat)) {
+          weight_new <- (gamma_new - gamma_old) * log_likelihood
+          weight_new <- weight_new - logSumExp(weight_new)
+          cess_new <- CESS_weight_more(weight_old, weight_new)
+          if (cess_new >= (log(alpha)+cess_old)) {
             gamma_new <- 1
           }
         }
       }
 
       # Reweight
-      weight_vec <- (gamma_new - gamma_old) * log_likelihood
-      weight_vec <- weight_vec - logSumExp(weight_vec)
-      ess_new <- ESS_weight(weight_vec)
+      weight_new <- (gamma_new - gamma_old) * log_likelihood
+      weight_new <- weight_new - logSumExp(weight_new)
+      cess_new <- CESS_weight_more(weight_old, weight_new)
 
       if (gamma_new == 1) {break}
     }
+    ess_new <- ESS_weight_more(weight_old, weight_new)
+    weight_old <- weight_new
 
     # Resample
-    prob_vec <- exp(weight_vec)
-    resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
-    theta_mat <- theta_mat[, resample_index, drop=FALSE]
-    mu_mat <- mu_mat[, resample_index, drop=FALSE]
-    log_likelihood <- log_likelihood[resample_index]
-    sigma_array <- sigma_array[, , resample_index, drop=FALSE]
-    weight_vec <- rep(-log(N), N)
+    if (ess_new < (log(0.5)+ess_flat)) {
+      prob_vec <- exp(weight_old)
+      resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
+      theta_mat <- theta_mat[, resample_index, drop=FALSE]
+      mu_mat <- mu_mat[, resample_index, drop=FALSE]
+      log_likelihood <- log_likelihood[resample_index]
+      sigma_array <- sigma_array[, , resample_index, drop=FALSE]
+      weight_old <- rep(-log(N), N)
+    }
 
     # Move
     for (n in 1:N) {
@@ -123,6 +129,7 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     gamma_old <- gamma_new
     if (gamma_history) {
       gamma_vec <- c(gamma_vec, gamma_old)
+      ess_vec <- c(ess_vec, ess_new)
     }
     if (theta_history) {
       theta_history_mat[(1+(iter-1)*theta_d):(iter*theta_d), ] <- theta_mat
@@ -137,7 +144,8 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     return(theta_history_mat)
   } else if (gamma_history) {
     return(list(theta = theta_mat,
-                gamma = gamma_vec))
+                gamma = gamma_vec,
+                ess = ess_vec))
   } else {
     return(theta_mat)
   }
