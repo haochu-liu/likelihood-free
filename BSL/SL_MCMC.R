@@ -29,7 +29,6 @@ SL_MCMC <- function(M, iter, obs, init_theta, prior_func, sample_func, q_sigma,
   # M-H MCMC
   for (i in 2:iter) {
     theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=q_sigma))
-    theta_new <- max(0, theta_new)
     stats_new <- sample_func(theta_new, M)
     sl_new <- dmvnorm(x=obs, mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
 
