@@ -26,8 +26,8 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   mu_mat <- matrix(NA, nrow=length(obs), ncol=N)
   sigma_array <- array(data = NA, dim = c(length(obs), length(obs), N))
   weight_old <- rep(-log(N), N)
-  ess_flat <- ESS_weight_more(weight_old, weight_old)
-  cess_old <- CESS_weight_more(weight_old, weight_old)
+  ess_flat <- ESS_weight2(weight_old, weight_old)
+  cess_old <- CESS_weight(weight_old, weight_old)
   gamma_old <- 0
   iter <- 1
   if (gamma_history) {
@@ -61,7 +61,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     # Reweight
     weight_new <- (gamma_new - gamma_old) * log_likelihood
     weight_new <- weight_new - logSumExp(weight_new)
-    cess_new <- CESS_weight_more(weight_old, weight_new)
+    cess_new <- CESS_weight(weight_old, weight_new)
     for (i in 1:100) {
       if (abs(cess_new - (log(alpha)+cess_old)) < 0.01) {
         break
@@ -77,7 +77,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
         if (i == 1) {
           weight_new <- (gamma_new - gamma_old) * log_likelihood
           weight_new <- weight_new - logSumExp(weight_new)
-          cess_new <- CESS_weight_more(weight_old, weight_new)
+          cess_new <- CESS_weight(weight_old, weight_new)
           if (cess_new >= (log(alpha)+cess_old)) {
             gamma_new <- 1
           }
@@ -87,11 +87,11 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
       # Reweight
       weight_new <- (gamma_new - gamma_old) * log_likelihood
       weight_new <- weight_new - logSumExp(weight_new)
-      cess_new <- CESS_weight_more(weight_old, weight_new)
+      cess_new <- CESS_weight(weight_old, weight_new)
 
       if (gamma_new == 1) {break}
     }
-    ess_new <- ESS_weight_more(weight_old, weight_new)
+    ess_new <- ESS_weight2(weight_old, weight_new)
     weight_old <- weight_new
 
     # Resample
@@ -151,6 +151,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   if (gamma_history) {
     result_list$gamma <- gamma_vec
     result_list$ess <- ess_vec
+    result_list$cess <- cess_vec
   }
 
   return(result_list)
