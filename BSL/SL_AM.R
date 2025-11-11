@@ -32,7 +32,6 @@ SL_AM <- function(M, iter, burn_in, obs, init_theta, prior_func, sample_func,
   # Burn-in iterations
   for (i in 2:burn_in) {
     theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=q_sigma))
-    theta_new <- max(0, theta_new)
     stats_new <- sample_func(theta_new, M)
     sl_new <- dmvnorm(x=obs, mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
 
@@ -65,7 +64,6 @@ SL_AM <- function(M, iter, burn_in, obs, init_theta, prior_func, sample_func,
   # Adaptive M-H
   for (i in (burn_in+1):iter) {
     theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=cov_sigma))
-    theta_new <- max(0, theta_new)
     stats_new <- sample_func(theta_new, M)
     sl_new <- dmvnorm(x=obs, mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
 
