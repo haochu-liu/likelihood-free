@@ -207,5 +207,3 @@ plot(1:gamma_n, theta_smc_c$ess, type = "l",
      ylab = "ESS")
 par(mfrow = c(1, 1))
 ```
-
-
