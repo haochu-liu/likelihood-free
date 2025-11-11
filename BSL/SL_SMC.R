@@ -30,6 +30,7 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   iter <- 1
   if (gamma_history) {
     gamma_vec <- c(gamma_old)
+    ess_vec <- c(ess_flat)
   }
 
   # Initialization
@@ -121,7 +122,8 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     # Update
     gamma_old <- gamma_new
     if (gamma_history) {
-      gamma_vec <- c(gamma_vec, gamma_old)
+      gamma_vec <- c(gamma_vec, gamma_new)
+      ess_vec <- c(ess_vec, ess_new)
     }
     if (theta_history) {
       theta_history_mat[(1+(iter-1)*theta_d):(iter*theta_d), ] <- theta_mat
@@ -133,11 +135,15 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   }
 
   if (theta_history) {
-    return(theta_history_mat)
-  } else if (gamma_history) {
-    return(list(theta = theta_mat,
-                gamma = gamma_vec))
+    result_list <- list(theta=theta_history_mat)
   } else {
-    return(theta_mat)
+    result_list <- list(theta=theta_mat)
   }
+
+  if (gamma_history) {
+    result_list$gamma <- gamma_vec
+    result_list$ess <- ess_vec
+  }
+
+  return(result_list)
 }
