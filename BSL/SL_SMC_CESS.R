@@ -33,7 +33,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   if (gamma_history) {
     gamma_vec <- c(gamma_old)
     ess_vec <- c(ess_flat)
-    cess_vec <- c()
+    cess_vec <- c(cess_old)
   }
 
   # Initialization
