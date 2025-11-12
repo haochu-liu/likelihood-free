@@ -69,11 +69,6 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     weight_new <- (gamma_new - gamma_old) * log_likelihood
     weight_new <- weight_new - logSumExp(weight_new)
     cess_new <- CESS_weight(weight_old, weight_new)
-    # test
-    trace_mat <- matrix(data=NA, nrow=2, ncol=101)
-    rownames(trace_mat) <- c("gamma_new", "cess")
-    trace_mat[, 1] <- c(gamma_new, cess_new)
-    # ----
     for (i in 1:100) {
       if (abs(cess_new - (log(alpha)+cess_old)) < 0.001) {
         break
@@ -102,10 +97,6 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
       weight_new <- (gamma_new - gamma_old) * log_likelihood
       weight_new <- weight_new - logSumExp(weight_new)
       cess_new <- CESS_weight(weight_old, weight_new)
-
-      # test
-      trace_mat[, i+1] <- c(gamma_new, cess_new)
-      # ----
 
       if (gamma_new == 1) {break}
     }

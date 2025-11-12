@@ -211,7 +211,7 @@ theta_smc_c <- SL_SMC_CESS(M, alpha, N, theta_d, s_obs, prior_sampler,
 
 ```{r}
 #| echo: true
-theta_density <- density(theta_smc_c$theta[1, , 7])
+theta_density <- density(theta_smc_c$theta[1, , 6])
 
 plot(theta_density,
      main = "Density functions",
