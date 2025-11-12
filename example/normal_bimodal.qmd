@@ -30,7 +30,7 @@ set.seed(100)
 We set:
 -   $\theta \sim N(0, 9)$,
 -   $y|\theta \sim \frac{1}{2}N(\theta, 1) + \frac{1}{2}N(-\theta, 1)$.
-Let the true parameter be $\theta = 5$
+Let the true parameter be $\theta = 5$.
 
 ```{r}
 #| echo: true
