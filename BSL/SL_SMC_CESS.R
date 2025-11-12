@@ -21,7 +21,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
   if (theta_history) {
-    theta_history_array <- array(data = NA, dim = c(theta_d, N, iter_mat))
+    theta_history_array <- array(data = NA, dim = c(theta_d, N, iter_max))
   }
   mu_mat <- matrix(NA, nrow=length(obs), ncol=N)
   sigma_array <- array(data = NA, dim = c(length(obs), length(obs), N))
@@ -46,7 +46,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     sigma_array[, , n] <- sample_sta$sigma
   }
   if (theta_history) {
-    theta_history_mat[, , iter] <- theta_mat
+    theta_history_array[, , iter] <- theta_mat
   }
   iter <- iter + 1
 
@@ -62,22 +62,31 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     }
 
     # Binary search 100 times
-    gamma_new <- (1 + gamma_old) / 2
+    search_u <- 1
+    search_l <- gamma_old
+    gamma_new <- (search_u + search_l) / 2
     # Reweight
     weight_new <- (gamma_new - gamma_old) * log_likelihood
     weight_new <- weight_new - logSumExp(weight_new)
     cess_new <- CESS_weight(weight_old, weight_new)
+    # test
+    trace_mat <- matrix(data=NA, nrow=2, ncol=101)
+    rownames(trace_mat) <- c("gamma_new", "cess")
+    trace_mat[, 1] <- c(gamma_new, cess_new)
+    # ----
     for (i in 1:100) {
-      if (abs(cess_new - (log(alpha)+cess_old)) < 0.01) {
+      if (abs(cess_new - (log(alpha)+cess_old)) < 0.001) {
         break
       }
 
       if (cess_new < (log(alpha)+cess_old)) {
         # ESS too small
-        gamma_new <- (gamma_new + gamma_old) / 2
+        search_u <- gamma_new
+        gamma_new <- (search_u + search_l) / 2
       } else {
         # ESS too large
-        gamma_new <- (gamma_new + 1) / 2
+        search_l <- gamma_new
+        gamma_new <- (search_u + search_l) / 2
         # Try gamma_new = 1 once
         if (i == 1) {
           weight_new <- (gamma_new - gamma_old) * log_likelihood
@@ -93,6 +102,10 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
       weight_new <- (gamma_new - gamma_old) * log_likelihood
       weight_new <- weight_new - logSumExp(weight_new)
       cess_new <- CESS_weight(weight_old, weight_new)
+
+      # test
+      trace_mat[, i+1] <- c(gamma_new, cess_new)
+      # ----
 
       if (gamma_new == 1) {break}
     }
@@ -113,7 +126,6 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     # Move
     for (n in 1:N) {
       theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
-      theta_new <- max(0, theta_new)
       stats_new <- sample_func(theta_new, M)
       sl_new <- dmvnorm(x=obs,
                         mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
