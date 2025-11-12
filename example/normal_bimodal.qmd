@@ -28,7 +28,7 @@ set.seed(100)
 ## Normal mixture example
 
 We set:
--   $\theta \sim N(0, 3)$,
+-   $\theta \sim N(0, 9)$,
 -   $y|\theta \sim \frac{1}{2}N(\theta, 1) + \frac{1}{2}N(-\theta, 1)$.
 Let the true parameter be $\theta = 5$
 
@@ -196,7 +196,7 @@ sample_func <- function(theta, M) {
               sigma=var(t(s_mat))))
 }
 
-alpha <- 0.99
+alpha <- 0.9
 N <- 1000
 theta_d <- 1
 q_sigma <- matrix(1, nrow=1, ncol=1)
@@ -205,12 +205,13 @@ q_sigma <- matrix(1, nrow=1, ncol=1)
 ```{r}
 #| echo: true
 theta_smc_c <- SL_SMC_CESS(M, alpha, N, theta_d, s_obs, prior_sampler,
-                           prior_func, sample_func, q_sigma, gamma_history=TRUE)
+                           prior_func, sample_func, q_sigma,
+                           theta_history=TRUE, gamma_history=TRUE)
 ```
 
 ```{r}
 #| echo: true
-theta_density <- density(theta_smc_c$theta[1, ])
+theta_density <- density(theta_smc_c$theta[1, , 7])
 
 plot(theta_density,
      main = "Density functions",
@@ -233,5 +234,13 @@ plot(1:gamma_n, exp(theta_smc_c$ess), type = "l",
      xlab = "Iteration",
      ylab = "ESS")
 par(mfrow = c(1, 1))
+```
+
+```{r}
+#| echo: true
+plot(1:gamma_n, exp(theta_smc_c$cess), type = "l",
+     ylim = c(0, exp(theta_smc_c$cess[1])),
+     xlab = "Iteration",
+     ylab = "CESS")
 ```
 
