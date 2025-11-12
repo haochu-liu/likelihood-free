@@ -20,7 +20,7 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
   if (theta_history) {
-    theta_history_mat <- matrix(NA, nrow=(iter_max*theta_d), ncol=N)
+    theta_history_array <- array(data = NA, dim = c(theta_d, N, iter_mat))
   }
   mu_mat <- matrix(NA, nrow=length(obs), ncol=N)
   sigma_array <- array(data = NA, dim = c(length(obs), length(obs), N))
@@ -42,6 +42,10 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     mu_mat[, n] <- sample_sta$mean
     sigma_array[, , n] <- sample_sta$sigma
   }
+  if (theta_history) {
+    theta_history_mat[, , iter] <- theta_mat
+  }
+  iter <- iter + 1
 
   while (gamma_old < 1) {
     # Log-likelihood for current parameters
@@ -126,7 +130,7 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
       ess_vec <- c(ess_vec, ess_new)
     }
     if (theta_history) {
-      theta_history_mat[(1+(iter-1)*theta_d):(iter*theta_d), ] <- theta_mat
+      theta_history_mat[, , iter] <- theta_mat
     }
     iter <- iter + 1
     if (iter >= iter_max) {
@@ -135,7 +139,7 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   }
 
   if (theta_history) {
-    result_list <- list(theta=theta_history_mat)
+    result_list <- list(theta=theta_history_array)
   } else {
     result_list <- list(theta=theta_mat)
   }
