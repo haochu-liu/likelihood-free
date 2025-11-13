@@ -244,3 +244,4 @@ plot(1:gamma_n, exp(theta_smc_c$cess), type = "l",
      ylab = "CESS")
 par(mfrow = c(1, 1))
 ```
+

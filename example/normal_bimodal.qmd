@@ -245,3 +245,100 @@ plot(1:gamma_n, exp(theta_smc_c$cess), type = "l",
 par(mfrow = c(1, 1))
 ```
 
+### Adaptive M?
+
+Fix $M = 20$, see how the variance of log-likelihood changes for $\theta \in [-10, 10]$.
+
+```{r}
+#| echo: true
+var_mat <- rep(NA, 401)
+theta_vec <- seq(-10, 10, length.out = 401)
+for (j in 1:401) {
+  theta <- theta_vec[j]
+  sl_vec <- rep(NA, 100)
+  for (k in 1:100) {
+    stats_M <- sample_func(theta, 20)
+    sl_vec[k] <- dmvnorm(x=obs,
+                         mean=stats_M$mean,
+                         sigma=stats_M$sigma,
+                         log=TRUE)
+  }
+  var_mat[j] <- var(sl_vec)
+}
+```
+
+```{r}
+#| echo: true
+plot(theta_vec, var_mat,
+     type = "l",
+     col = "darkblue",
+     xlab = "Theta",
+     ylab = "Var(log-likelihood)",
+     ylim = range(var_mat),
+     lwd = 2)
+```
+
+For each iteration in the SMC function. Randomly sample 20 $\theta$s and find the optimal $M$ values from candidates in $seq(5, 100, by=5)$.
+
+```{r}
+#| echo: true
+opt_M <- matrix(NA, nrow=20, ncol=gamma_n)
+M_seq <- seq(5, 100, by=5)
+for (i in 1:gamma_n) {
+  theta_vec <- sample(theta_smc_c$theta[1, , i], size=20, replace=FALSE)
+  for (j in 1:20) {
+    theta <- theta_vec[j]
+    var_vec <- rep(NA, length(M_seq))
+    
+    # Find var log-likelihood for different M
+    for (l in 1:length(M_seq)) {
+      M <- M_seq[l]
+      sl_vec <- rep(NA, 100)
+      for (k in 1:100) {
+      stats_M <- sample_func(theta, M)
+      sl_vec[k] <- dmvnorm(x=obs,
+                           mean=stats_M$mean,
+                           sigma=stats_M$sigma,
+                           log=TRUE)
+      }
+      var_vec[l] <- var(sl_vec)
+    }
+    
+    # Find the optimal M value
+    close_M <- which(var_vec <= 3)[1]
+    if (is.na(close_M)) {
+      opt_M[j, i] <- max(M_seq)
+    } else {
+      opt_M[j, i] <- close_M
+    }
+    print(paste0("Finish j = ", j))
+  }
+  print(paste0("Finish iteration ", i))
+}
+```
+
+```{r}
+#| echo: true
+plot(rep(1:gamma_n, each=20), as.vector(opt_M), pch = 4,
+     main = "Optimal M values for each iteration in SMC",
+     xlab = "Iteration",
+     ylab = "M")
+
+# df <- data.frame(
+#   Iteration = rep(1:gamma_n, each=20),
+#   Opt_M = NA)
+# for (i in 1:gamma_n) {
+#   r1 <- 1 + 20*(i-1)
+#   r2 <- 20*i
+#   df$Opt_M[r1:r2] <- opt_M[, i]
+# }
+# boxplot(Opt_M ~ Iteration,
+#         data = df,
+#         main = "Optimal M values for each iteration in SMC",
+#         xlab = "Iteration",
+#         ylab = "M",
+#         col = rainbow(6),
+#         border = "black")
+```
+
+
