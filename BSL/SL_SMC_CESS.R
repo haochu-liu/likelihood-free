@@ -26,7 +26,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   mu_mat <- matrix(NA, nrow=length(obs), ncol=N)
   sigma_array <- array(data = NA, dim = c(length(obs), length(obs), N))
   weight_old <- rep(-log(N), N)
-  ess_flat <- ESS_weight2(weight_old, weight_old)
+  ess_flat <- ESS_weight(weight_old)
   cess_old <- CESS_weight(weight_old, weight_old)
   gamma_old <- 0
   iter <- 1
@@ -100,7 +100,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
 
       if (gamma_new == 1) {break}
     }
-    ess_new <- ESS_weight2(weight_old, weight_new)
+    ess_new <- ESS_weight(weight_new)
     weight_old <- weight_new
 
     # Resample
