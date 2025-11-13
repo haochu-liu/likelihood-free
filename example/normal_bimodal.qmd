@@ -27,10 +27,7 @@ set.seed(100)
 
 ## Normal mixture example
 
-We set:
--   $\theta \sim N(0, 9)$,
--   $y|\theta \sim \frac{1}{2}N(\theta, 1) + \frac{1}{2}N(-\theta, 1)$.
-Let the true parameter be $\theta = 5$.
+We set: - $\theta \sim N(0, 9)$, - $y|\theta \sim \frac{1}{2}N(\theta, 1) + \frac{1}{2}N(-\theta, 1)$. Let the true parameter be $\theta = 5$.
 
 ```{r}
 #| echo: true
@@ -309,7 +306,7 @@ for (i in 1:gamma_n) {
     if (is.na(close_M)) {
       opt_M[j, i] <- max(M_seq)
     } else {
-      opt_M[j, i] <- close_M
+      opt_M[j, i] <- M_seq[close_M]
     }
     print(paste0("Finish j = ", j))
   }
@@ -340,5 +337,3 @@ plot(rep(1:gamma_n, each=20), as.vector(opt_M), pch = 4,
 #         col = rainbow(6),
 #         border = "black")
 ```
-
-
