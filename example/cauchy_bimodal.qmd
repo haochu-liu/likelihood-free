@@ -28,8 +28,11 @@ set.seed(100)
 ## Cauchy mixture example
 
 We set:
+
 -   $\theta \sim Cauchy(0, 1)$,
+
 -   $y|\theta \sim \frac{1}{2}Cauchy(\theta, 1) + \frac{1}{2}Cauchy(-\theta, 1)$.
+
 Let the true parameter be $\theta = 5$.
 
 ```{r}
@@ -244,4 +247,3 @@ plot(1:gamma_n, exp(theta_smc_c$cess), type = "l",
      ylab = "CESS")
 par(mfrow = c(1, 1))
 ```
-
