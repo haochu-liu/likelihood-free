@@ -27,7 +27,13 @@ set.seed(100)
 
 ## Normal mixture example
 
-We set: - $\theta \sim N(0, 9)$, - $y|\theta \sim \frac{1}{2}N(\theta, 1) + \frac{1}{2}N(-\theta, 1)$. Let the true parameter be $\theta = 5$.
+We set:
+
+-   $\theta \sim N(0, 9)$,
+
+-   $y|\theta \sim \frac{1}{2}N(\theta, 1) + \frac{1}{2}N(-\theta, 1)$.
+
+Let the true parameter be $\theta = 5$.
 
 ```{r}
 #| echo: true
@@ -255,7 +261,7 @@ for (j in 1:401) {
   sl_vec <- rep(NA, 100)
   for (k in 1:100) {
     stats_M <- sample_func(theta, 20)
-    sl_vec[k] <- dmvnorm(x=obs,
+    sl_vec[k] <- dmvnorm(x=s_obs,
                          mean=stats_M$mean,
                          sigma=stats_M$sigma,
                          log=TRUE)
@@ -293,7 +299,7 @@ for (i in 1:gamma_n) {
       sl_vec <- rep(NA, 100)
       for (k in 1:100) {
       stats_M <- sample_func(theta, M)
-      sl_vec[k] <- dmvnorm(x=obs,
+      sl_vec[k] <- dmvnorm(x=s_obs,
                            mean=stats_M$mean,
                            sigma=stats_M$sigma,
                            log=TRUE)
@@ -321,19 +327,14 @@ plot(rep(1:gamma_n, each=20), as.vector(opt_M), pch = 4,
      xlab = "Iteration",
      ylab = "M")
 
-# df <- data.frame(
-#   Iteration = rep(1:gamma_n, each=20),
-#   Opt_M = NA)
-# for (i in 1:gamma_n) {
-#   r1 <- 1 + 20*(i-1)
-#   r2 <- 20*i
-#   df$Opt_M[r1:r2] <- opt_M[, i]
-# }
-# boxplot(Opt_M ~ Iteration,
-#         data = df,
-#         main = "Optimal M values for each iteration in SMC",
-#         xlab = "Iteration",
-#         ylab = "M",
-#         col = rainbow(6),
-#         border = "black")
+df <- data.frame(
+  Iteration = rep(1:gamma_n, each=20),
+  Opt_M = as.vector(opt_M))
+boxplot(Opt_M ~ Iteration,
+        data = df,
+        main = "Optimal M values for each iteration in SMC",
+        xlab = "Iteration",
+        ylab = "M",
+        col = rainbow(6),
+        border = "black")
 ```
