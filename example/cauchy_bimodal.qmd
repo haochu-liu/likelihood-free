@@ -73,16 +73,25 @@ sample_mix_cauchy <- function(theta = 5, n = 20) {
   rcauchy(n, location = locs, scale = 1)
 }
 
-summary_stats <- function(y) {
-  n <- length(y)
-  mean_y <- mean(y)
-  sd_y <- sd(y)
-  mad_y <- mad(y) # median absolute deviation
-  skew_y <- moments::skewness(y) # skewness
-  kurt_y <- moments::kurtosis(y) - 3 # Pearson kurtosis
-  bc <- (skew_y^2 + 1) / (kurt_y + 3*(n-1)^2 / ((n-2)*(n-3))) # bimodality coefficient
+# summary_stats <- function(y) {
+#   n <- length(y)
+#   mean_y <- mean(y)
+#   sd_y <- sd(y)
+#   mad_y <- mad(y) # median absolute deviation
+#   skew_y <- moments::skewness(y) # skewness
+#   kurt_y <- moments::kurtosis(y) - 3 # Pearson kurtosis
+#   bc <- (skew_y^2 + 1) / (kurt_y + 3*(n-1)^2 / ((n-2)*(n-3))) # bimodality coefficient
+# 
+#   stats_vec <- c(mean_y, sd_y, mad_y, bc)
+#   return(stats_vec)
+# }
 
-  stats_vec <- c(mean_y, sd_y, mad_y, bc)
+summary_stats <- function(y) {
+  median_y <- median(y)
+  mad_y <- mad(y) # median absolute deviation
+  quantile_y <- quantile(y, probs = c(0.25, 0.75))
+  median_abs_y <- median(abs(y))
+  stats_vec <- c(median_y, mad_y, quantile_y[2] - quantile_y[1], median_abs_y)
   return(stats_vec)
 }
 ```
@@ -103,7 +112,7 @@ for (i in 1:100) {
 }
 
 stats_df <- as.data.frame(stats_mat)
-colnames(stats_df) <- c("mean", "sd", "MAD", "bc")
+colnames(stats_df) <- c("median", "MAD", "Qu - Ql", "median_abs")
 ggpairs(stats_df)
 ```
 
