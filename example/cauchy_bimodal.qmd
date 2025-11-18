@@ -161,7 +161,7 @@ for (j in 1:length(M_seq)) {
 }
 
 print(log_likelihood)
-M <- M_seq[4]
+M <- M_seq[3]
 ```
 
 ### BSL MCMC
