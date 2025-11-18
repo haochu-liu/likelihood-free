@@ -68,7 +68,6 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     gamma_new <- (search_u + search_l) / 2
     # Reweight
     incremental_weight <- (gamma_new - gamma_old) * log_likelihood
-    # incremental_weight <- incremental_weight - logSumExp(incremental_weight)
     cess_new <- CESS_weight(weight, incremental_weight)
     for (i in 1:100) {
       if (abs(cess_new - (log(alpha)+cess_flat)) < 0.001) {
@@ -86,7 +85,6 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
         # Try gamma_new = 1 once
         if (i == 1) {
           incremental_weight <- (gamma_new - gamma_old) * log_likelihood
-          # incremental_weight <- incremental_weight - logSumExp(incremental_weight)
           cess_new <- CESS_weight(weight, incremental_weight)
           if (cess_new >= (log(alpha)+cess_flat)) {
             gamma_new <- 1
@@ -96,7 +94,6 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
 
       # Reweight
       incremental_weight <- (gamma_new - gamma_old) * log_likelihood
-      # incremental_weight <- incremental_weight - logSumExp(incremental_weight)
       cess_new <- CESS_weight(weight, incremental_weight)
 
       if (gamma_new == 1) {break}
