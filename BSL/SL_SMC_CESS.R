@@ -25,15 +25,16 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   }
   mu_mat <- matrix(NA, nrow=length(obs), ncol=N)
   sigma_array <- array(data = NA, dim = c(length(obs), length(obs), N))
-  weight_old <- rep(-log(N), N)
-  ess_flat <- ESS_weight(weight_old)
-  cess_old <- CESS_weight(weight_old, weight_old)
+  weight <- rep(-log(N), N)
+  incremental_weight <- rep(log(1), N)
+  ess_flat <- ESS_weight2(weight, incremental_weight)
+  cess_flat <- CESS_weight(weight, incremental_weight)
   gamma_old <- 0
   iter <- 1
   if (gamma_history) {
     gamma_vec <- c(gamma_old)
     ess_vec <- c(ess_flat)
-    cess_vec <- c(cess_old)
+    cess_vec <- c(cess_flat)
   }
 
   # Initialization
@@ -66,15 +67,15 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     search_l <- gamma_old
     gamma_new <- (search_u + search_l) / 2
     # Reweight
-    weight_new <- (gamma_new - gamma_old) * log_likelihood
-    weight_new <- weight_new - logSumExp(weight_new)
-    cess_new <- CESS_weight(weight_old, weight_new)
+    incremental_weight <- (gamma_new - gamma_old) * log_likelihood
+    # incremental_weight <- incremental_weight - logSumExp(incremental_weight)
+    cess_new <- CESS_weight(weight, incremental_weight)
     for (i in 1:100) {
-      if (abs(cess_new - (log(alpha)+cess_old)) < 0.001) {
+      if (abs(cess_new - (log(alpha)+cess_flat)) < 0.001) {
         break
       }
 
-      if (cess_new < (log(alpha)+cess_old)) {
+      if (cess_new < (log(alpha)+cess_flat)) {
         # ESS too small
         search_u <- gamma_new
         gamma_new <- (search_u + search_l) / 2
@@ -84,34 +85,35 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
         gamma_new <- (search_u + search_l) / 2
         # Try gamma_new = 1 once
         if (i == 1) {
-          weight_new <- (gamma_new - gamma_old) * log_likelihood
-          weight_new <- weight_new - logSumExp(weight_new)
-          cess_new <- CESS_weight(weight_old, weight_new)
-          if (cess_new >= (log(alpha)+cess_old)) {
+          incremental_weight <- (gamma_new - gamma_old) * log_likelihood
+          # incremental_weight <- incremental_weight - logSumExp(incremental_weight)
+          cess_new <- CESS_weight(weight, incremental_weight)
+          if (cess_new >= (log(alpha)+cess_flat)) {
             gamma_new <- 1
           }
         }
       }
 
       # Reweight
-      weight_new <- (gamma_new - gamma_old) * log_likelihood
-      weight_new <- weight_new - logSumExp(weight_new)
-      cess_new <- CESS_weight(weight_old, weight_new)
+      incremental_weight <- (gamma_new - gamma_old) * log_likelihood
+      # incremental_weight <- incremental_weight - logSumExp(incremental_weight)
+      cess_new <- CESS_weight(weight, incremental_weight)
 
       if (gamma_new == 1) {break}
     }
-    ess_new <- ESS_weight(weight_new)
-    weight_old <- weight_new
+    ess_new <- ESS_weight2(weight, incremental_weight)
+    weight <- weight + incremental_weight
+    weight <- weight - logSumExp(weight)
 
     # Resample
     if (ess_new < (log(0.5)+ess_flat)) {
-      prob_vec <- exp(weight_old)
+      prob_vec <- exp(weight)
       resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
       theta_mat <- theta_mat[, resample_index, drop=FALSE]
       mu_mat <- mu_mat[, resample_index, drop=FALSE]
       log_likelihood <- log_likelihood[resample_index]
       sigma_array <- sigma_array[, , resample_index, drop=FALSE]
-      weight_old <- rep(-log(N), N)
+      weight <- rep(-log(N), N)
     }
 
     # Move
