@@ -92,7 +92,8 @@ Run `SL_MCMC` for a Markov chain with length $50000$.
 
 ```{r}
 #| echo: true
-theta_seq <- SL_MCMC(M, iter, obs, init_theta, prior_func, sample_func, 0.1,
+q_sigma <- matrix(0.1, nrow=1, ncol=1)
+theta_seq <- SL_MCMC(M, iter, obs, init_theta, prior_func, sample_func, q_sigma,
                      acc_rate=TRUE)
 ```
 
