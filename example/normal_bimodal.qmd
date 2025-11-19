@@ -35,34 +35,6 @@ We set:
 
 Let the true parameter be $\theta = 5$.
 
-```{r}
-#| echo: true
-x <- seq(-12, 12, length.out = 4000)
-
-prior <- dnorm(x, mean=0, sd=3)
-likelihood <- 0.5 * dnorm(x, mean=5, sd=1) +
-              0.5 * dnorm(x, mean=-5, sd=1)
-posterior_unnorm <- prior * likelihood
-posterior <- posterior_unnorm / sum(posterior_unnorm) /
-             (x[2] - x[1])
-
-plot(x, prior, type = "l", lwd = 2, col = "blue",
-     ylim = c(0, 0.5),
-     ylab = "Density",
-     xlab = "x",
-     main = "Density functions")
-lines(x, likelihood, col = "red", lwd = 2, lty = 2)
-lines(x, posterior, col = "darkgreen", lwd = 3, lty = 1)
-legend("topright",
-       legend = c("Prior",
-                  "Likelihood",
-                  "Posterior"),
-       col = c("blue", "red", "darkgreen"),
-       lwd = c(2, 2, 3),
-       lty = c(1, 2, 1),
-       bg = "white")
-```
-
 ### Sampling and summary statistics
 
 ```{r}
@@ -91,6 +63,64 @@ summary_stats <- function(y) {
 #| echo: true
 y_obs <- sample_mix_norm()
 s_obs <- summary_stats(y_obs)
+```
+
+```{r}
+#| echo: true
+x <- seq(-12, 12, length.out = 4000)
+prior <- dnorm(x, mean=0, sd=3)
+
+dnorm_mix <- function(y, theta) {
+  0.5 * dnorm(y, mean=theta, sd=1) + 0.5 * dnorm(y, mean=-theta, sd=1)
+}
+log_posterior <- function(theta, y) {
+  log_prior  <- dnorm(theta, mean=0, sd=3, log = TRUE)
+  log_like   <- sum(log(dnorm_mix(y, theta)))
+  log_prior + log_like
+}
+mh_sample <- function(y, n_iter = 50000, proposal_sd = 3) {
+  theta <- numeric(n_iter)
+  theta[1] <- 0
+  
+  log_post_curr = log_posterior(theta[1], y)
+  
+  for (i in 2:n_iter) {
+    theta_prop = rnorm(1, theta[i-1], proposal_sd)
+    
+    log_post_prop = log_posterior(theta_prop, y)
+    
+    log_alpha = log_post_prop - log_post_curr
+    
+    if (log(runif(1)) < log_alpha) {
+      theta[i] <- theta_prop
+      log_post_curr <- log_post_prop
+    } else {
+      theta[i] <- theta[i-1]
+    }
+  }
+  theta
+}
+
+set.seed(100)
+theta <- mh_sample(y_obs)
+exact_density <- density(theta[10000:50000])
+```
+
+```{r}
+#| echo: true
+plot(exact_density,
+     ylim = c(0, 1),
+     main = "Density functions",
+     xlab = "Theta",
+     ylab = "Density",
+     col = "black",
+     lwd = 2)
+lines(x, prior, col = "gray", lwd = 2, lty = 1)
+legend("topright",
+       c("pi(theta|y_obs)", "pi(theta)"),
+       col = c("black", "gray"),
+       lty = 1,
+       lwd = 2)
 ```
 
 ```{r}
@@ -171,12 +201,20 @@ plot(1:50000, theta_seq$theta[1, ], type = "l", xlab="Iterations", ylab="Theta")
 
 theta_density <- density(theta_seq$theta[1, 10000:iter])
 
-plot(theta_density,
-     main = "Density function",
+plot(exact_density,
+     ylim = c(0, 1),
+     main = "Density functions",
      xlab = "Theta",
      ylab = "Density",
      col = "black",
      lwd = 2)
+lines(theta_density, col = "blue", lwd = 2, lty = 4)
+lines(x, prior, col = "gray", lwd = 2, lty = 1)
+legend("topright",
+       c("pi(theta|y_obs)", "pi_BSL(theta|s_obs)", "pi(theta)"),
+       col = c("black", "blue", "gray"),
+       lty = c(1, 4, 1),
+       lwd = 2)
 ```
 
 ### BSL-SMC
