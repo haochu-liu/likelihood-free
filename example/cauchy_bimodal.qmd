@@ -112,8 +112,7 @@ mh_sample <- function(y, n_iter = 50000, proposal_sd = 3) {
 }
 
 set.seed(100)
-y <- y_obs
-theta <- mh_sample(y)
+theta <- mh_sample(y_obs)
 exact_density <- density(theta[10000:50000])
 ```
 
