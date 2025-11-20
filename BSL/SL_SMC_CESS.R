@@ -110,6 +110,10 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     ess_new <- ESS_weight2(weight, incremental_weight)
     weight <- weight + incremental_weight
     weight <- weight - logSumExp(weight)
+    if (AM) {
+      s_d <- 2.38^2 / theta_d
+      q_sigma <- s_d * cov.wt(t(theta_mat), wt=exp(weight))$cov
+    }
 
     # Resample
     if (ess_new < (log(0.5)+ess_flat)) {
@@ -125,10 +129,6 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     # Move
     if ((gamma_new != 1) | iter < iter_max) {
       # No move in the final iteration
-      if (AM) {
-        s_d <- 2.38^2 / theta_d
-        q_sigma <- s_d * cov.wt(t(theta_mat), wt=exp(weight))$cov
-      }
 
       for (n in 1:N) {
         theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))

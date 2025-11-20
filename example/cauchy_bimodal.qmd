@@ -258,8 +258,19 @@ q_sigma <- matrix(1, nrow=1, ncol=1)
 #| echo: true
 set.seed(100)
 theta_smc_c <- SL_SMC_CESS(M, alpha, N, theta_d, s_obs, prior_sampler,
-                           prior_func, sample_func, q_sigma,
-                           theta_history=TRUE, gamma_history=TRUE)
+                           prior_func, sample_func, q_sigma, AM=TRUE,
+                           theta_history=TRUE, gamma_history=TRUE,
+                           acc_history=TRUE)
+theta_smc_c$acc
+```
+
+```{r}
+# Why?
+var(sample(c(5, -5), size=1000, replace = TRUE))
+iter_weight <- theta_smc_c$weight[10, ]
+iter_mat <- theta_smc_c$theta[, , 9]
+iter_mat <- matrix(iter_mat, nrow=1, ncol=1000)
+cov.wt(t(iter_mat), wt=exp(iter_weight))$cov
 ```
 
 ```{r}
@@ -295,6 +306,29 @@ for (i in 6:gamma_n) {
      lwd = 2)
 }
 par(mfrow = c(1, 1))
+```
+
+```{r}
+#| echo: true
+theta_mh_density <- density(theta_seq$theta[1, 10000:iter])
+theta_smc_density <- density(theta_smc_c$theta[1, ,gamma_n], bw = 0.5,
+                             weights = exp(theta_smc_c$weight[gamma_n, ]))
+
+plot(exact_density,
+     ylim = c(0, 1),
+     main = "Density functions",
+     xlab = "Theta",
+     ylab = "Density",
+     col = "black",
+     lwd = 2)
+lines(theta_mh_density, col = "blue", lwd = 2, lty = 4)
+lines(theta_smc_density, col = "green", lwd = 2, lty = 4)
+lines(x, prior, col = "gray", lwd = 2, lty = 1)
+legend("topright",
+       c("Exact posterior", "BSL-MCMC posterior", "BSL-SMC posterior", "prior"),
+       col = c("black", "blue", "green", "gray"),
+       lty = c(1, 4, 4, 1),
+       lwd = 2)
 ```
 
 ```{r}
