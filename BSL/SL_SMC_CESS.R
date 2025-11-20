@@ -12,11 +12,12 @@
 #' @param prior_func A density function of prior (log density).
 #' @param sample_func A function which takes theta and M and return sample mean and variance.
 #' @param q_sigma A scale matrix for the Gaussian proposal.
+#' @param AM Default AM = TRUE, if FALSE, do not adapt the proposal variance for MCMC move.
 #' @param theta_history Default theta_history = FALSE, if TRUE, return all particles in history.
 #' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
 #' @return A vector of parameters from the BSL posterior.
 SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
-                        sample_func, q_sigma,
+                        sample_func, q_sigma, AM=TRUE,
                         theta_history=FALSE, gamma_history=FALSE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
