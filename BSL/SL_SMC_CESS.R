@@ -15,10 +15,12 @@
 #' @param AM Default AM = TRUE, if FALSE, do not adapt the proposal variance for MCMC move.
 #' @param theta_history Default theta_history = FALSE, if TRUE, return all particles in history.
 #' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
+#' @param acc_history Default acc_history = FALSE, if TRUE, return acceptance rates of MCMC.
 #' @return A vector of parameters from the BSL posterior.
 SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
                         sample_func, q_sigma, AM=TRUE,
-                        theta_history=FALSE, gamma_history=FALSE) {
+                        theta_history=FALSE, gamma_history=FALSE,
+                        acc_history=FALSE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
   if (theta_history) {
@@ -37,6 +39,10 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     gamma_vec <- c(gamma_old)
     ess_vec <- c(ess_flat)
     cess_vec <- c(cess_flat)
+  }
+  if (acc_history) {
+    acc_vec <- c()
+    acc_count <- 0
   }
 
   # Initialization
@@ -119,6 +125,11 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     # Move
     if ((gamma_new != 1) | iter < iter_max) {
       # No move in the final iteration
+      if (AM) {
+        s_d <- 2.38^2 / theta_d
+        q_sigma <- s_d * cov.wt(t(theta_mat), wt=exp(weight))$cov
+      }
+
       for (n in 1:N) {
         theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
         stats_new <- sample_func(theta_new, M)
@@ -135,6 +146,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
           theta_mat[, n] <- theta_new
           mu_mat[, n] <- stats_new$mean
           sigma_array[, , n] <- stats_new$sigma
+          if (acc_history) {acc_count <- acc_count + 1}
         }
       }
     }
@@ -150,6 +162,10 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     if (theta_history) {
       theta_history_array[, , iter] <- theta_mat
       weight_history_mat[iter, ] <- weight
+    }
+    if (acc_history) {
+      acc_vec <- c(acc_vec, acc_count/N)
+      acc_count <- 0
     }
     if (iter >= iter_max) {
       break
@@ -169,6 +185,10 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     result_list$gamma <- gamma_vec
     result_list$ess <- ess_vec
     result_list$cess <- cess_vec
+  }
+
+  if (acc_history) {
+    result_list$acc <- acc_vec
   }
 
   return(result_list)
