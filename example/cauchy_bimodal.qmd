@@ -265,9 +265,27 @@ theta_smc_c <- SL_SMC_CESS(M, alpha, N, theta_d, s_obs, prior_sampler,
 ```{r}
 #| echo: true
 gamma_n <- length(theta_smc_c$gamma)
-par(mfrow = c(gamma_n, 1), mar = c(2, 4, 2, 1))
-for (i in 1:gamma_n) {
-  theta_density <- density(theta_smc_c$theta[1, ,i])
+par(mfrow = c(5, 1), mar = c(2, 4, 2, 1))
+for (i in 1:5) {
+  theta_density <- density(theta_smc_c$theta[1, ,i], bw = 0.5,
+                           weights = exp(theta_smc_c$weight[i, ]))
+  plot(theta_density,
+     main = paste0("Iteration ", i),
+     xlab = "Theta",
+     ylab = "Density",
+     xlim = c(-20, 20),
+     col = "black",
+     lwd = 2)
+}
+par(mfrow = c(1, 1))
+```
+
+```{r}
+#| echo: true
+par(mfrow = c(6, 1), mar = c(2, 4, 2, 1))
+for (i in 6:gamma_n) {
+  theta_density <- density(theta_smc_c$theta[1, ,i], bw = 0.5,
+                           weights = exp(theta_smc_c$weight[i, ]))
   plot(theta_density,
      main = paste0("Iteration ", i),
      xlab = "Theta",
