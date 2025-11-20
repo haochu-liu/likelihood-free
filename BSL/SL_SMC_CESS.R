@@ -22,6 +22,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   iter_max <- 50
   if (theta_history) {
     theta_history_array <- array(data = NA, dim = c(theta_d, N, iter_max))
+    weight_history_mat <- matrix(NA, nrow = iter_max, ncol = N)
   }
   mu_mat <- matrix(NA, nrow=length(obs), ncol=N)
   sigma_array <- array(data = NA, dim = c(length(obs), length(obs), N))
@@ -48,6 +49,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   }
   if (theta_history) {
     theta_history_array[, , iter] <- theta_mat
+    weight_history_mat[iter, ] <- weight
   }
   iter <- iter + 1
 
@@ -114,22 +116,25 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     }
 
     # Move
-    for (n in 1:N) {
-      theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
-      stats_new <- sample_func(theta_new, M)
-      sl_new <- dmvnorm(x=obs,
-                        mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
+    if ((gamma_new != 1) | iter < iter_max) {
+      # No move in the final iteration
+      for (n in 1:N) {
+        theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
+        stats_new <- sample_func(theta_new, M)
+        sl_new <- dmvnorm(x=obs,
+                          mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
 
 
-      log_alpha <- sl_new + prior_func(theta_new) -
-        log_likelihood[n] - prior_func(theta_mat[, n] )
-      log_alpha <- min(0, log_alpha)
-      log_u <- log(runif(1))
+        log_alpha <- sl_new + prior_func(theta_new) -
+          log_likelihood[n] - prior_func(theta_mat[, n] )
+        log_alpha <- min(0, log_alpha)
+        log_u <- log(runif(1))
 
-      if (log_u < log_alpha) {
-        theta_mat[, n] <- theta_new
-        mu_mat[, n] <- stats_new$mean
-        sigma_array[, , n] <- stats_new$sigma
+        if (log_u < log_alpha) {
+          theta_mat[, n] <- theta_new
+          mu_mat[, n] <- stats_new$mean
+          sigma_array[, , n] <- stats_new$sigma
+        }
       }
     }
 
@@ -143,17 +148,20 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     }
     if (theta_history) {
       theta_history_array[, , iter] <- theta_mat
+      weight_history_mat[iter, ] <- weight
     }
-    iter <- iter + 1
     if (iter >= iter_max) {
       break
     }
+    iter <- iter + 1
   }
 
   if (theta_history) {
     result_list <- list(theta=theta_history_array)
+    result_list$weight <- weight_history_mat
   } else {
     result_list <- list(theta=theta_mat)
+    result_list$weight <- weight
   }
 
   if (gamma_history) {
