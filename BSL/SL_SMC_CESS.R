@@ -115,7 +115,7 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
       q_sigma <- s_d * cov.wt(t(theta_mat), wt=exp(weight))$cov
     }
 
-    if ((gamma_new != 1) | iter < iter_max) {
+    if ((gamma_new != 1) & iter < iter_max) {
       # No resample and move in the final iteration
 
       # Resample
