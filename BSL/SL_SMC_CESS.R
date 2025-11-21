@@ -115,21 +115,21 @@ SL_SMC_CESS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
       q_sigma <- s_d * cov.wt(t(theta_mat), wt=exp(weight))$cov
     }
 
-    # Resample
-    if (ess_new < (log(0.5)+ess_flat)) {
-      prob_vec <- exp(weight)
-      resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
-      theta_mat <- theta_mat[, resample_index, drop=FALSE]
-      mu_mat <- mu_mat[, resample_index, drop=FALSE]
-      log_likelihood <- log_likelihood[resample_index]
-      sigma_array <- sigma_array[, , resample_index, drop=FALSE]
-      weight <- rep(-log(N), N)
-    }
-
-    # Move
     if ((gamma_new != 1) | iter < iter_max) {
-      # No move in the final iteration
+      # No resample and move in the final iteration
 
+      # Resample
+      if (ess_new < (log(0.5)+ess_flat)) {
+        prob_vec <- exp(weight)
+        resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
+        theta_mat <- theta_mat[, resample_index, drop=FALSE]
+        mu_mat <- mu_mat[, resample_index, drop=FALSE]
+        log_likelihood <- log_likelihood[resample_index]
+        sigma_array <- sigma_array[, , resample_index, drop=FALSE]
+        weight <- rep(-log(N), N)
+      }
+
+      # Move
       for (n in 1:N) {
         theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
         stats_new <- sample_func(theta_new, M)
