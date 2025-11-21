@@ -293,7 +293,7 @@ par(mfrow = c(1, 1))
 
 ```{r}
 #| echo: true
-par(mfrow = c(6, 1), mar = c(2, 4, 2, 1))
+par(mfrow = c(5, 1), mar = c(2, 4, 2, 1))
 for (i in 6:gamma_n) {
   theta_density <- density(theta_smc_c$theta[1, ,i], bw = 0.5,
                            weights = exp(theta_smc_c$weight[i, ]))
