@@ -64,7 +64,6 @@ SL_IBIS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   }
   iter <- iter + 1
 
-
   while (gamma_old < 1) {
     # Binary search 100 times
     search_u <- 1
