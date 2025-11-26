@@ -52,6 +52,7 @@ SL_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
   }
 
   # Initialization
+  log_likelihood <- rep(NA, N)
   for (n in 1:N) {
     theta_n <- prior_sampler()
     sample_sta <- sample_func(theta_n, M)
@@ -59,6 +60,10 @@ SL_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
     theta_mat[, n] <- theta_n
     mu_mat[, n] <- sample_sta$mean
     sigma_array[, , n] <- sample_sta$sigma
+    log_likelihood[n] <- dmvnorm(x=obs,
+                                 mean=mu_mat[, n],
+                                 sigma=as.matrix(sigma_array[, , n]),
+                                 log=TRUE)
   }
   if (theta_history) {
     theta_history_array[, , iter] <- theta_mat
@@ -67,15 +72,6 @@ SL_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
   iter <- iter + 1
 
   while (gamma_old < 1) {
-    # Log-likelihood for current parameters
-    log_likelihood <- rep(NA, N)
-    for (n in 1:N) {
-      log_likelihood[n] <- dmvnorm(x=obs,
-                                   mean=mu_mat[, n],
-                                   sigma=as.matrix(sigma_array[, , n]),
-                                   log=TRUE)
-    }
-
     # Binary search 100 times
     search_u <- 1
     search_l <- gamma_old
@@ -137,48 +133,35 @@ SL_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
         # Set up the starting sample
         theta_old <- theta_mat_sample[, n]
         sl_old <- log_likelihood_sample[n]
-        theta_mat[, n] <- theta_new
-        log_likelihood[]
-        mu_mat[, n] <- stats_new$mean
-        sigma_array[, , n] <- stats_new$sigma
+        theta_mat[, 1+(n-1)*P] <- theta_old
+        log_likelihood[1+(n-1)*P] <- sl_old
+        mu_mat[, 1+(n-1)*P] <- mu_mat_sample[, n]
+        sigma_array[, , 1+(n-1)*P] <- sigma_array_sample[, , n]
         for (p in 2:P) {
-          theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
+          theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=q_sigma))
           stats_new <- sample_func(theta_new, M)
           sl_new <- dmvnorm(x=obs,
                             mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
 
-
           log_alpha <- sl_new + prior_func(theta_new) -
-            log_likelihood[n] - prior_func(theta_mat[, n] )
+            sl_old - prior_func(theta_mat[, n])
           log_alpha <- min(0, log_alpha)
           log_u <- log(runif(1))
 
           if (log_u < log_alpha) {
-            theta_mat[, n] <- theta_new
-            mu_mat[, n] <- stats_new$mean
-            sigma_array[, , n] <- stats_new$sigma
+            theta_old <- theta_new
+            sl_old <- sl_new
+            theta_mat[, p+(n-1)*P] <- theta_old
+            log_likelihood[p+(n-1)*P] <- sl_old
+            mu_mat[, p+(n-1)*P] <- stats_new$mean
+            sigma_array[, , p+(n-1)*P] <- stats_new$sigma
             if (acc_history) {acc_count <- acc_count + 1}
+          } else {
+            theta_mat[, p+(n-1)*P] <- theta_old
+            log_likelihood[p+(n-1)*P] <- sl_old
+            mu_mat[, p+(n-1)*P] <- mu_mat[, p-1+(n-1)*P]
+            sigma_array[, , p+(n-1)*P] <- sigma_array[, , p-1+(n-1)*P]
           }
-        }
-      }
-
-      for (n in 1:N) {
-        theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
-        stats_new <- sample_func(theta_new, M)
-        sl_new <- dmvnorm(x=obs,
-                          mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
-
-
-        log_alpha <- sl_new + prior_func(theta_new) -
-          log_likelihood[n] - prior_func(theta_mat[, n] )
-        log_alpha <- min(0, log_alpha)
-        log_u <- log(runif(1))
-
-        if (log_u < log_alpha) {
-          theta_mat[, n] <- theta_new
-          mu_mat[, n] <- stats_new$mean
-          sigma_array[, , n] <- stats_new$sigma
-          if (acc_history) {acc_count <- acc_count + 1}
         }
       }
     }
