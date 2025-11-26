@@ -1,7 +1,7 @@
 #' Synthetic Likelihood waste-free SMC
 #'
 #' Apply waste-free sequential Monte Carlo (WF-SMC) algorithm for BSL posterior target.
-#' Use CESS to measure the discrepancy between distributions.
+#' Resampling at every iteration.
 #'
 #' @param M Number of new data points drawn in each iteration.
 #' @param alpha Number to control the effective sample size in reweight.
@@ -18,8 +18,8 @@
 #' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
 #' @param acc_history Default acc_history = FALSE, if TRUE, return acceptance rates of MCMC.
 #' @return A vector of parameters from the BSL posterior.
-SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
-                   sample_func, q_sigma, AM=TRUE,
+SL_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
+                   prior_func, sample_func, q_sigma, AM=TRUE,
                    theta_history=FALSE, gamma_history=FALSE,
                    acc_history=FALSE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
@@ -60,7 +60,6 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     weight_history_mat[iter, ] <- weight
   }
   iter <- iter + 1
-
 
   while (gamma_old < 1) {
     # Log-likelihood for current parameters
@@ -120,15 +119,13 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
       # No resample and move in the final iteration
 
       # Resample
-      if (ess_new < (log(0.5)+ess_flat)) {
-        prob_vec <- exp(weight)
-        resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
-        theta_mat <- theta_mat[, resample_index, drop=FALSE]
-        mu_mat <- mu_mat[, resample_index, drop=FALSE]
-        log_likelihood <- log_likelihood[resample_index]
-        sigma_array <- sigma_array[, , resample_index, drop=FALSE]
-        weight <- rep(-log(N), N)
-      }
+      prob_vec <- exp(weight)
+      resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
+      theta_mat <- theta_mat[, resample_index, drop=FALSE]
+      mu_mat <- mu_mat[, resample_index, drop=FALSE]
+      log_likelihood <- log_likelihood[resample_index]
+      sigma_array <- sigma_array[, , resample_index, drop=FALSE]
+      weight <- rep(-log(N), N)
 
       # Move
       for (n in 1:N) {
