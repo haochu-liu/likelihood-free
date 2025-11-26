@@ -134,7 +134,14 @@ SL_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
 
       # Move
       for (n in 1:N_sample) {
-        for (p in 1:P) {
+        # Set up the starting sample
+        theta_old <- theta_mat_sample[, n]
+        sl_old <- log_likelihood_sample[n]
+        theta_mat[, n] <- theta_new
+        log_likelihood[]
+        mu_mat[, n] <- stats_new$mean
+        sigma_array[, , n] <- stats_new$sigma
+        for (p in 2:P) {
           theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
           stats_new <- sample_func(theta_new, M)
           sl_new <- dmvnorm(x=obs,

@@ -44,6 +44,7 @@ SL_SMC_resample <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func
   }
 
   # Initialization
+  log_likelihood <- rep(NA, N)
   for (n in 1:N) {
     theta_n <- prior_sampler()
     sample_sta <- sample_func(theta_n, M)
@@ -51,6 +52,10 @@ SL_SMC_resample <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func
     theta_mat[, n] <- theta_n
     mu_mat[, n] <- sample_sta$mean
     sigma_array[, , n] <- sample_sta$sigma
+    log_likelihood[n] <- dmvnorm(x=obs,
+                                 mean=mu_mat[, n],
+                                 sigma=as.matrix(sigma_array[, , n]),
+                                 log=TRUE)
   }
   if (theta_history) {
     theta_history_array[, , iter] <- theta_mat
@@ -59,15 +64,6 @@ SL_SMC_resample <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func
   iter <- iter + 1
 
   while (gamma_old < 1) {
-    # Log-likelihood for current parameters
-    log_likelihood <- rep(NA, N)
-    for (n in 1:N) {
-      log_likelihood[n] <- dmvnorm(x=obs,
-                                   mean=mu_mat[, n],
-                                   sigma=as.matrix(sigma_array[, , n]),
-                                   log=TRUE)
-    }
-
     # Binary search 100 times
     search_u <- 1
     search_l <- gamma_old
@@ -114,7 +110,6 @@ SL_SMC_resample <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func
 
     if ((gamma_new != 1) & iter < iter_max) {
       # No resample and move in the final iteration
-
       # Resample
       prob_vec <- exp(weight)
       resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
@@ -141,6 +136,7 @@ SL_SMC_resample <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func
           theta_mat[, n] <- theta_new
           mu_mat[, n] <- stats_new$mean
           sigma_array[, , n] <- stats_new$sigma
+          log_likelihood[n] <- sl_new
           if (acc_history) {acc_count <- acc_count + 1}
         }
       }
