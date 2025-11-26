@@ -26,8 +26,6 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     theta_history_array <- array(data = NA, dim = c(theta_d, N, iter_max))
     weight_history_mat <- matrix(NA, nrow = iter_max, ncol = N)
   }
-  mu_mat <- matrix(NA, nrow=length(obs), ncol=N)
-  sigma_array <- array(data = NA, dim = c(length(obs), length(obs), N))
   weight <- rep(-log(N), N)
   incremental_weight <- rep(log(1), N)
   ess_flat <- ESS_weight2(weight, incremental_weight)
@@ -51,11 +49,9 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     sample_sta <- sample_func(theta_n, M)
 
     theta_mat[, n] <- theta_n
-    mu_mat[, n] <- sample_sta$mean
-    sigma_array[, , n] <- sample_sta$sigma
     log_likelihood[n] <- dmvnorm(x=obs,
-                                 mean=mu_mat[, n],
-                                 sigma=as.matrix(sigma_array[, , n]),
+                                 mean=sample_sta$mean,
+                                 sigma=sample_sta$sigma,
                                  log=TRUE)
   }
   if (theta_history) {
@@ -116,9 +112,7 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
         prob_vec <- exp(weight)
         resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
         theta_mat <- theta_mat[, resample_index, drop=FALSE]
-        mu_mat <- mu_mat[, resample_index, drop=FALSE]
         log_likelihood <- log_likelihood[resample_index]
-        sigma_array <- sigma_array[, , resample_index, drop=FALSE]
         weight <- rep(-log(N), N)
       }
 
@@ -136,8 +130,6 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
 
         if (log_u < log_alpha) {
           theta_mat[, n] <- theta_new
-          mu_mat[, n] <- stats_new$mean
-          sigma_array[, , n] <- stats_new$sigma
           log_likelihood[n] <- sl_new
           if (acc_history) {acc_count <- acc_count + 1}
         }

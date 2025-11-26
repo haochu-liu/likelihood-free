@@ -1,4 +1,4 @@
-theta_seq <- theta_wf_ibis
+theta_seq <- theta_smc
 par(mfrow = c(5, 1), mar = c(2, 4, 2, 1))
 for (i in 1:5) {
   theta_density <- density(theta_seq$theta[1, ,i], bw = 0.5,

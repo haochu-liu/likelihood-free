@@ -129,6 +129,8 @@ SL_WF_SMC.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
       weight <- rep(-log(N), N)
 
       # Move
+
+
       for (n in 1:N_sample) {
         # Set up the starting sample
         theta_old <- theta_mat_sample[, n]
