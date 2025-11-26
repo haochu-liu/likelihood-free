@@ -129,6 +129,7 @@ SL_WF_SMC.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
       weight <- rep(-log(N), N)
 
       # Move
+      # try future.apply
 
 
       for (n in 1:N_sample) {
