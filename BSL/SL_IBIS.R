@@ -66,7 +66,6 @@ SL_IBIS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
 
 
   while (gamma_old < 1) {
-    # Log-likelihood for current parameters
     # Binary search 100 times
     search_u <- 1
     search_l <- gamma_old
@@ -130,9 +129,8 @@ SL_IBIS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
           sl_new <- dmvnorm(x=obs,
                             mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
 
-
           log_alpha <- sl_new + prior_func(theta_new) -
-            log_likelihood[n] - prior_func(theta_mat[, n] )
+            log_likelihood[n] - prior_func(theta_mat[, n])
           log_alpha <- min(0, log_alpha)
           log_u <- log(runif(1))
 

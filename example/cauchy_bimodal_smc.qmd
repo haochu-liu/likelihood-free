@@ -253,7 +253,7 @@ plot(1:gamma_n, exp(theta_ibis$cess), type = "l",
 par(mfrow = c(1, 1))
 ```
 
-
+## Waste-free SMC
 
 
 
