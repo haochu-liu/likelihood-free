@@ -28,6 +28,7 @@ SL_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
     theta_history_array <- array(data = NA, dim = c(theta_d, N, iter_max))
     weight_history_mat <- matrix(NA, nrow = iter_max, ncol = N)
   }
+  # Store mu and sigma for particles
   mu_mat <- matrix(NA, nrow=length(obs), ncol=N)
   sigma_array <- array(data = NA, dim = c(length(obs), length(obs), N))
   weight <- rep(-log(N), N)
@@ -36,6 +37,10 @@ SL_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
   cess_flat <- CESS_weight(weight, incremental_weight)
   gamma_old <- 0
   iter <- 1
+  P <- N / N_sample
+  if (P != as.integer(P)) {
+    cli::cli_abort("N / N_sample must be an integer")
+  }
   if (gamma_history) {
     gamma_vec <- c(gamma_old)
     ess_vec <- c(ess_flat)
@@ -120,14 +125,36 @@ SL_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
 
       # Resample
       prob_vec <- exp(weight)
-      resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
-      theta_mat <- theta_mat[, resample_index, drop=FALSE]
-      mu_mat <- mu_mat[, resample_index, drop=FALSE]
-      log_likelihood <- log_likelihood[resample_index]
-      sigma_array <- sigma_array[, , resample_index, drop=FALSE]
+      resample_index <- sample(1:N, size=N_sample, replace=TRUE, prob=prob_vec)
+      theta_mat_sample <- theta_mat[, resample_index, drop=FALSE]
+      mu_mat_sample <- mu_mat[, resample_index, drop=FALSE]
+      log_likelihood_sample <- log_likelihood[resample_index]
+      sigma_array_sample <- sigma_array[, , resample_index, drop=FALSE]
       weight <- rep(-log(N), N)
 
       # Move
+      for (n in 1:N_sample) {
+        for (p in 1:P) {
+          theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
+          stats_new <- sample_func(theta_new, M)
+          sl_new <- dmvnorm(x=obs,
+                            mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
+
+
+          log_alpha <- sl_new + prior_func(theta_new) -
+            log_likelihood[n] - prior_func(theta_mat[, n] )
+          log_alpha <- min(0, log_alpha)
+          log_u <- log(runif(1))
+
+          if (log_u < log_alpha) {
+            theta_mat[, n] <- theta_new
+            mu_mat[, n] <- stats_new$mean
+            sigma_array[, , n] <- stats_new$sigma
+            if (acc_history) {acc_count <- acc_count + 1}
+          }
+        }
+      }
+
       for (n in 1:N) {
         theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
         stats_new <- sample_func(theta_new, M)
