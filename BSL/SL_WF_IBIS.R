@@ -17,10 +17,10 @@
 #' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
 #' @param acc_history Default acc_history = FALSE, if TRUE, return acceptance rates of MCMC.
 #' @return A vector of parameters from the BSL posterior.
-SL_IBIS <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
-                    prior_func, sample_func, q_sigma, AM=TRUE,
-                    theta_history=FALSE, gamma_history=FALSE,
-                    acc_history=FALSE) {
+SL_WF_IBIS <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
+                       prior_func, sample_func, q_sigma, AM=TRUE,
+                       theta_history=FALSE, gamma_history=FALSE,
+                       acc_history=FALSE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
   if (theta_history) {
