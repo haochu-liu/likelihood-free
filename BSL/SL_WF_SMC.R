@@ -1,24 +1,27 @@
-#' Synthetic Likelihood SMC (resampling every iteration)
+#' Synthetic Likelihood waste-free SMC
 #'
-#' Apply sequential Monte Carlo (SMC) algorithm for BSL posterior target.
-#' Resampling at every iteration.
+#' Apply waste-free sequential Monte Carlo (WF-SMC) algorithm for BSL posterior target.
+#' Use CESS to measure the discrepancy between distributions.
 #'
 #' @param M Number of new data points drawn in each iteration.
 #' @param alpha Number to control the effective sample size in reweight.
 #' @param N Number of particles for SMC.
+#' @param N_sample Number of resampled particles in SMC.
 #' @param theta_d Dimension of parameter.
 #' @param obs A vector of the observed statistics.
 #' @param prior_sampler A function to draw samples form prior.
 #' @param prior_func A density function of prior (log density).
 #' @param sample_func A function which takes theta and M and return sample mean and variance.
 #' @param q_sigma A scale matrix for the Gaussian proposal.
+#' @param AM Default AM = TRUE, if FALSE, do not adapt the proposal variance for MCMC move.
 #' @param theta_history Default theta_history = FALSE, if TRUE, return all particles in history.
 #' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
+#' @param acc_history Default acc_history = FALSE, if TRUE, return acceptance rates of MCMC.
 #' @return A vector of parameters from the BSL posterior.
-SL_SMC_resample <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
-                            sample_func, q_sigma, AM=TRUE,
-                            theta_history=FALSE, gamma_history=FALSE,
-                            acc_history=FALSE) {
+SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
+                   sample_func, q_sigma, AM=TRUE,
+                   theta_history=FALSE, gamma_history=FALSE,
+                   acc_history=FALSE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
   if (theta_history) {
@@ -117,13 +120,15 @@ SL_SMC_resample <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func
       # No resample and move in the final iteration
 
       # Resample
-      prob_vec <- exp(weight)
-      resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
-      theta_mat <- theta_mat[, resample_index, drop=FALSE]
-      mu_mat <- mu_mat[, resample_index, drop=FALSE]
-      log_likelihood <- log_likelihood[resample_index]
-      sigma_array <- sigma_array[, , resample_index, drop=FALSE]
-      weight <- rep(-log(N), N)
+      if (ess_new < (log(0.5)+ess_flat)) {
+        prob_vec <- exp(weight)
+        resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
+        theta_mat <- theta_mat[, resample_index, drop=FALSE]
+        mu_mat <- mu_mat[, resample_index, drop=FALSE]
+        log_likelihood <- log_likelihood[resample_index]
+        sigma_array <- sigma_array[, , resample_index, drop=FALSE]
+        weight <- rep(-log(N), N)
+      }
 
       # Move
       for (n in 1:N) {
