@@ -58,7 +58,6 @@ SL_SMC_resample <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func
   }
   iter <- iter + 1
 
-
   while (gamma_old < 1) {
     # Log-likelihood for current parameters
     log_likelihood <- rep(NA, N)

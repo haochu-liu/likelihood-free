@@ -1,6 +1,6 @@
-#' Synthetic Likelihood SMC
+#' Synthetic Likelihood IBIS
 #'
-#' Apply sequential Monte Carlo (SMC) algorithm for BSL posterior target.
+#' Apply iterated batch importance sampling (IBIS) algorithm for BSL posterior target.
 #'
 #' @param M Number of new data points drawn in each iteration.
 #' @param alpha Number to control the effective sample size in reweight.
@@ -16,10 +16,10 @@
 #' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
 #' @param acc_history Default acc_history = FALSE, if TRUE, return acceptance rates of MCMC.
 #' @return A vector of parameters from the BSL posterior.
-SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
-                   sample_func, q_sigma, AM=TRUE,
-                   theta_history=FALSE, gamma_history=FALSE,
-                   acc_history=FALSE) {
+SL_IBIS <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
+                    sample_func, q_sigma, AM=TRUE,
+                    theta_history=FALSE, gamma_history=FALSE,
+                    acc_history=FALSE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
   if (theta_history) {
@@ -58,6 +58,7 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     weight_history_mat[iter, ] <- weight
   }
   iter <- iter + 1
+
 
   while (gamma_old < 1) {
     # Log-likelihood for current parameters
@@ -116,8 +117,8 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
     if ((gamma_new != 1) & iter < iter_max) {
       # No resample and move in the final iteration
 
-      # Resample
       if (ess_new < (log(0.5)+ess_flat)) {
+        # Resample
         prob_vec <- exp(weight)
         resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
         theta_mat <- theta_mat[, resample_index, drop=FALSE]
@@ -125,26 +126,26 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
         log_likelihood <- log_likelihood[resample_index]
         sigma_array <- sigma_array[, , resample_index, drop=FALSE]
         weight <- rep(-log(N), N)
-      }
 
-      # Move
-      for (n in 1:N) {
-        theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
-        stats_new <- sample_func(theta_new, M)
-        sl_new <- dmvnorm(x=obs,
-                          mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
+        # Move
+        for (n in 1:N) {
+          theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
+          stats_new <- sample_func(theta_new, M)
+          sl_new <- dmvnorm(x=obs,
+                            mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
 
 
-        log_alpha <- sl_new + prior_func(theta_new) -
-          log_likelihood[n] - prior_func(theta_mat[, n] )
-        log_alpha <- min(0, log_alpha)
-        log_u <- log(runif(1))
+          log_alpha <- sl_new + prior_func(theta_new) -
+            log_likelihood[n] - prior_func(theta_mat[, n] )
+          log_alpha <- min(0, log_alpha)
+          log_u <- log(runif(1))
 
-        if (log_u < log_alpha) {
-          theta_mat[, n] <- theta_new
-          mu_mat[, n] <- stats_new$mean
-          sigma_array[, , n] <- stats_new$sigma
-          if (acc_history) {acc_count <- acc_count + 1}
+          if (log_u < log_alpha) {
+            theta_mat[, n] <- theta_new
+            mu_mat[, n] <- stats_new$mean
+            sigma_array[, , n] <- stats_new$sigma
+            if (acc_history) {acc_count <- acc_count + 1}
+          }
         }
       }
     }
