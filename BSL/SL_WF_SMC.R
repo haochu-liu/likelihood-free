@@ -18,7 +18,7 @@
 #' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
 #' @param acc_history Default acc_history = FALSE, if TRUE, return acceptance rates of MCMC.
 #' @return A vector of parameters from the BSL posterior.
-SL_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
+SL_WF_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
                    prior_func, sample_func, q_sigma, AM=TRUE,
                    theta_history=FALSE, gamma_history=FALSE,
                    acc_history=FALSE) {
@@ -118,7 +118,6 @@ SL_SMC <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
 
     if ((gamma_new != 1) & iter < iter_max) {
       # No resample and move in the final iteration
-
       # Resample
       prob_vec <- exp(weight)
       resample_index <- sample(1:N, size=N_sample, replace=TRUE, prob=prob_vec)
