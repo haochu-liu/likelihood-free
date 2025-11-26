@@ -1,7 +1,6 @@
-#' Synthetic Likelihood SMC (with CESS)
+#' Synthetic Likelihood SMC
 #'
-#' Apply sequential Monte Carlo (SMC) algorithm for BSL posterior as the target distribution.
-#' Use CESS rather than ESS to measure the discrepancy between distributions.
+#' Apply sequential Monte Carlo (SMC) algorithm for BSL posterior target.
 #'
 #' @param M Number of new data points drawn in each iteration.
 #' @param alpha Number to control the effective sample size in reweight.
