@@ -58,34 +58,34 @@ theta_d <- 1
 q_sigma <- matrix(1, nrow=1, ncol=1)
 plan(multisession, workers = N_sample)
 
-df1 <- data.frame(type=rep(c("SMC", "SMC(R)", "IBIS"), each=20),
-                  move=rep("std", 60),
-                  run=rep("sequential", 60),
-                  time=rep(NA, 60),
-                  QU=rep(NA, 60),
-                  QL=rep(NA, 60),
-                  E=rep(NA, 60))
+df1 <- data.frame(type=rep(c("SMC", "SMC(R)", "IBIS"), each=50),
+                  move=rep("std", 150),
+                  run=rep("sequential", 150),
+                  time=rep(NA, 150),
+                  QU=rep(NA, 150),
+                  QL=rep(NA, 150),
+                  E=rep(NA, 150))
 
-df2 <- data.frame(type=rep(c("SMC(R)", "IBIS"), each=20),
-                  move=rep("waste-free", 40),
-                  run=rep("sequential", 40),
-                  time=rep(NA, 40),
-                  QU=rep(NA, 40),
-                  QL=rep(NA, 40),
-                  E=rep(NA, 40))
+df2 <- data.frame(type=rep(c("SMC(R)", "IBIS"), each=50),
+                  move=rep("waste-free", 100),
+                  run=rep("sequential", 100),
+                  time=rep(NA, 100),
+                  QU=rep(NA, 100),
+                  QL=rep(NA, 100),
+                  E=rep(NA, 100))
 
-df3 <- data.frame(type=rep(c("SMC(R)", "IBIS"), each=20),
-                  move=rep("waste-free", 40),
-                  run=rep("parallel", 40),
-                  time=rep(NA, 40),
-                  QU=rep(NA, 40),
-                  QL=rep(NA, 40),
-                  E=rep(NA, 40))
+df3 <- data.frame(type=rep(c("SMC(R)", "IBIS"), each=50),
+                  move=rep("waste-free", 100),
+                  run=rep("parallel", 100),
+                  time=rep(NA, 100),
+                  QU=rep(NA, 100),
+                  QL=rep(NA, 100),
+                  E=rep(NA, 100))
 
 df_eff <- rbind(df1, df2)
 df_eff <- rbind(df_eff, df3)
 
-for (i in 1:140) {
+for (i in 1:350) {
   func_type <- df_eff[i, 1:3]
   if (func_type$type == "SMC") {
     time_result <- system.time(
@@ -97,13 +97,13 @@ for (i in 1:140) {
     time_result <- system.time(
       theta_smc <- SL_SMC_resample(M, alpha, N, theta_d, s_obs, prior_sampler,
                                    prior_func, sample_func, q_sigma, AM=TRUE,
-                                   theta_history=TRUE, gamma_history=TRUE)
+                                   theta_history=FALSE, gamma_history=FALSE)
     )
   } else if (func_type$type == "IBIS" & func_type$move == "std") {
     time_result <- system.time(
       theta_smc <- SL_IBIS(M, alpha, N, theta_d, s_obs, prior_sampler,
                            prior_func, sample_func, q_sigma, AM=TRUE,
-                           theta_history=TRUE, gamma_history=TRUE)
+                           theta_history=FALSE, gamma_history=FALSE)
     )
   } else if (func_type$type == "SMC(R)" &
              func_type$move == "waste-free" &
@@ -111,7 +111,7 @@ for (i in 1:140) {
     time_result <- system.time(
       theta_smc <- SL_WF_SMC(M, alpha, N, N_sample, theta_d, s_obs, prior_sampler,
                              prior_func, sample_func, q_sigma, AM=TRUE,
-                             theta_history=TRUE, gamma_history=TRUE)
+                             theta_history=FALSE, gamma_history=FALSE)
     )
   } else if (func_type$type == "IBIS" &
              func_type$move == "waste-free" &
@@ -119,7 +119,7 @@ for (i in 1:140) {
     time_result <- system.time(
       theta_smc <- SL_WF_IBIS(M, alpha, N, N_sample, theta_d, s_obs, prior_sampler,
                               prior_func, sample_func, q_sigma, AM=TRUE,
-                              theta_history=TRUE, gamma_history=TRUE)
+                              theta_history=FALSE, gamma_history=FALSE)
     )
   } else if (func_type$type == "SMC(R)" &
              func_type$move == "waste-free" &
@@ -127,8 +127,8 @@ for (i in 1:140) {
     time_result <- system.time(
       theta_smc <- SL_WF_SMC.par(M, alpha, N, N_sample, theta_d, s_obs,
                                  prior_sampler, prior_func, sample_func,
-                                 q_sigma, AM=TRUE, theta_history=TRUE,
-                                 gamma_history=TRUE, future_seed=NULL)
+                                 q_sigma, AM=TRUE, theta_history=FALSE,
+                                 gamma_history=FALSE, future_seed=NULL)
     )
   } else if (func_type$type == "IBIS" &
              func_type$move == "waste-free" &
@@ -136,8 +136,8 @@ for (i in 1:140) {
     time_result <- system.time(
       theta_smc <- SL_WF_IBIS.par(M, alpha, N, N_sample, theta_d, s_obs,
                                   prior_sampler, prior_func, sample_func,
-                                  q_sigma, AM=TRUE, theta_history=TRUE,
-                                  gamma_history=TRUE, future_seed=NULL)
+                                  q_sigma, AM=TRUE, theta_history=FALSE,
+                                  gamma_history=FALSE, future_seed=NULL)
     )
   }
 
@@ -146,6 +146,7 @@ for (i in 1:140) {
   df_eff$QL[i] <- quantile(theta_smc$theta[1, ], probs=0.05)
   df_eff$E[i] <- mean(theta_smc$theta[1, ])
 
-  if (i %% 10 == 0) {print(paste0("Finish iteration ", r))}
+  if (i %% 5 == 0) {print(paste0("Finish iteration ", i))}
 }
 
+saveRDS(df_eff, file="df_eff.rds")
