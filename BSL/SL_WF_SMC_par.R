@@ -18,20 +18,18 @@
 #' @param theta_history Default theta_history = FALSE, if TRUE, return all particles in history.
 #' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
 #' @param acc_history Default acc_history = FALSE, if TRUE, return acceptance rates of MCMC.
+#' @param future_seed Default future_seed = TRUE.
 #' @return A vector of parameters from the BSL posterior.
 SL_WF_SMC.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
                           prior_func, sample_func, q_sigma, AM=TRUE,
                           theta_history=FALSE, gamma_history=FALSE,
-                          acc_history=FALSE) {
+                          acc_history=FALSE, future_seed=TRUE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
   if (theta_history) {
     theta_history_array <- array(data = NA, dim = c(theta_d, N, iter_max))
     weight_history_mat <- matrix(NA, nrow = iter_max, ncol = N)
   }
-  # Store mu and sigma for particles
-  mu_mat <- matrix(NA, nrow=length(obs), ncol=N)
-  sigma_array <- array(data = NA, dim = c(length(obs), length(obs), N))
   weight <- rep(-log(N), N)
   incremental_weight <- rep(log(1), N)
   ess_flat <- ESS_weight2(weight, incremental_weight)
@@ -59,11 +57,9 @@ SL_WF_SMC.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
     sample_sta <- sample_func(theta_n, M)
 
     theta_mat[, n] <- theta_n
-    mu_mat[, n] <- sample_sta$mean
-    sigma_array[, , n] <- sample_sta$sigma
     log_likelihood[n] <- dmvnorm(x=obs,
-                                 mean=mu_mat[, n],
-                                 sigma=as.matrix(sigma_array[, , n]),
+                                 mean=sample_sta$mean,
+                                 sigma=sample_sta$sigma,
                                  log=TRUE)
   }
   if (theta_history) {
@@ -123,14 +119,22 @@ SL_WF_SMC.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
       prob_vec <- exp(weight)
       resample_index <- sample(1:N, size=N_sample, replace=TRUE, prob=prob_vec)
       theta_mat_sample <- theta_mat[, resample_index, drop=FALSE]
-      mu_mat_sample <- mu_mat[, resample_index, drop=FALSE]
       log_likelihood_sample <- log_likelihood[resample_index]
-      sigma_array_sample <- sigma_array[, , resample_index, drop=FALSE]
       weight <- rep(-log(N), N)
 
       # Move
-      # try future.apply
-
+      # Use future.apply
+      chains <- future_lapply(
+        1:N_sample,
+        function(n) {
+          # Set up the starting sample
+          theta_old <- theta_mat_sample[, n]
+          sl_old <- log_likelihood_sample[n]
+          theta_mat[, 1+(n-1)*P] <- theta_old
+          log_likelihood[1+(n-1)*P] <- sl_old
+        },
+        future.seed = future_seed
+      )
 
       for (n in 1:N_sample) {
         # Set up the starting sample
@@ -138,8 +142,6 @@ SL_WF_SMC.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
         sl_old <- log_likelihood_sample[n]
         theta_mat[, 1+(n-1)*P] <- theta_old
         log_likelihood[1+(n-1)*P] <- sl_old
-        mu_mat[, 1+(n-1)*P] <- mu_mat_sample[, n]
-        sigma_array[, , 1+(n-1)*P] <- sigma_array_sample[, , n]
         for (p in 2:P) {
           theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=q_sigma))
           stats_new <- sample_func(theta_new, M)
@@ -156,14 +158,10 @@ SL_WF_SMC.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
             sl_old <- sl_new
             theta_mat[, p+(n-1)*P] <- theta_old
             log_likelihood[p+(n-1)*P] <- sl_old
-            mu_mat[, p+(n-1)*P] <- stats_new$mean
-            sigma_array[, , p+(n-1)*P] <- stats_new$sigma
             if (acc_history) {acc_count <- acc_count + 1}
           } else {
             theta_mat[, p+(n-1)*P] <- theta_old
             log_likelihood[p+(n-1)*P] <- sl_old
-            mu_mat[, p+(n-1)*P] <- mu_mat[, p-1+(n-1)*P]
-            sigma_array[, , p+(n-1)*P] <- sigma_array[, , p-1+(n-1)*P]
           }
         }
       }
