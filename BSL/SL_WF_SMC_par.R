@@ -168,6 +168,7 @@ SL_WF_SMC.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
       # Combine list into theta_mat and log_likelihood
       theta_mat <- do.call(cbind, lapply(chains, `[[`, "theta"))
       log_likelihood <- unlist(lapply(chains, `[[`, "log_likelihood"))
+      if (acc_history) {acc_count <- sum(unlist(lapply(chains, `[[`, "acc")))}
     }
 
     # Update
