@@ -134,8 +134,8 @@ SL_WF_IBIS <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
                               mean=stats_new$mean,
                               sigma=stats_new$sigma, log=TRUE)
 
-            log_alpha <- sl_new + prior_func(theta_new) -
-              sl_old - prior_func(theta_mat[, n])
+            log_alpha <- gamma_new * sl_new + prior_func(theta_new) -
+              gamma_new * sl_old - prior_func(theta_mat[, n])
             log_alpha <- min(0, log_alpha)
             log_u <- log(runif(1))
 
