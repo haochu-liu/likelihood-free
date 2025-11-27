@@ -17,7 +17,7 @@
 #' @param theta_history Default theta_history = FALSE, if TRUE, return all particles in history.
 #' @param gamma_history Default gamma_history = FALSE, if TRUE, return gamma history.
 #' @param acc_history Default acc_history = FALSE, if TRUE, return acceptance rates of MCMC.
-#' @param future_seed Default future_seed = TRUE.
+#' @param future_seed Default future_seed = TRUE. Can set to be NULL.
 #' @return A vector of parameters from the BSL posterior.
 SL_WF_IBIS.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
                            prior_func, sample_func, q_sigma, AM=TRUE,
