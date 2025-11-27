@@ -1,7 +1,6 @@
-#' Synthetic Likelihood waste-free SMC
+#' Synthetic Likelihood waste-free IBIS
 #'
-#' Apply waste-free sequential Monte Carlo (WF-SMC) algorithm for BSL posterior target.
-#' Resampling at every iteration.
+#' Apply waste-free iterated batch importance sampling (IBIS) algorithm for BSL posterior target.
 #' Run move step parallel.
 #'
 #' @param M Number of new data points drawn in each iteration.
@@ -20,10 +19,10 @@
 #' @param acc_history Default acc_history = FALSE, if TRUE, return acceptance rates of MCMC.
 #' @param future_seed Default future_seed = TRUE.
 #' @return A vector of parameters from the BSL posterior.
-SL_WF_SMC.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
-                          prior_func, sample_func, q_sigma, AM=TRUE,
-                          theta_history=FALSE, gamma_history=FALSE,
-                          acc_history=FALSE, future_seed=TRUE) {
+SL_WF_IBIS.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
+                           prior_func, sample_func, q_sigma, AM=TRUE,
+                           theta_history=FALSE, gamma_history=FALSE,
+                           acc_history=FALSE, future_seed=TRUE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
   if (theta_history) {
@@ -115,61 +114,63 @@ SL_WF_SMC.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
 
     if ((gamma_new != 1) & iter < iter_max) {
       # No resample and move in the final iteration
-      # Resample
-      prob_vec <- exp(weight)
-      resample_index <- sample(1:N, size=N_sample, replace=TRUE, prob=prob_vec)
-      theta_mat_sample <- theta_mat[, resample_index, drop=FALSE]
-      log_likelihood_sample <- log_likelihood[resample_index]
-      weight <- rep(-log(N), N)
+      if (ess_new < (log(0.5)+ess_flat)) {
+        # Resample
+        prob_vec <- exp(weight)
+        resample_index <- sample(1:N, size=N_sample, replace=TRUE, prob=prob_vec)
+        theta_mat_sample <- theta_mat[, resample_index, drop=FALSE]
+        log_likelihood_sample <- log_likelihood[resample_index]
+        weight <- rep(-log(N), N)
 
-      # Move
-      # Use future.apply
-      chains <- future_lapply(
-        1:N_sample,
-        function(n) {
-          if (acc_history) {acc_chain <- 0}
-          # Set up the starting sample
-          theta_old <- theta_mat_sample[, n]
-          sl_old <- log_likelihood_sample[n]
-          theta_chain <- matrix(NA, nrow=theta_d, ncol=P)
-          log_likelihood_chain <- rep(NA, P)
-          theta_chain[, 1] <- theta_old
-          log_likelihood_chain[1] <- sl_old
-          for (p in 2:P) {
-            theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=q_sigma))
-            stats_new <- sample_func(theta_new, M)
-            sl_new <- dmvnorm(x=obs,
-                              mean=stats_new$mean, sigma=stats_new$sigma,
-                              log=TRUE)
+        # Move
+        # Use future.apply
+        chains <- future_lapply(
+          1:N_sample,
+          function(n) {
+            if (acc_history) {acc_chain <- 0}
+            # Set up the starting sample
+            theta_old <- theta_mat_sample[, n]
+            sl_old <- log_likelihood_sample[n]
+            theta_chain <- matrix(NA, nrow=theta_d, ncol=P)
+            log_likelihood_chain <- rep(NA, P)
+            theta_chain[, 1] <- theta_old
+            log_likelihood_chain[1] <- sl_old
+            for (p in 2:P) {
+              theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=q_sigma))
+              stats_new <- sample_func(theta_new, M)
+              sl_new <- dmvnorm(x=obs,
+                                mean=stats_new$mean, sigma=stats_new$sigma,
+                                log=TRUE)
 
-            log_alpha <- gamma_new * sl_new + prior_func(theta_new) -
-              gamma_new * sl_old - prior_func(theta_mat[, n])
-            log_alpha <- min(0, log_alpha)
-            log_u <- log(runif(1))
+              log_alpha <- gamma_new * sl_new + prior_func(theta_new) -
+                gamma_new * sl_old - prior_func(theta_mat[, n])
+              log_alpha <- min(0, log_alpha)
+              log_u <- log(runif(1))
 
-            if (log_u < log_alpha) {
-              theta_old <- theta_new
-              sl_old <- sl_new
-              theta_chain[, p] <- theta_old
-              log_likelihood_chain[p] <- sl_old
-              if (acc_history) {acc_chain <- acc_chain + 1}
-            } else {
-              theta_chain[, p] <- theta_old
-              log_likelihood_chain[p] <- sl_old
+              if (log_u < log_alpha) {
+                theta_old <- theta_new
+                sl_old <- sl_new
+                theta_chain[, p] <- theta_old
+                log_likelihood_chain[p] <- sl_old
+                if (acc_history) {acc_chain <- acc_chain + 1}
+              } else {
+                theta_chain[, p] <- theta_old
+                log_likelihood_chain[p] <- sl_old
+              }
             }
-          }
-          chain_output <- list(theta=theta_chain,
-                               log_likelihood=log_likelihood_chain)
-          if (acc_history) {chain_output$acc <- acc_chain}
-          return(chain_output)
-        },
-        future.seed = future_seed
-      )
+            chain_output <- list(theta=theta_chain,
+                                 log_likelihood=log_likelihood_chain)
+            if (acc_history) {chain_output$acc <- acc_chain}
+            return(chain_output)
+          },
+          future.seed = future_seed
+        )
 
-      # Combine list into theta_mat and log_likelihood
-      theta_mat <- do.call(cbind, lapply(chains, `[[`, "theta"))
-      log_likelihood <- unlist(lapply(chains, `[[`, "log_likelihood"))
-      if (acc_history) {acc_count <- sum(unlist(lapply(chains, `[[`, "acc")))}
+        # Combine list into theta_mat and log_likelihood
+        theta_mat <- do.call(cbind, lapply(chains, `[[`, "theta"))
+        log_likelihood <- unlist(lapply(chains, `[[`, "log_likelihood"))
+        if (acc_history) {acc_count <- sum(unlist(lapply(chains, `[[`, "acc")))}
+      }
     }
 
     # Update

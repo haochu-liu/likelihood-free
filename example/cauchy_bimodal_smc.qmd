@@ -365,7 +365,45 @@ legend("topright",
        lwd = 2)
 ```
 
+## Parallel MCMC in waste-free SMC
 
+### BSL waste-free SMC
+
+```{r}
+#| echo: true
+M <- 20
+alpha <- 0.9
+N <- 1000
+N_sample <- 10
+theta_d <- 1
+q_sigma <- matrix(1, nrow=1, ncol=1)
+```
+
+```{r}
+#| echo: true
+set.seed(100)
+theta_wf_ibis <- SL_WF_IBIS(M, alpha, N, N_sample, theta_d, s_obs, prior_sampler,
+                            prior_func, sample_func, q_sigma, AM=TRUE,
+                            theta_history=TRUE, gamma_history=TRUE)
+```
+
+```{r}
+#| echo: true
+gamma_n <- length(theta_wf_ibis$gamma)
+par(mfrow = c(1, 3))
+plot(1:gamma_n, theta_wf_ibis$gamma, type = "p",
+     xlab = "Iteration",
+     ylab = "gamma")
+plot(1:gamma_n, exp(theta_wf_ibis$ess), type = "l",
+     ylim = c(0, exp(theta_wf_ibis$ess[1])),
+     xlab = "Iteration",
+     ylab = "ESS")
+plot(1:gamma_n, exp(theta_wf_ibis$cess), type = "l",
+     ylim = c(0, exp(theta_wf_ibis$cess[1])),
+     xlab = "Iteration",
+     ylab = "CESS")
+par(mfrow = c(1, 1))
+```
 
 
 
