@@ -127,44 +127,46 @@ SL_WF_SMC.par <- function(M, alpha, N, N_sample, theta_d, obs, prior_sampler,
       chains <- future_lapply(
         1:N_sample,
         function(n) {
+          if (acc_history) {acc_chain <- 0}
           # Set up the starting sample
           theta_old <- theta_mat_sample[, n]
           sl_old <- log_likelihood_sample[n]
-          theta_mat[, 1+(n-1)*P] <- theta_old
-          log_likelihood[1+(n-1)*P] <- sl_old
+          theta_chain <- matrix(NA, nrow=theta_d, ncol=P)
+          log_likelihood_chain <- rep(NA, P)
+          theta_chain[, 1] <- theta_old
+          log_likelihood_chain[1] <- sl_old
+          for (p in 2:P) {
+            theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=q_sigma))
+            stats_new <- sample_func(theta_new, M)
+            sl_new <- dmvnorm(x=obs,
+                              mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
+
+            log_alpha <- sl_new + prior_func(theta_new) -
+              sl_old - prior_func(theta_mat[, n])
+            log_alpha <- min(0, log_alpha)
+            log_u <- log(runif(1))
+
+            if (log_u < log_alpha) {
+              theta_old <- theta_new
+              sl_old <- sl_new
+              theta_chain[, p] <- theta_old
+              log_likelihood_chain[p] <- sl_old
+              if (acc_history) {acc_chain <- acc_chain + 1}
+            } else {
+              theta_chain[, p] <- theta_old
+              log_likelihood_chain[p] <- sl_old
+            }
+          }
+          chain_output <- list(theta=theta_chain,
+                               log_likelihood=log_likelihood_chain)
+          if (acc_history) {chain_output$acc <- acc_chain}
+          return(chain_output)
         },
         future.seed = future_seed
       )
 
-      for (n in 1:N_sample) {
-        # Set up the starting sample
-        theta_old <- theta_mat_sample[, n]
-        sl_old <- log_likelihood_sample[n]
-        theta_mat[, 1+(n-1)*P] <- theta_old
-        log_likelihood[1+(n-1)*P] <- sl_old
-        for (p in 2:P) {
-          theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=q_sigma))
-          stats_new <- sample_func(theta_new, M)
-          sl_new <- dmvnorm(x=obs,
-                            mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
+      # Combine list into theta_mat and log_likelihood
 
-          log_alpha <- sl_new + prior_func(theta_new) -
-            sl_old - prior_func(theta_mat[, n])
-          log_alpha <- min(0, log_alpha)
-          log_u <- log(runif(1))
-
-          if (log_u < log_alpha) {
-            theta_old <- theta_new
-            sl_old <- sl_new
-            theta_mat[, p+(n-1)*P] <- theta_old
-            log_likelihood[p+(n-1)*P] <- sl_old
-            if (acc_history) {acc_count <- acc_count + 1}
-          } else {
-            theta_mat[, p+(n-1)*P] <- theta_old
-            log_likelihood[p+(n-1)*P] <- sl_old
-          }
-        }
-      }
     }
 
     # Update
