@@ -14,7 +14,6 @@ library(mvtnorm)
 library(coda)
 library(matrixStats)
 library(ggplot2)
-library(GGally)
 library(future.apply)
 source("../BSL/SL_SMC.R")
 source("../BSL/SL_SMC_resample.R")
@@ -448,6 +447,62 @@ plot(1:gamma_n, exp(theta_wf_ibis_par$cess), type = "l",
      ylab = "CESS")
 par(mfrow = c(1, 1))
 ```
+
+## Time and efficiency
+
+```{r}
+#| echo: true
+df_eff <- readRDS("../df_eff.rds")
+
+df_box <- df_eff
+df_box$name <- paste(df_box$move, df_box$run)
+df_box$name <- factor(df_box$name,
+                      levels = c("std sequential",
+                                 "waste-free sequential",
+                                 "waste-free parallel"))
+
+ggplot(df_box, aes(x=type, y=time, fill=name)) +
+  geom_boxplot() +
+  ylab("Time (sec)")
+```
+
+```{r}
+#| echo: true
+eff_compute <- data.frame(method=unique(paste(df_eff$type,
+                                              df_eff$move,
+                                              df_eff$run)),
+                          mean_time=NA,
+                          V_QU=NA,
+                          V_QL=NA,
+                          V_E=NA,
+                          V_QU.T=NA,
+                          V_QL.T=NA,
+                          V_E.T=NA)
+
+for (i in 1:7) {
+  mean_time <- mean(df_eff$time[(1+(i-1)*50):(i*50)])
+  V_QU <- var(df_eff$QU[(1+(i-1)*50):(i*50)])
+  V_QL <- var(df_eff$QL[(1+(i-1)*50):(i*50)])
+  V_E <- var(df_eff$E[(1+(i-1)*50):(i*50)])
+  
+  eff_compute$mean_time[i] <- mean_time
+  eff_compute$V_QU[i] <- V_QU
+  eff_compute$V_QL[i] <- V_QL
+  eff_compute$V_E[i] <- V_E
+  eff_compute$V_QU.T[i] <- mean_time * V_QU
+  eff_compute$V_QL.T[i] <- mean_time * V_QL
+  eff_compute$V_E.T[i] <- mean_time * V_E
+}
+
+print(eff_compute)
+```
+
+
+
+
+
+
+
 
 
 
