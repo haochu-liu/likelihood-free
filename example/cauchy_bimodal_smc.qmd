@@ -463,7 +463,8 @@ df_box$name <- factor(df_box$name,
 
 ggplot(df_box, aes(x=type, y=time, fill=name)) +
   geom_boxplot() +
-  ylab("Time (sec)")
+  ylab("Time (sec)") +
+  labs(fill='method')
 ```
 
 ```{r}
@@ -474,11 +475,10 @@ eff_compute <- data.frame(method=unique(paste(df_eff$type,
                           mean_time=NA,
                           V_QU=NA,
                           V_QL=NA,
-                          V_E=NA,
+                          # V_E=NA, V_E.T=NA,
                           V_QU.T=NA,
-                          V_QL.T=NA,
-                          V_E.T=NA)
-
+                          V_QL.T=NA)
+                          
 for (i in 1:7) {
   mean_time <- mean(df_eff$time[(1+(i-1)*50):(i*50)])
   V_QU <- var(df_eff$QU[(1+(i-1)*50):(i*50)])
@@ -488,11 +488,13 @@ for (i in 1:7) {
   eff_compute$mean_time[i] <- mean_time
   eff_compute$V_QU[i] <- V_QU
   eff_compute$V_QL[i] <- V_QL
-  eff_compute$V_E[i] <- V_E
+  # eff_compute$V_E[i] <- V_E
   eff_compute$V_QU.T[i] <- mean_time * V_QU
   eff_compute$V_QL.T[i] <- mean_time * V_QL
-  eff_compute$V_E.T[i] <- mean_time * V_E
+  # eff_compute$V_E.T[i] <- mean_time * V_E
 }
+colnames(eff_compute)[1:2] <- c("algorithm & method", "mean time (sec)")
+
 
 print(eff_compute)
 ```
