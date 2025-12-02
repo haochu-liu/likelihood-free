@@ -30,7 +30,7 @@ ABC_MCMC <- function(tol, iter, obs, kernel_func, theta_sigma, init_theta,
   # Sample at i = 1
   theta_old <- init_theta
   stats_old <- sample_func(theta_old)
-  k_old <- kernel_func(obs, stats_old, tol, sigma)
+  k_old <- kernel_func(obs, stats_old, tol, theta_sigma)
   theta_matrix[, i] <- theta_old
   if (s_history) {
     s_matrix[, i] <- stats_old
@@ -40,7 +40,7 @@ ABC_MCMC <- function(tol, iter, obs, kernel_func, theta_sigma, init_theta,
   for (i in 2:iter) {
     theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=q_sigma))
     stats_new <- sample_func(theta_new)
-    k_new <- kernel_func(obs, stats_new, tol, sigma)
+    k_new <- kernel_func(obs, stats_new, tol, theta_sigma)
 
     log_alpha <- k_new + prior_func(theta_new) - k_old - prior_func(theta_old)
     log_alpha <- min(0, log_alpha)
