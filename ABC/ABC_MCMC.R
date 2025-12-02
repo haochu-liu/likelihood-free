@@ -1,6 +1,17 @@
-#' ABC-MCMC
+#' Approximate Bayesian computation MCMC
 #'
-#' Run ABC-MCMC by given proposal and prior.
+#' Apply Metropolis-Hastings MCMC (MH-MCMC) algorithm using approximate Bayesian computation (ABC).
+#'
+#' @param tol A positive numberic value for the tolerance.
+#' @param iter Number of iterations.
+#' @param obs A vector of the observed statistics.
+#' @param kernel_func A kernel function.
+#' @param init_theta A vector of the initial parameter sampled from the prior.
+#' @param prior_func A density function of prior (log density).
+#' @param sample_func A function which takes theta and M and return sample mean and variance.
+#' @param q_sigma A scale matrix for the Gaussian proposal.
+#' @param acc_rate Default acc_rate = FALSE, if TRUE, print acceptance rate and return it.
+#' @return A sequence of parameters from the BSL posterior.
 #'
 #' @param obs The vector of observed data point.
 #' @param tol A positive numeric value for the tolerance.
@@ -14,10 +25,8 @@
 #' @param sigma The covariance matrix.
 #' @return Function value.
 #' @export
-abc_mcmc <- function(obs, tol, kernel_func, p_theta, d_theta, p_s, prior,
-                     theta_0, n_iter, sigma=NULL) {
-  if (is.null(sigma)) {sigma=diag(rep(1, length(obs)))}
-
+ABC_MCMC <- function(tol, iter, obs, kernel_func, init_theta, prior_func,
+                     sample_func, q_sigma, acc_rate=FALSE) {
   theta_matrix <- matrix(NA, nrow=(n_iter+1), ncol=length(theta_0))
   s_matrix <- matrix(NA, nrow=(n_iter+1), ncol=length(obs))
   accept_vec <- rep(FALSE, n_iter+1)
