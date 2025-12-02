@@ -23,33 +23,45 @@ SL_AM <- function(tol, iter, burn_in, obs, kernel_func, theta_sigma, init_theta,
   n_theta <- length(init_theta)
   n_obs <- length(obs)
   theta_matrix <- matrix(NA, nrow=n_theta, ncol=iter)
+  if (s_history) {
+    s_matrix <- matrix(NA, nrow=n_obs, ncol=iter)
+  }
   if (acc_rate) {accept_num <- 0}
   i <- 1
 
   # Sample and likelihood at i = 1
   theta_old <- init_theta
-  stats_old <- sample_func(theta_old, M)
-  sl_old <- dmvnorm(x=obs, mean=stats_old$mean, sigma=stats_old$sigma, log=TRUE)
-  theta_matrix[, i] <- init_theta
+  stats_old <- sample_func(theta_old)
+  k_old <- kernel_func(obs, stats_old, tol, theta_sigma)
+  theta_matrix[, i] <- theta_old
+  if (s_history) {
+    s_matrix[, i] <- stats_old
+  }
 
   # Burn-in iterations
   for (i in 2:burn_in) {
     theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=q_sigma))
-    stats_new <- sample_func(theta_new, M)
-    sl_new <- dmvnorm(x=obs, mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
+    stats_new <- sample_func(theta_new)
+    k_new <- kernel_func(obs, stats_new, tol, theta_sigma)
 
-    log_alpha <- sl_new + prior_func(theta_new) - sl_old - prior_func(theta_old)
+    log_alpha <- k_new + prior_func(theta_new) - k_old - prior_func(theta_old)
     log_alpha <- min(0, log_alpha)
     log_u <- log(runif(1))
 
     if (log_u < log_alpha) {
       theta_matrix[, i] <- theta_new
+      if (s_history) {
+        s_matrix[, i] <- stats_new
+      }
       theta_old <- theta_new
       stats_old <- stats_new
-      sl_old <- sl_new
+      k_old <- k_new
       if (acc_rate) {accept_num <- accept_num + 1}
     } else {
       theta_matrix[, i] <- theta_old
+      if (s_history) {
+        s_matrix[, i] <- stats_old
+      }
     }
   }
 
@@ -67,24 +79,30 @@ SL_AM <- function(tol, iter, burn_in, obs, kernel_func, theta_sigma, init_theta,
   # Adaptive M-H
   for (i in (burn_in+1):iter) {
     theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=cov_sigma))
-    stats_new <- sample_func(theta_new, M)
-    sl_new <- dmvnorm(x=obs, mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
+    stats_new <- sample_func(theta_new)
+    k_new <- kernel_func(obs, stats_new, tol, theta_sigma)
 
-    log_alpha <- sl_new + prior_func(theta_new) - sl_old - prior_func(theta_old)
+    log_alpha <- k_new + prior_func(theta_new) - k_old - prior_func(theta_old)
     log_alpha <- min(0, log_alpha)
     log_u <- log(runif(1))
 
     if (log_u < log_alpha) {
       theta_matrix[, i] <- theta_new
+      if (s_history) {
+        s_matrix[, i] <- stats_new
+      }
       theta_old <- theta_new
       stats_old <- stats_new
-      sl_old <- sl_new
+      k_old <- k_new
       if (acc_rate) {
         accept_num <- accept_num + 1
         accept_num_after <- accept_num_after + 1
       }
     } else {
       theta_matrix[, i] <- theta_old
+      if (s_history) {
+        s_matrix[, i] <- stats_old
+      }
     }
 
     m_theta <- as.matrix(theta_matrix[, i], )
@@ -97,6 +115,9 @@ SL_AM <- function(tol, iter, burn_in, obs, kernel_func, theta_sigma, init_theta,
   }
 
   result_list <- list(theta=theta_matrix)
+  if (s_history) {
+    result_list$summary_stats <- s_matrix
+  }
   if (acc_rate) {
     print(paste0("Acceptance rate: ", accept_num/iter))
     result_list$acc_rate = accept_num/iter
