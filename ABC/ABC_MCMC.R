@@ -2,7 +2,7 @@
 #'
 #' Apply Metropolis-Hastings MCMC (MH-MCMC) algorithm using approximate Bayesian computation (ABC).
 #'
-#' @param tol A positive numberic value for the tolerance.
+#' @param tol A positive numeric value for the tolerance.
 #' @param iter Number of iterations.
 #' @param obs A vector of the observed statistics.
 #' @param kernel_func A kernel function.
