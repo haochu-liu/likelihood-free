@@ -20,7 +20,7 @@ SL_AM <- function(M, iter, burn_in, obs, init_theta, prior_func, sample_func,
   n_theta <- length(init_theta)
   n_obs <- length(obs)
   theta_matrix <- matrix(NA, nrow=n_theta, ncol=iter)
-  accept_num <- 0
+  if (acc_rate) {accept_num <- 0}
   i <- 1
 
   # Sample and likelihood at i = 1
@@ -44,7 +44,7 @@ SL_AM <- function(M, iter, burn_in, obs, init_theta, prior_func, sample_func,
       theta_old <- theta_new
       stats_old <- stats_new
       sl_old <- sl_new
-      accept_num <- accept_num + 1
+      if (acc_rate) {accept_num <- accept_num + 1}
     } else {
       theta_matrix[, i] <- theta_old
     }
@@ -59,8 +59,8 @@ SL_AM <- function(M, iter, burn_in, obs, init_theta, prior_func, sample_func,
     mean_old <- as.matrix(rowMeans(theta_matrix[, 1:burn_in]))
     cov_sigma <- s_d*cov(t(theta_matrix[, 1:burn_in])) + s_d*epsilon*diag(n_theta)
   }
-  accept_num_after <- 0
-
+  if (acc_rate) {accept_num_after <- 0}
+  
   # Adaptive M-H
   for (i in (burn_in+1):iter) {
     theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=cov_sigma))
@@ -76,8 +76,10 @@ SL_AM <- function(M, iter, burn_in, obs, init_theta, prior_func, sample_func,
       theta_old <- theta_new
       stats_old <- stats_new
       sl_old <- sl_new
-      accept_num <- accept_num + 1
-      accept_num_after <- accept_num_after + 1
+      if (acc_rate) {
+        accept_num <- accept_num + 1
+        accept_num_after <- accept_num_after + 1
+      }
     } else {
       theta_matrix[, i] <- theta_old
     }
@@ -91,12 +93,11 @@ SL_AM <- function(M, iter, burn_in, obs, init_theta, prior_func, sample_func,
                    epsilon * diag(n_theta))
   }
 
+  result_list <- list(theta=theta_matrix)
   if (acc_rate) {
     print(paste0("Acceptance rate: ", accept_num/iter))
-    return(list(theta = theta_matrix,
-                acc_rate = accept_num/iter,
-                acc_rate2 = accept_num_after/(iter-burn_in)))
-  } else {
-    return(theta_matrix)
+    result_list$acc_rate = accept_num/iter
+    result_list$acc_rate2 = accept_num_after/(iter-burn_in)
   }
+  return(result_list)
 }

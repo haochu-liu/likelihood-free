@@ -17,7 +17,7 @@ SL_MCMC <- function(M, iter, obs, init_theta, prior_func, sample_func, q_sigma,
   n_theta <- length(init_theta)
   n_obs <- length(obs)
   theta_matrix <- matrix(NA, nrow=n_theta, ncol=iter)
-  accept_num <- 0
+  if (acc_rate) {accept_num <- 0}
   i <- 1
 
   # Sample and likelihood at i = 1
@@ -41,17 +41,16 @@ SL_MCMC <- function(M, iter, obs, init_theta, prior_func, sample_func, q_sigma,
       theta_old <- theta_new
       stats_old <- stats_new
       sl_old <- sl_new
-      accept_num <- accept_num + 1
+      if (acc_rate) {accept_num <- accept_num + 1}
     } else {
       theta_matrix[, i] <- theta_old
     }
   }
 
+  result_list <- list(theta=theta_matrix)
   if (acc_rate) {
     print(paste0("Acceptance rate: ", accept_num/iter))
-    return(list(theta = theta_matrix,
-                acc_rate = accept_num/iter))
-  } else {
-    return(theta_matrix)
+    result_list$acc_rate = accept_num/iter
   }
+  return(result_list)
 }
