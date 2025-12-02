@@ -14,18 +14,14 @@
 #' @param q_sigma A scale matrix for the Gaussian proposal.
 #' @param epsilon Term to control the noise.
 #' @param acc_rate Default acc_rate = FALSE, if TRUE, print acceptance rate and return it.
-#' @param s_history Default s_history = FALSE, if TRUE, return the history of summary statistics.
 #' @return A sequence of parameters from the ABC posterior.
 ABC_AM <- function(tol, iter, burn_in, obs, kernel_func, theta_sigma, init_theta,
                    prior_func, sample_func, q_sigma, epsilon,
-                   acc_rate=FALSE, s_history=FALSE) {
+                   acc_rate=FALSE) {
   # Initial setup
   n_theta <- length(init_theta)
   n_obs <- length(obs)
   theta_matrix <- matrix(NA, nrow=n_theta, ncol=iter)
-  if (s_history) {
-    s_matrix <- matrix(NA, nrow=n_obs, ncol=iter)
-  }
   if (acc_rate) {accept_num <- 0}
   i <- 1
 
@@ -34,9 +30,6 @@ ABC_AM <- function(tol, iter, burn_in, obs, kernel_func, theta_sigma, init_theta
   stats_old <- sample_func(theta_old)
   k_old <- kernel_func(obs, stats_old, tol, theta_sigma)
   theta_matrix[, i] <- theta_old
-  if (s_history) {
-    s_matrix[, i] <- stats_old
-  }
 
   # Burn-in iterations
   for (i in 2:burn_in) {
@@ -50,18 +43,12 @@ ABC_AM <- function(tol, iter, burn_in, obs, kernel_func, theta_sigma, init_theta
 
     if (log_u < log_alpha) {
       theta_matrix[, i] <- theta_new
-      if (s_history) {
-        s_matrix[, i] <- stats_new
-      }
       theta_old <- theta_new
       stats_old <- stats_new
       k_old <- k_new
       if (acc_rate) {accept_num <- accept_num + 1}
     } else {
       theta_matrix[, i] <- theta_old
-      if (s_history) {
-        s_matrix[, i] <- stats_old
-      }
     }
   }
 
@@ -88,9 +75,6 @@ ABC_AM <- function(tol, iter, burn_in, obs, kernel_func, theta_sigma, init_theta
 
     if (log_u < log_alpha) {
       theta_matrix[, i] <- theta_new
-      if (s_history) {
-        s_matrix[, i] <- stats_new
-      }
       theta_old <- theta_new
       stats_old <- stats_new
       k_old <- k_new
@@ -100,9 +84,6 @@ ABC_AM <- function(tol, iter, burn_in, obs, kernel_func, theta_sigma, init_theta
       }
     } else {
       theta_matrix[, i] <- theta_old
-      if (s_history) {
-        s_matrix[, i] <- stats_old
-      }
     }
 
     m_theta <- as.matrix(theta_matrix[, i], )
@@ -115,9 +96,6 @@ ABC_AM <- function(tol, iter, burn_in, obs, kernel_func, theta_sigma, init_theta
   }
 
   result_list <- list(theta=theta_matrix)
-  if (s_history) {
-    result_list$summary_stats <- s_matrix
-  }
   if (acc_rate) {
     print(paste0("Acceptance rate: ", accept_num/iter))
     result_list$acc_rate = accept_num/iter

@@ -12,18 +12,14 @@
 #' @param sample_func A function which takes theta and M and return sample mean and variance.
 #' @param q_sigma A scale matrix for the Gaussian proposal.
 #' @param acc_rate Default acc_rate = FALSE, if TRUE, print acceptance rate and return it.
-#' @param s_history Default s_history = FALSE, if TRUE, return the history of summary statistics.
 #' @return A sequence of parameters from the ABC posterior.
 ABC_MCMC <- function(tol, iter, obs, kernel_func, theta_sigma, init_theta,
                      prior_func, sample_func, q_sigma,
-                     acc_rate=FALSE, s_history=FALSE) {
+                     acc_rate=FALSE) {
   # Initial setup
   n_theta <- length(init_theta)
   n_obs <- length(obs)
   theta_matrix <- matrix(NA, nrow=n_theta, ncol=iter)
-  if (s_history) {
-    s_matrix <- matrix(NA, nrow=n_obs, ncol=iter)
-  }
   if (acc_rate) {accept_num <- 0}
   i <- 1
 
@@ -32,9 +28,6 @@ ABC_MCMC <- function(tol, iter, obs, kernel_func, theta_sigma, init_theta,
   stats_old <- sample_func(theta_old)
   k_old <- kernel_func(obs, stats_old, tol, theta_sigma)
   theta_matrix[, i] <- theta_old
-  if (s_history) {
-    s_matrix[, i] <- stats_old
-  }
 
   # M-H MCMC
   for (i in 2:iter) {
@@ -48,25 +41,16 @@ ABC_MCMC <- function(tol, iter, obs, kernel_func, theta_sigma, init_theta,
 
     if (log_u < log_alpha) {
       theta_matrix[, i] <- theta_new
-      if (s_history) {
-        s_matrix[, i] <- stats_new
-      }
       theta_old <- theta_new
       stats_old <- stats_new
       k_old <- k_new
       if (acc_rate) {accept_num <- accept_num + 1}
     } else {
       theta_matrix[, i] <- theta_old
-      if (s_history) {
-        s_matrix[, i] <- stats_old
-      }
     }
   }
 
   result_list <- list(theta=theta_matrix)
-  if (s_history) {
-    result_list$summary_stats <- s_matrix
-  }
   if (acc_rate) {
     print(paste0("Acceptance rate: ", accept_num/iter))
     result_list$acc_rate = accept_num/iter
