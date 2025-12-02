@@ -18,11 +18,11 @@
 #' @param theta_history Default theta_history = FALSE, if TRUE, return all particles in history.
 #' @param tol_history Default tol_history = FALSE, if TRUE, return tolerance history.
 #' @param acc_history Default acc_history = FALSE, if TRUE, return acceptance rates of MCMC.
-#' @return A vector of parameters from the BSL posterior.
-SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
-                   sample_func, q_sigma, AM=TRUE,
-                   theta_history=FALSE, gamma_history=FALSE,
-                   acc_history=FALSE) {
+#' @return A vector of parameters from the ABC posterior.
+ABC_SMC <- function(tol_start, tol_end, alpha, N, theta_d, obs, kernel_func,
+                    theta_sigma, prior_sampler, prior_func, sample_func, q_sigma,
+                    AM=TRUE, theta_history=FALSE, tol_history=FALSE,
+                    acc_history=FALSE) {
   theta_mat <- matrix(NA, nrow=theta_d, ncol=N)
   iter_max <- 50
   if (theta_history) {
@@ -33,9 +33,9 @@ SL_SMC <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func,
   incremental_weight <- rep(log(1), N)
   ess_flat <- ESS_weight2(weight, incremental_weight)
   cess_flat <- CESS_weight(weight, incremental_weight)
-  gamma_old <- 0
+  tol_old <- tol_start
   iter <- 1
-  if (gamma_history) {
+  if (tol_history) {
     gamma_vec <- c(gamma_old)
     ess_vec <- c(ess_flat)
     cess_vec <- c(cess_flat)
