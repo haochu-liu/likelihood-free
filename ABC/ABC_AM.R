@@ -1,8 +1,8 @@
-#' Synthetic Likelihood adaptive M-H
+#' Approximate Bayesian computation adaptive M-H
 #'
-#' Apply adaptive Metropolis-Hastings algorithm for BSL posterior as the target distribution.
+#' Apply adaptive Metropolis-Hastings algorithm using approximate Bayesian computation (ABC).
 #'
-#' @param tol A positive numberic value for the tolerance.
+#' @param tol A positive numeric value for the tolerance.
 #' @param iter Number of iterations.
 #' @param burn_in Length of the burn-in period.
 #' @param obs A vector of the observed statistics.
@@ -16,9 +16,9 @@
 #' @param acc_rate Default acc_rate = FALSE, if TRUE, print acceptance rate and return it.
 #' @param s_history Default s_history = FALSE, if TRUE, return the history of summary statistics.
 #' @return A sequence of parameters from the ABC posterior.
-SL_AM <- function(tol, iter, burn_in, obs, kernel_func, theta_sigma, init_theta,
-                  prior_func, sample_func, q_sigma, epsilon,
-                  acc_rate=FALSE, s_history=FALSE) {
+ABC_AM <- function(tol, iter, burn_in, obs, kernel_func, theta_sigma, init_theta,
+                   prior_func, sample_func, q_sigma, epsilon,
+                   acc_rate=FALSE, s_history=FALSE) {
   # Initial setup
   n_theta <- length(init_theta)
   n_obs <- length(obs)
