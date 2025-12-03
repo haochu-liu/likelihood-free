@@ -498,18 +498,3 @@ colnames(eff_compute)[1:2] <- c("algorithm & method", "mean time (sec)")
 
 print(eff_compute)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
