@@ -8,7 +8,6 @@
 #' @param sigma The covariance matrix.
 #' @param log.kernel If TRUE, return value in log scale.
 #' @return Function value.
-#' @export
 gaussian_kernel <- function(y, z, tol=1, sigma, log.kernel=TRUE) {
   if (length(y)!=length(z)) {
     stop("Two vectors should have same length.")

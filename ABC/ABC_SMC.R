@@ -5,21 +5,22 @@
 #' @param tol_start A positive numeric value for the starting tolerance.
 #' @param tol_end A positive numeric value for the ending tolerance.
 #' @param alpha Number to control the effective sample size in reweight.
+#' @param M Number of new data points drawn for each particle.
 #' @param N Number of particles for SMC.
 #' @param theta_d Dimension of parameter.
 #' @param obs A vector of the observed statistics.
-#' @param kernel_func A kernel function.
+#' @param kernel_func A kernel function which takes the normalised distance as input.
 #' @param theta_sigma A covariance matrix for the kernel function.
 #' @param prior_sampler A function to draw samples form prior.
 #' @param prior_func A density function of prior (log density).
-#' @param sample_func A function which takes theta and M and return sample mean and variance.
+#' @param sample_func A function which takes theta and M and return summary statistics.
 #' @param q_sigma A scale matrix for the Gaussian proposal.
 #' @param AM Default AM = TRUE, if FALSE, do not adapt the proposal variance for MCMC move.
 #' @param theta_history Default theta_history = FALSE, if TRUE, return all particles in history.
 #' @param tol_history Default tol_history = FALSE, if TRUE, return tolerance history.
 #' @param acc_history Default acc_history = FALSE, if TRUE, return acceptance rates of MCMC.
 #' @return A vector of parameters from the ABC posterior.
-ABC_SMC <- function(tol_start, tol_end, alpha, N, theta_d, obs, kernel_func,
+ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
                     theta_sigma, prior_sampler, prior_func, sample_func, q_sigma,
                     AM=TRUE, theta_history=FALSE, tol_history=FALSE,
                     acc_history=FALSE) {
@@ -36,7 +37,7 @@ ABC_SMC <- function(tol_start, tol_end, alpha, N, theta_d, obs, kernel_func,
   tol_old <- tol_start
   iter <- 1
   if (tol_history) {
-    gamma_vec <- c(gamma_old)
+    tol_vec <- c(tol_old)
     ess_vec <- c(ess_flat)
     cess_vec <- c(cess_flat)
   }
@@ -46,16 +47,20 @@ ABC_SMC <- function(tol_start, tol_end, alpha, N, theta_d, obs, kernel_func,
   }
 
   # Initialization
-  log_likelihood <- rep(NA, N)
+  u_mat <- matrix(NA, nrow=M, ncol=N)
+  K_old <- rep(0, N)
   for (n in 1:N) {
     theta_n <- prior_sampler()
     sample_sta <- sample_func(theta_n, M)
 
     theta_mat[, n] <- theta_n
-    log_likelihood[n] <- dmvnorm(x=obs,
-                                 mean=sample_sta$mean,
-                                 sigma=sample_sta$sigma,
-                                 log=TRUE)
+    K_vec <- rep(NA, M)
+    for (m in 1:M) {
+      d <- as.matrix(obs - sample_sta[, m])
+      u_mat[m, n] <- sqrt(t(d) %*% solve(sigma) %*% d)
+      K_vec[m] <- kernel_func(u_mat[m, n], tol_old)
+    }
+    K_old[n] <- logSumExp(K_vec)
   }
   if (theta_history) {
     theta_history_array[, , iter] <- theta_mat
@@ -63,13 +68,21 @@ ABC_SMC <- function(tol_start, tol_end, alpha, N, theta_d, obs, kernel_func,
   }
   iter <- iter + 1
 
-  while (gamma_old < 1) {
+  while (tol_old > tol_end) {
     # Binary search 100 times
-    search_u <- 1
-    search_l <- gamma_old
-    gamma_new <- (search_u + search_l) / 2
+    search_u <- tol_old
+    search_l <- tol_end
+    tol_new <- (search_u + search_l) / 2
     # Reweight
-    incremental_weight <- (gamma_new - gamma_old) * log_likelihood
+    K_new <- rep(0, N)
+    for (n in 1:N) {
+      K_vec <- rep(NA, M)
+      for (m in 1:M) {
+        K_vec[m] <- kernel_func(u_mat[m, n], tol_new)
+      }
+      K_new[n] <- logSumExp(K_vec)
+    }
+    incremental_weight <- K_new - K_old
     cess_new <- CESS_weight(weight, incremental_weight)
     for (i in 1:100) {
       if (abs(cess_new - (log(alpha)+cess_flat)) < 0.001) {
@@ -78,14 +91,23 @@ ABC_SMC <- function(tol_start, tol_end, alpha, N, theta_d, obs, kernel_func,
 
       if (cess_new < (log(alpha)+cess_flat)) {
         # ESS too small
-        search_u <- gamma_new
-        gamma_new <- (search_u + search_l) / 2
+        search_l <- tol_new
+        tol_new <- (search_u + search_l) / 2
       } else {
         # ESS too large
-        search_l <- gamma_new
-        gamma_new <- (search_u + search_l) / 2
-        # Try gamma_new = 1 once
+        search_u <- tol_new
+        tol_new <- (search_u + search_l) / 2
+        # Try tol_new = tol_end once
         if (i == 1) {
+          K_new <- rep(0, N)
+          for (n in 1:N) {
+            K_vec <- rep(NA, M)
+            for (m in 1:M) {
+              K_vec[m] <- kernel_func(u_mat[m, n], tol_new)
+            }
+            K_new[n] <- logSumExp(K_vec)
+          }
+          incremental_weight <- K_new - K_old
           incremental_weight <- (gamma_new - gamma_old) * log_likelihood
           cess_new <- CESS_weight(weight, incremental_weight)
           if (cess_new >= (log(alpha)+cess_flat)) {

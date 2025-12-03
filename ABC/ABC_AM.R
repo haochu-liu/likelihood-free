@@ -10,7 +10,7 @@
 #' @param theta_sigma A covariance matrix for the kernel function.
 #' @param init_theta A vector of the initial parameter sampled from the prior.
 #' @param prior_func A density function of prior (log density).
-#' @param sample_func A function which takes theta and M and return sample mean and variance.
+#' @param sample_func A function which takes theta and return summary statistics.
 #' @param q_sigma A scale matrix for the Gaussian proposal.
 #' @param epsilon Term to control the noise.
 #' @param acc_rate Default acc_rate = FALSE, if TRUE, print acceptance rate and return it.
