@@ -82,7 +82,7 @@ SL_SMC_resample <- function(M, alpha, N, theta_d, obs, prior_sampler, prior_func
         gamma_new <- (search_u + search_l) / 2
         # Try gamma_new = 1 once
         if (i == 1) {
-          incremental_weight <- (gamma_new - gamma_old) * log_likelihood
+          incremental_weight <- (1 - gamma_old) * log_likelihood
           cess_new <- CESS_weight(weight, incremental_weight)
           if (cess_new >= (log(alpha)+cess_flat)) {
             gamma_new <- 1
