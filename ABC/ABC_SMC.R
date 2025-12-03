@@ -103,24 +103,31 @@ ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
           for (n in 1:N) {
             K_vec <- rep(NA, M)
             for (m in 1:M) {
-              K_vec[m] <- kernel_func(u_mat[m, n], tol_new)
+              K_vec[m] <- kernel_func(u_mat[m, n], tol_end)
             }
             K_new[n] <- logSumExp(K_vec)
           }
           incremental_weight <- K_new - K_old
-          incremental_weight <- (gamma_new - gamma_old) * log_likelihood
           cess_new <- CESS_weight(weight, incremental_weight)
           if (cess_new >= (log(alpha)+cess_flat)) {
-            gamma_new <- 1
+            tol_new <- tol_end
           }
         }
       }
 
       # Reweight
-      incremental_weight <- (gamma_new - gamma_old) * log_likelihood
+      K_new <- rep(0, N)
+      for (n in 1:N) {
+        K_vec <- rep(NA, M)
+        for (m in 1:M) {
+          K_vec[m] <- kernel_func(u_mat[m, n], tol_new)
+        }
+        K_new[n] <- logSumExp(K_vec)
+      }
+      incremental_weight <- K_new - K_old
       cess_new <- CESS_weight(weight, incremental_weight)
 
-      if (gamma_new == 1) {break}
+      if (tol_new == tol_end) {break}
     }
     ess_new <- ESS_weight2(weight, incremental_weight)
     weight <- weight + incremental_weight
@@ -130,14 +137,15 @@ ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
       q_sigma <- s_d * cov.wt(t(theta_mat), wt=exp(weight))$cov
     }
 
-    if ((gamma_new != 1) & iter < iter_max) {
+    if ((tol_new != tol_end) & iter < iter_max) {
       # No resample and move in the final iteration
       # Resample
       if (ess_new < (log(0.5)+ess_flat)) {
         prob_vec <- exp(weight)
         resample_index <- sample(1:N, size=N, replace=TRUE, prob=prob_vec)
         theta_mat <- theta_mat[, resample_index, drop=FALSE]
-        log_likelihood <- log_likelihood[resample_index]
+        u_mat <- u_mat[, resample_index, drop=FALSE]
+        K_new <- K_new[resample_index]
         weight <- rep(-log(N), N)
       }
 
@@ -145,27 +153,34 @@ ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
       for (n in 1:N) {
         theta_new <- theta_mat[, n] + as.vector(rmvnorm(n=1, sigma=q_sigma))
         stats_new <- sample_func(theta_new, M)
-        sl_new <- dmvnorm(x=obs,
-                          mean=stats_new$mean, sigma=stats_new$sigma, log=TRUE)
 
-        log_alpha <- gamma_new * sl_new + prior_func(theta_new) -
-          gamma_new * log_likelihood[n] - prior_func(theta_mat[, n])
+        K_vec <- rep(NA, M)
+        u_new <- rep(NA, M)
+        for (m in 1:M) {
+          d <- as.matrix(obs - stats_new[, m])
+          u_new[m] <- sqrt(t(d) %*% solve(sigma) %*% d)
+          K_vec[m] <- kernel_func(u_new[m], tol_new)
+        }
+        log_alpha <- logSumExp(K_vec) + prior_func(theta_new) -
+          K_new[n] - prior_func(theta_mat[, n])
         log_alpha <- min(0, log_alpha)
         log_u <- log(runif(1))
 
         if (log_u < log_alpha) {
           theta_mat[, n] <- theta_new
-          log_likelihood[n] <- sl_new
+          u_mat[, m] <- u_new
+          K_new[n] <- logSumExp(K_vec)
           if (acc_history) {acc_count <- acc_count + 1}
         }
       }
     }
 
     # Update
-    gamma_old <- gamma_new
+    tol_old <- tol_new
+    K_old <- K_new
     cess_old <- cess_new
-    if (gamma_history) {
-      gamma_vec <- c(gamma_vec, gamma_old)
+    if (tol_history) {
+      tol_vec <- c(tol_vec, tol_old)
       ess_vec <- c(ess_vec, ess_new)
       cess_vec <- c(cess_vec, cess_new)
     }
@@ -191,8 +206,8 @@ ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
     result_list$weight <- weight
   }
 
-  if (gamma_history) {
-    result_list$gamma <- gamma_vec
+  if (tol_history) {
+    result_list$tol <- tol_vec
     result_list$ess <- ess_vec
     result_list$cess <- cess_vec
   }
