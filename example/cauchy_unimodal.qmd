@@ -1,0 +1,160 @@
+---
+title: "Cauchy Unimodal"
+author: "Haochu"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(moments)
+library(mvtnorm)
+library(coda)
+library(matrixStats)
+library(ggplot2)
+library(future.apply)
+source("../BSL/SL_MCMC.R")
+source("../BSL/SL_SMC.R")
+source("../BSL/SL_SMC_resample.R")
+source("../BSL/SL_WF_SMC.R")
+source("../BSL/SL_WF_SMC_par.R")
+source("../BSL/ESS_weight2.R")
+source("../BSL/CESS_weight.R")
+set.seed(100)
+```
+
+## Cauchy mixture example
+
+We set:
+
+-   $\theta \sim Cauchy(0, 1)$,
+
+-   $y|\theta \sim Cauchy(\theta, 1)$.
+
+Let the true parameter be $\theta = 5$.
+
+### Sampling and summary statistics
+
+```{r}
+#| echo: true
+sample_cauchy <- function(theta = 5, n = 20) {
+  rcauchy(n, location = theta, scale = 1)
+}
+
+summary_stats <- function(y) {
+  median_y <- median(y)
+  mad_y <- mad(y) # median absolute deviation
+  quantile_y <- as.numeric(quantile(y, probs = c(0.25, 0.75)))
+  stats_vec <- c(median_y, mad_y, quantile_y[2] - quantile_y[1])
+  return(stats_vec)
+}
+```
+
+```{r}
+#| echo: true
+y_obs <- sample_cauchy()
+s_obs <- summary_stats(y_obs)
+```
+
+### Grid approximation for the posterior
+
+```{r}
+#| echo: true
+theta_vec <- seq(-10, 10, length.out = 20001)
+
+prior <- function(theta) {
+  dcauchy(theta, location = 0, scale = 1)
+}
+
+likelihood <- function(theta, y) {
+  prod(dcauchy(y, location = theta, scale = 1))
+}
+
+un_post <- sapply(theta_vec, function(t) prior(t) * likelihood(t, y_obs))
+post <- un_post / sum(un_post)
+posterior_mean <- sum(theta_vec * post)
+
+plot(theta_vec, post,
+     xlab = expression(theta),
+     ylab = "Density",
+     type = "l",
+     main="Posterior")
+abline(v = posterior_mean, col = "red", lwd = 2)
+```
+
+### MCMC for the posterior
+
+```{r}
+#| echo: true
+prior_vec <- dcauchy(theta_vec, location = 0, scale = 1)
+
+log_posterior <- function(theta, y) {
+  log_prior  <- dcauchy(theta, location = 0, scale = 1, log = TRUE)
+  log_like   <- sum(dcauchy(y, location = theta, scale = 1, log = TRUE))
+  log_prior + log_like
+}
+mh_sample <- function(y, n_iter = 50000, proposal_sd = 1) {
+  theta <- numeric(n_iter)
+  theta[1] <- 0
+  
+  log_post_curr = log_posterior(theta[1], y)
+  
+  for (i in 2:n_iter) {
+    theta_prop = rnorm(1, theta[i-1], proposal_sd)
+    
+    log_post_prop = log_posterior(theta_prop, y)
+    
+    log_alpha = log_post_prop - log_post_curr
+    
+    if (log(runif(1)) < log_alpha) {
+      theta[i] <- theta_prop
+      log_post_curr <- log_post_prop
+    } else {
+      theta[i] <- theta[i-1]
+    }
+  }
+  theta
+}
+
+set.seed(100)
+theta <- mh_sample(y_obs)
+exact_density <- density(theta[10000:50000])
+```
+
+```{r}
+#| echo: true
+plot(exact_density,
+     xlim = c(-10, 10),
+     main = "Density functions",
+     xlab = "Theta",
+     ylab = "Density",
+     col = "black",
+     lwd = 2)
+lines(theta_vec, prior_vec, col = "gray", lwd = 2, lty = 1)
+abline(v = posterior_mean, col = "red", lwd = 2)
+legend("topleft",
+       c("pi(theta|y_obs)", "pi(theta)"),
+       col = c("black", "gray"),
+       lty = 1,
+       lwd = 2)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
