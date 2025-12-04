@@ -321,7 +321,7 @@ sample_func <- function(theta) {
 #| echo: true
 set.seed(100)
 tol <- 1
-iter <- 5000
+iter <- 50000
 theta_sigma <- diag(c(0.1, 0.5, 1.5))
 q_sigma <- matrix(1, nrow=1, ncol=1)
 theta_mcmc <- ABC_MCMC(tol, iter, s_obs, gaussian_kernel, theta_sigma, init_theta,
@@ -331,9 +331,9 @@ theta_mcmc <- ABC_MCMC(tol, iter, s_obs, gaussian_kernel, theta_sigma, init_thet
 
 ```{r}
 #| echo: true
-plot(1:5000, theta_mcmc$theta[1, ], type = "l", xlab="Iterations", ylab="Theta")
+plot(1:50000, theta_mcmc$theta[1, ], type = "l", xlab="Iterations", ylab="Theta")
 
-theta_density <- density(theta_mcmc$theta[1, 1000:iter])
+theta_density <- density(theta_mcmc$theta[1, 10000:iter])
 
 plot(theta_vec, post,
      main = "Density functions",
@@ -348,6 +348,60 @@ legend("topleft",
        col = c("black", "blue"),
        lty = c(1, 4),
        lwd = 2)
+```
+
+### ABC SMC
+
+```{r}
+#| echo: true
+prior_sampler <- function(){
+  rcauchy(1, location=0, scale=1)
+}
+prior_func <- function(theta){
+  dcauchy(theta, location=0, scale=1, log=TRUE)
+}
+sample_func <- function(theta, M) {
+  s_mat <- matrix(NA, nrow=3, ncol=M)
+  for (i in 1:M) {
+    z <- sample_cauchy(theta=theta)
+    s_mat[, i] <- summary_stats(z)
+  }
+
+  return(s_mat)
+}
+```
+
+```{r}
+#| echo: true
+set.seed(100)
+tol_start <- 10
+tol_end <- 1
+N <- 1000
+theta_d <- 1
+theta_sigma <- diag(c(0.1, 0.5, 1.5))
+q_sigma <- matrix(1, nrow=1, ncol=1)
+theta_smc <- ABC_SMC(tol_start, tol_end, 0.9, M, N, theta_d, s_obs,
+                     gaussian_kernel2, theta_sigma, prior_sampler, prior_func,
+                     sample_func, q_sigma,
+                     AM=TRUE, theta_history=TRUE, tol_history=TRUE)
+```
+
+```{r}
+#| echo: true
+gamma_n <- length(theta_smc$gamma)
+par(mfrow = c(1, 3))
+plot(1:gamma_n, theta_smc$gamma, type = "p",
+     xlab = "Iteration",
+     ylab = "gamma")
+plot(1:gamma_n, exp(theta_smc$ess), type = "l",
+     ylim = c(0, exp(theta_smc$ess[1])),
+     xlab = "Iteration",
+     ylab = "ESS")
+plot(1:gamma_n, exp(theta_smc$cess), type = "l",
+     ylim = c(0, exp(theta_smc$cess[1])),
+     xlab = "Iteration",
+     ylab = "CESS")
+par(mfrow = c(1, 1))
 ```
 
 
