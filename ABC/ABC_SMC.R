@@ -57,7 +57,7 @@ ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
     K_vec <- rep(NA, M)
     for (m in 1:M) {
       d <- as.matrix(obs - sample_sta[, m])
-      u_mat[m, n] <- sqrt(t(d) %*% solve(sigma) %*% d)
+      u_mat[m, n] <- sqrt(t(d) %*% solve(theta_sigma) %*% d)
       K_vec[m] <- kernel_func(u_mat[m, n], tol_old)
     }
     K_old[n] <- logSumExp(K_vec)
@@ -69,6 +69,7 @@ ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
   iter <- iter + 1
 
   while (tol_old > tol_end) {
+    print(iter)
     # Binary search 100 times
     search_u <- tol_old
     search_l <- tol_end
@@ -158,7 +159,7 @@ ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
         u_new <- rep(NA, M)
         for (m in 1:M) {
           d <- as.matrix(obs - stats_new[, m])
-          u_new[m] <- sqrt(t(d) %*% solve(sigma) %*% d)
+          u_new[m] <- sqrt(t(d) %*% solve(theta_sigma) %*% d)
           K_vec[m] <- kernel_func(u_new[m], tol_new)
         }
         log_alpha <- logSumExp(K_vec) + prior_func(theta_new) -
