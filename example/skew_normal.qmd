@@ -32,85 +32,83 @@ set.seed(100)
 
 We set:
 
--   $\xi \sim N(0, 3)$,
+-   $\xi \sim N(0, 9)$,
 
--   $\alpha \sim N(0, 3)$,
+-   $\alpha \sim N(0, 9)$,
 
 -   $y|\xi, \alpha \sim SN(\xi, 1, \alpha)$.
 
-In the likelihood, we set scale to be $1$. Let the true parameter be $\xi = 1, \alpha = -5$.
+In the likelihood, we set scale parameter to be $1$. Let the true parameter be $\xi = 1, \alpha = -5$.
 
 ### Sampling and summary statistics
 
 ```{r}
 #| echo: true
-sample_mix_cauchy <- function(theta = 5, n = 20) {
-  u <- runif(n)
-  locs <- ifelse(u < 0.5, theta, -theta)
-  rcauchy(n, location = locs, scale = 1)
+sample_skew_normal <- function(xi = 1, alpha = -5, n = 20) {
+  as.numeric(rsn(n, xi=xi, omega=1, alpha=alpha))
 }
 
 summary_stats <- function(y) {
   median_y <- median(y)
   mad_y <- mad(y) # median absolute deviation
-  quantile_y <- quantile(y, probs = c(0.25, 0.75))
-  median_abs_y <- median(abs(y))
-  stats_vec <- c(median_y, mad_y, quantile_y[2] - quantile_y[1], median_abs_y)
+  quantile_y <- as.numeric(quantile(y, probs = c(0.25, 0.75)))
+  stats_vec <- c(median_y, mad_y, quantile_y[2] - quantile_y[1])
   return(stats_vec)
 }
 ```
 
 ```{r}
 #| echo: true
-y_obs <- sample_mix_cauchy()
+y_obs <- sample_skew_normal(n=1000)
 s_obs <- summary_stats(y_obs)
 ```
 
 ```{r}
 #| echo: true
-x <- seq(-12, 12, length.out = 4000)
-prior <- dcauchy(x, location = 0, scale = 1)
+xi_vec <- seq(-5, 5, length.out = 1001)
+alpha_vec <- seq(-5, 5, length.out = 1001)
+xi_prior <- dnorm(xi_vec, mean = 0, sd = 3)
+alpha_prior <- dnorm(alpha_vec, mean = 0, sd = 3)
 
-dcauchy_mix <- function(y, theta) {
-  0.5 * dcauchy(y, location = -theta, scale = 1) +
-  0.5 * dcauchy(y, location =  theta, scale = 1)
-}
-log_posterior <- function(theta, y) {
-  log_prior  <- dcauchy(theta, location = 0, scale = 1, log = TRUE)
-  log_like   <- sum(log(dcauchy_mix(y, theta)))
+log_posterior <- function(xi, alpha, y) {
+  log_prior  <- dnorm(xi, mean = 0, sd = 3, log = TRUE) +
+    dnorm(alpha, mean = 0, sd = 3, log = TRUE)
+  log_like   <- sum(dsn(y, xi=xi, omega=1, alpha=alpha, log=TRUE))
   log_prior + log_like
 }
-mh_sample <- function(y, n_iter = 50000, proposal_sd = 3) {
-  theta <- numeric(n_iter)
-  theta[1] <- 0
+mh_sample <- function(y, n_iter = 50000, proposal_sd = 1) {
+  theta <- matrix(NA, nrow=2, ncol=n_iter)
+  theta[, 1] <- c(0, 0)
   
-  log_post_curr = log_posterior(theta[1], y)
+  log_post_curr <- log_posterior(theta[1, 1], theta[2, 1], y)
   
   for (i in 2:n_iter) {
-    theta_prop = rnorm(1, theta[i-1], proposal_sd)
+    proposal_sigma <- proposal_sd^2 * diag(2)
+    theta_prop = rmvnorm(1, mean=theta[, i-1], sigma=proposal_sigma)
     
-    log_post_prop = log_posterior(theta_prop, y)
+    log_post_prop = log_posterior(theta_prop[1], theta_prop[2], y)
     
     log_alpha = log_post_prop - log_post_curr
     
     if (log(runif(1)) < log_alpha) {
-      theta[i] <- theta_prop
+      theta[, i] <- theta_prop
       log_post_curr <- log_post_prop
     } else {
-      theta[i] <- theta[i-1]
+      theta[, i] <- theta[, i-1]
     }
   }
   theta
 }
 
 set.seed(100)
-theta <- mh_sample(y_obs)
-exact_density <- density(theta[10000:50000])
+theta <- mh_sample(y_obs, proposal_sd = 0.75)
+exact_xi_density <- density(theta[1, 10000:50000])
+exact_alpha_density <- density(theta[2, 10000:50000])
 ```
 
 ```{r}
 #| echo: true
-plot(exact_density,
+plot(exact_xi_density,
      ylim = c(0, 1),
      main = "Density functions",
      xlab = "Theta",
@@ -125,12 +123,19 @@ legend("topright",
        lwd = 2)
 ```
 
-
-
-
-
-
-
-
-
-
+```{r}
+#| echo: true
+plot(exact_alpha_density,
+     ylim = c(0, 1),
+     main = "Density functions",
+     xlab = "Theta",
+     ylab = "Density",
+     col = "black",
+     lwd = 2)
+lines(x, prior, col = "gray", lwd = 2, lty = 1)
+legend("topright",
+       c("pi(theta|y_obs)", "pi(theta)"),
+       col = c("black", "gray"),
+       lty = 1,
+       lwd = 2)
+```
