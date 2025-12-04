@@ -252,8 +252,8 @@ plot(1:50000, theta_seq$theta[2, ], type = "l", xlab="Iterations", ylab="Theta")
 alpha_density <- density(theta_seq$theta[2, 10000:iter])
 
 plot(alpha_density,
-     main = "pi_BSL(xi|s_obs)",
-     xlab = "xi",
+     main = "pi_BSL(alpha|s_obs)",
+     xlab = "alpha",
      ylab = "Density",
      col = "black",
      lwd = 2)
@@ -292,12 +292,33 @@ plot(1:50000, theta_seq$theta[2, ], type = "l", xlab="Iterations", ylab="Theta")
 alpha_density <- density(theta_seq$theta[2, 10000:iter])
 
 plot(alpha_density,
-     main = "pi_BSL(xi|s_obs)",
-     xlab = "xi",
+     main = "pi_BSL(alpha|s_obs)",
+     xlab = "alpha",
      ylab = "Density",
      col = "black",
      lwd = 2)
 abline(v = post_mean_alpha, col = "red", lwd = 2)
+```
+
+**Possible reason:** bad summary statistics, not sufficient to get $\alpha$.
+
+```{r}
+#| echo: true
+x <- seq(-5, 5, length.out=1001)
+y1 <- dsn(x, xi=1, alpha=-5)
+y2 <- dsn(x, xi=1, alpha=-10)
+y3 <- dsn(x, xi=1, alpha=-20)
+y4 <- dsn(x, xi=1, alpha=-1)
+
+plot(x, y1, type="l", col = rainbow(4)[1], lwd = 2)
+lines(x, y2, col = rainbow(4)[2], lwd = 2)
+lines(x, y3, col = rainbow(4)[3], lwd = 2)
+lines(x, y4, col = rainbow(4)[4], lwd = 2)
+legend("topright",
+       c("alpha = -5", "alpha = -10", "alpha = -20",
+         "alpha = -1"),
+       col = rainbow(4),
+       lwd = 2)
 ```
 
 
