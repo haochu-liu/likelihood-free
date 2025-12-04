@@ -16,13 +16,12 @@ library(matrixStats)
 library(sn)
 library(ggplot2)
 library(future.apply)
+source("../BSL/SL_MCMC.R")
+source("../BSL/SL_AM.R")
 source("../BSL/SL_SMC.R")
 source("../BSL/SL_SMC_resample.R")
-source("../BSL/SL_IBIS.R")
 source("../BSL/SL_WF_SMC.R")
-source("../BSL/SL_WF_IBIS.R")
 source("../BSL/SL_WF_SMC_par.R")
-source("../BSL/SL_WF_IBIS_par.R")
 source("../BSL/ESS_weight2.R")
 source("../BSL/CESS_weight.R")
 set.seed(100)
@@ -59,14 +58,47 @@ summary_stats <- function(y) {
 
 ```{r}
 #| echo: true
-y_obs <- sample_skew_normal(n=1000)
+y_obs <- sample_skew_normal(n=100)
 s_obs <- summary_stats(y_obs)
 ```
 
 ```{r}
 #| echo: true
-xi_vec <- seq(-5, 5, length.out = 1001)
-alpha_vec <- seq(-5, 5, length.out = 1001)
+xi_vec <- seq(-10, 10, length.out = 101)
+alpha_vec <- seq(-10, 10, length.out = 101)
+TH1 <- matrix(rep(xi_vec, each = length(alpha_vec)), nrow = length(xi_vec))
+TH2 <- matrix(rep(alpha_vec, times = length(xi_vec)), nrow = length(xi_vec))
+
+prior <- function(xi, alpha) {
+  dnorm(xi, mean = 0, sd = 3) * dnorm(alpha, mean = 0, sd = 3)
+}
+
+likelihood <- function(xi, alpha, y) {
+  prod(dsn(y, xi=xi, omega=1, alpha=alpha))
+}
+
+un_post <- matrix(0, nrow = length(alpha_vec), ncol = length(xi_vec))
+for (i in 1:length(xi_vec)) {
+  for (j in 1:length(alpha_vec)) {
+    un_post[j, i] <- prior(TH1[j, i], TH2[j, i]) *
+                     likelihood(TH1[j, i], TH2[j, i], y_obs)
+  }
+}
+
+post <- un_post / sum(un_post)
+post_mean_xi <- sum(TH1 * post)
+post_mean_alpha <- sum(TH2 * post)
+
+image(alpha_vec, xi_vec, post,
+      xlab = expression(alpha),
+      ylab = expression(xi),
+      main="Posterior")
+```
+
+```{r}
+#| echo: true
+xi_vec <- seq(-10, 10, length.out = 1001)
+alpha_vec <- seq(-10, 10, length.out = 1001)
 xi_prior <- dnorm(xi_vec, mean = 0, sd = 3)
 alpha_prior <- dnorm(alpha_vec, mean = 0, sd = 3)
 
@@ -78,7 +110,7 @@ log_posterior <- function(xi, alpha, y) {
 }
 mh_sample <- function(y, n_iter = 50000, proposal_sd = 1) {
   theta <- matrix(NA, nrow=2, ncol=n_iter)
-  theta[, 1] <- c(0, 0)
+  theta[, 1] <- rmvnorm(1, mean=c(0, 0), sigma=diag(c(9, 9)))
   
   log_post_curr <- log_posterior(theta[1, 1], theta[2, 1], y)
   
@@ -101,7 +133,7 @@ mh_sample <- function(y, n_iter = 50000, proposal_sd = 1) {
 }
 
 set.seed(100)
-theta <- mh_sample(y_obs, proposal_sd = 0.75)
+theta <- mh_sample(y_obs, proposal_sd = 1)
 exact_xi_density <- density(theta[1, 10000:50000])
 exact_alpha_density <- density(theta[2, 10000:50000])
 ```
@@ -109,15 +141,15 @@ exact_alpha_density <- density(theta[2, 10000:50000])
 ```{r}
 #| echo: true
 plot(exact_xi_density,
-     ylim = c(0, 1),
      main = "Density functions",
      xlab = "Theta",
      ylab = "Density",
      col = "black",
      lwd = 2)
-lines(x, prior, col = "gray", lwd = 2, lty = 1)
+lines(xi_vec, xi_prior, col = "gray", lwd = 2, lty = 1)
+abline(v = post_mean_xi, col = "red", lwd = 2)
 legend("topright",
-       c("pi(theta|y_obs)", "pi(theta)"),
+       c("pi(xi|y_obs)", "pi(xi)"),
        col = c("black", "gray"),
        lty = 1,
        lwd = 2)
@@ -126,16 +158,148 @@ legend("topright",
 ```{r}
 #| echo: true
 plot(exact_alpha_density,
-     ylim = c(0, 1),
      main = "Density functions",
      xlab = "Theta",
      ylab = "Density",
      col = "black",
      lwd = 2)
-lines(x, prior, col = "gray", lwd = 2, lty = 1)
+lines(alpha_vec, alpha_prior, col = "gray", lwd = 2, lty = 1)
+abline(v = post_mean_alpha, col = "red", lwd = 2)
 legend("topright",
-       c("pi(theta|y_obs)", "pi(theta)"),
+       c("pi(alpha|y_obs)", "pi(alpha)"),
        col = c("black", "gray"),
        lty = 1,
        lwd = 2)
 ```
+
+## BSL
+
+Model setup
+
+```{r}
+#| echo: true
+set.seed(100)
+iter <- 50000
+init_theta <- rmvnorm(1, mean=c(0, 0), sigma=diag(c(9, 9)))
+prior_func <- function(theta){
+  dmvnorm(theta, mean=c(0, 0), sigma=diag(c(9, 9)))
+}
+sample_func <- function(theta, M) {
+  s_mat <- matrix(NA, nrow=3, ncol=M)
+  for (i in 1:M) {
+    z <- sample_skew_normal(xi=theta[1], alpha=theta[2], n=100)
+    s_mat[, i] <- summary_stats(z)
+  }
+
+  return(list(mean=rowMeans(s_mat),
+              sigma=var(t(s_mat))))
+}
+```
+
+### Find M
+
+```{r}
+#| echo: true
+M_seq <- seq(5, 100, by=5)
+log_likelihood <- rep(NA, length(M_seq))
+for (j in 1:length(M_seq)) {
+  M <- M_seq[j]
+  sl_vec <- rep(NA, 100)
+  for (i in 1:100) {
+    stats_M <- sample_func(c(1, -5), M)
+    sl_vec[i] <- dmvnorm(x=s_obs,
+                         mean=stats_M$mean,
+                         sigma=stats_M$sigma,
+                         log=TRUE)
+  }
+  log_likelihood[j] <- var(sl_vec)
+  # print(paste0("Finish M = ", M))
+}
+
+print(log_likelihood)
+M <- M_seq[3]
+```
+
+### BSL MCMC
+
+```{r}
+#| echo: true
+set.seed(100)
+q_sigma <- diag(c(1, 1))
+theta_seq <- SL_MCMC(M, iter, s_obs, init_theta, prior_func, sample_func,
+                     q_sigma, acc_rate=TRUE)
+```
+
+```{r}
+#| echo: true
+plot(1:50000, theta_seq$theta[1, ], type = "l", xlab="Iterations", ylab="Theta")
+
+xi_density <- density(theta_seq$theta[1, 10000:iter])
+
+plot(xi_density,
+     main = "pi_BSL(xi|s_obs)",
+     xlab = "xi",
+     ylab = "Density",
+     col = "black",
+     lwd = 2)
+abline(v = post_mean_xi, col = "red", lwd = 2)
+```
+
+```{r}
+#| echo: true
+plot(1:50000, theta_seq$theta[2, ], type = "l", xlab="Iterations", ylab="Theta")
+
+alpha_density <- density(theta_seq$theta[2, 10000:iter])
+
+plot(alpha_density,
+     main = "pi_BSL(xi|s_obs)",
+     xlab = "xi",
+     ylab = "Density",
+     col = "black",
+     lwd = 2)
+abline(v = post_mean_alpha, col = "red", lwd = 2)
+```
+
+### BSL AM
+
+```{r}
+#| echo: true
+set.seed(100)
+q_sigma <- diag(c(1, 1))
+theta_seq <- SL_AM(M, iter, 10000, s_obs, init_theta, prior_func, sample_func,
+                   q_sigma, 0.01, acc_rate=TRUE)
+```
+
+```{r}
+#| echo: true
+plot(1:50000, theta_seq$theta[1, ], type = "l", xlab="Iterations", ylab="Theta")
+
+xi_density <- density(theta_seq$theta[1, 10000:iter])
+
+plot(xi_density,
+     main = "pi_BSL(xi|s_obs)",
+     xlab = "xi",
+     ylab = "Density",
+     col = "black",
+     lwd = 2)
+abline(v = post_mean_xi, col = "red", lwd = 2)
+```
+
+```{r}
+#| echo: true
+plot(1:50000, theta_seq$theta[2, ], type = "l", xlab="Iterations", ylab="Theta")
+
+alpha_density <- density(theta_seq$theta[2, 10000:iter])
+
+plot(alpha_density,
+     main = "pi_BSL(xi|s_obs)",
+     xlab = "xi",
+     ylab = "Density",
+     col = "black",
+     lwd = 2)
+abline(v = post_mean_alpha, col = "red", lwd = 2)
+```
+
+
+
+
