@@ -69,7 +69,6 @@ ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
   iter <- iter + 1
 
   while (tol_old > tol_end) {
-    print(iter)
     # Binary search 100 times
     search_u <- tol_old
     search_l <- tol_end
@@ -78,10 +77,13 @@ ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
     K_new <- rep(0, N)
     for (n in 1:N) {
       K_vec <- rep(NA, M)
+      K_vec2 <- rep(NA, M)
       for (m in 1:M) {
         K_vec[m] <- kernel_func(u_mat[m, n], tol_new)
+        K_vec2[m] <- kernel_func(u_mat[m, n], tol_old)
       }
       K_new[n] <- logSumExp(K_vec)
+      K_old[n] <- logSumExp(K_vec2)
     }
     incremental_weight <- K_new - K_old
     cess_new <- CESS_weight(weight, incremental_weight)
@@ -170,7 +172,6 @@ ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
         if (log_u < log_alpha) {
           theta_mat[, n] <- theta_new
           u_mat[, m] <- u_new
-          K_new[n] <- logSumExp(K_vec)
           if (acc_history) {acc_count <- acc_count + 1}
         }
       }
@@ -178,7 +179,6 @@ ABC_SMC <- function(tol_start, tol_end, alpha, M, N, theta_d, obs, kernel_func,
 
     # Update
     tol_old <- tol_new
-    K_old <- K_new
     cess_old <- cess_new
     if (tol_history) {
       tol_vec <- c(tol_vec, tol_old)
