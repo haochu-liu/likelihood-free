@@ -1,5 +1,5 @@
 ---
-title: "Cauchy Unimodal"
+title: "Normal Unimodal"
 author: "Haochu"
 format: html
 editor: visual
@@ -30,9 +30,11 @@ set.seed(100)
 
 We set:
 
--   $\theta \sim Cauchy(0, 1)$,
+-   $\theta \sim N(0, 9)$,
 
--   $y|\theta \sim Cauchy(\theta, 1)$.
+-   $y|\theta \sim N(\theta, 1)$,
+
+-   $s|\theta = \frac{1}{20} (y_1, \dots, y_{20}) \sim N(\theta, 0.05)$
 
 Let the true parameter be $\theta = 5$.
 
@@ -40,22 +42,20 @@ Let the true parameter be $\theta = 5$.
 
 ```{r}
 #| echo: true
-sample_cauchy <- function(theta = 5, n = 20) {
-  rcauchy(n, location = theta, scale = 1)
+sample_normal <- function(theta = 5, n = 20) {
+  rnorm(n, mean = theta, sd = 1)
 }
 
 summary_stats <- function(y) {
-  median_y <- median(y)
-  # mad_y <- mad(y) # median absolute deviation
-  # quantile_y <- as.numeric(quantile(y, probs = c(0.25, 0.75)))
-  stats_vec <- c(median_y) #, mad_y, quantile_y[2] - quantile_y[1])
+  mean_y <- mean(y)
+  stats_vec <- c(mean_y)
   return(stats_vec)
 }
 ```
 
 ```{r}
 #| echo: true
-y_obs <- sample_cauchy()
+y_obs <- sample_normal()
 s_obs <- summary_stats(y_obs)
 ```
 
@@ -66,21 +66,22 @@ s_obs <- summary_stats(y_obs)
 theta_vec <- seq(-10, 10, length.out = 20001)
 
 prior <- function(theta) {
-  dcauchy(theta, location = 0, scale = 1)
+  dnorm(theta, mean = 0, sd = 3)
 }
 
 likelihood <- function(theta, y) {
-  prod(dcauchy(y, location = theta, scale = 1))
+  prod(dnorm(y, mean = theta, sd = sqrt(0.05)))
 }
 
-un_post <- sapply(theta_vec, function(t) prior(t) * likelihood(t, y_obs))
+un_post <- sapply(theta_vec, function(t) prior(t) * likelihood(t, s_obs))
 
 normalize <- function(x, grid) {
   dx <- diff(grid)[1]
   x / sum(x) / dx
 }
 post <- normalize(un_post, theta_vec)
-posterior_mean <- sum(theta_vec * post)
+std_post <- post / sum(post)
+posterior_mean <- sum(theta_vec * std_post)
 
 plot(theta_vec, post,
      xlab = expression(theta),
@@ -94,11 +95,11 @@ abline(v = posterior_mean, col = "red", lwd = 2)
 
 ```{r}
 #| echo: true
-prior_vec <- dcauchy(theta_vec, location = 0, scale = 1)
+prior_vec <- dnorm(theta_vec, mean = 0, sd = 3)
 
 log_posterior <- function(theta, y) {
-  log_prior  <- dcauchy(theta, location = 0, scale = 1, log = TRUE)
-  log_like   <- sum(dcauchy(y, location = theta, scale = 1, log = TRUE))
+  log_prior  <- dnorm(theta, mean = 0, sd = 3, log = TRUE)
+  log_like   <- sum(dnorm(y, mean = theta, sd = sqrt(0.05), log = TRUE))
   log_prior + log_like
 }
 mh_sample <- function(y, n_iter = 50000, proposal_sd = 1) {
@@ -125,7 +126,7 @@ mh_sample <- function(y, n_iter = 50000, proposal_sd = 1) {
 }
 
 set.seed(100)
-theta <- mh_sample(y_obs)
+theta <- mh_sample(s_obs)
 exact_density <- density(theta[10000:50000])
 ```
 
@@ -142,7 +143,7 @@ lines(theta_vec, prior_vec, col = "gray", lwd = 2, lty = 2)
 lines(theta_vec, post, col = "darkblue", lwd = 2, lty = 2)
 abline(v = posterior_mean, col = "red", lwd = 2)
 legend("topleft",
-       c("pi(theta|y_obs)", "pi(theta)", "posterior by grids", "posterior mean"),
+       c("pi(theta|s_obs)", "pi(theta)", "posterior by grids", "posterior mean"),
        col = c("black", "gray", "darkblue", "red"),
        lty = c(1, 2, 2, 1),
        lwd = 2)
@@ -150,20 +151,21 @@ legend("topleft",
 
 ## BSL
 
-Model setup
+### BSL MCMC
 
 ```{r}
 #| echo: true
 set.seed(100)
+M <- 10
 iter <- 50000
-init_theta <- rcauchy(1, location=0, scale=1)
+init_theta <- rnorm(1, mean=0, sd=3)
 prior_func <- function(theta){
-  dcauchy(theta, location=0, scale=1, log=TRUE)
+  dnorm(theta, mean=0, sd=3, log=TRUE)
 }
 sample_func <- function(theta, M) {
   s_mat <- matrix(NA, nrow=1, ncol=M)
   for (i in 1:M) {
-    z <- sample_cauchy(theta=theta)
+    z <- sample_normal(theta=theta)
     s_mat[, i] <- summary_stats(z)
   }
 
@@ -171,32 +173,6 @@ sample_func <- function(theta, M) {
               sigma=var(t(s_mat))))
 }
 ```
-
-### Find M
-
-```{r}
-#| echo: true
-M_seq <- seq(5, 100, by=5)
-log_likelihood <- rep(NA, length(M_seq))
-for (j in 1:length(M_seq)) {
-  M <- M_seq[j]
-  sl_vec <- rep(NA, 100)
-  for (i in 1:100) {
-    stats_M <- sample_func(5, M)
-    sl_vec[i] <- dmvnorm(x=s_obs,
-                         mean=stats_M$mean,
-                         sigma=stats_M$sigma,
-                         log=TRUE)
-  }
-  log_likelihood[j] <- var(sl_vec)
-  # print(paste0("Finish M = ", M))
-}
-
-print(log_likelihood)
-M <- M_seq[3]
-```
-
-### BSL MCMC
 
 ```{r}
 #| echo: true
@@ -213,7 +189,6 @@ plot(1:50000, bsl_mcmc$theta[1, ], type = "l", xlab="Iterations", ylab="Theta")
 theta_density <- density(bsl_mcmc$theta[1, 10000:iter])
 
 plot(theta_vec, post,
-     ylim = c(0, 1),
      main = "Density functions",
      xlab = "Theta",
      ylab = "Density",
@@ -222,7 +197,7 @@ plot(theta_vec, post,
      lwd = 2)
 lines(theta_density, col = "blue", lwd = 2, lty = 4)
 legend("topleft",
-       c("pi(theta|y_obs)", "pi_BSL(theta|s_obs)"),
+       c("pi(theta|s_obs)", "pi_BSL(theta|s_obs)"),
        col = c("black", "blue"),
        lty = c(1, 4),
        lwd = 2)
@@ -233,15 +208,15 @@ legend("topleft",
 ```{r}
 #| echo: true
 prior_sampler <- function(){
-  rcauchy(1, location=0, scale=1)
+  rnorm(1, mean=0, sd=3)
 }
 prior_func <- function(theta){
-  dcauchy(theta, location=0, scale=1, log=TRUE)
+  dnorm(theta, mean=0, sd=3, log=TRUE)
 }
 sample_func <- function(theta, M) {
   s_mat <- matrix(NA, nrow=1, ncol=M)
   for (i in 1:M) {
-    z <- sample_cauchy(theta=theta)
+    z <- sample_normal(theta=theta)
     s_mat[, i] <- summary_stats(z)
   }
 
@@ -286,9 +261,7 @@ par(mfrow = c(1, 1))
 
 ```{r}
 #| echo: true
-theta_density <- density(bsl_smc$theta[1, ,gamma_n],
-                         bw = 0.5,
-                         weights = exp(bsl_smc$weight[gamma_n, ]))
+theta_density <- density(bsl_smc$theta[1, ,gamma_n])
 
 plot(theta_vec, post,
      main = "Density functions",
@@ -299,7 +272,7 @@ plot(theta_vec, post,
      lwd = 2)
 lines(theta_density, col = "blue", lwd = 2, lty = 4)
 legend("topleft",
-       c("pi(theta|y_obs)", "pi_BSL(theta|s_obs)"),
+       c("pi(theta|s_obs)", "pi_BSL(theta|s_obs)"),
        col = c("black", "blue"),
        lty = c(1, 4),
        lwd = 2)
@@ -312,10 +285,10 @@ legend("topleft",
 ```{r}
 #| echo: true
 prior_func <- function(theta){
-  dcauchy(theta, location=0, scale=1, log=TRUE)
+  dnorm(theta, mean=0, sd=3, log=TRUE)
 }
 sample_func <- function(theta) {
-  z <- sample_cauchy(theta=theta)
+  z <- sample_normal(theta=theta)
   return(summary_stats(z))
 }
 ```
@@ -323,7 +296,7 @@ sample_func <- function(theta) {
 ```{r}
 #| echo: true
 set.seed(100)
-tol <- 1
+tol <- 0.1
 iter <- 50000
 theta_sigma <- matrix(0.1, nrow=1, ncol=1)
 q_sigma <- matrix(1, nrow=1, ncol=1)
@@ -347,7 +320,7 @@ plot(theta_vec, post,
      lwd = 2)
 lines(theta_density, col = "blue", lwd = 2, lty = 4)
 legend("topleft",
-       c("pi(theta|y_obs)", "pi_ABC(theta|s_obs)"),
+       c("pi(theta|s_obs)", "pi_ABC(theta|s_obs)"),
        col = c("black", "blue"),
        lty = c(1, 4),
        lwd = 2)
@@ -358,15 +331,15 @@ legend("topleft",
 ```{r}
 #| echo: true
 prior_sampler <- function(){
-  rcauchy(1, location=0, scale=1)
+  rnorm(1, mean=0, sd=3)
 }
 prior_func <- function(theta){
-  dcauchy(theta, location=0, scale=1, log=TRUE)
+  dnorm(theta, mean=0, sd=3, log=TRUE)
 }
 sample_func <- function(theta, M) {
   s_mat <- matrix(NA, nrow=1, ncol=M)
   for (i in 1:M) {
-    z <- sample_cauchy(theta=theta)
+    z <- sample_normal(theta=theta)
     s_mat[, i] <- summary_stats(z)
   }
 
@@ -378,7 +351,7 @@ sample_func <- function(theta, M) {
 #| echo: true
 set.seed(100)
 tol_start <- 1
-tol_end <- 0.1
+tol_end <- 0.01
 N <- 1000
 theta_d <- 1
 theta_sigma <- matrix(0.1, nrow=1, ncol=1)
@@ -409,77 +382,7 @@ par(mfrow = c(1, 1))
 
 ```{r}
 #| echo: true
-par(mfrow = c(5, 1), mar = c(2, 4, 2, 1))
-for (i in 1:5) {
-  theta_density <- density(abc_smc$theta[1, ,i], bw = 0.5,
-                           weights = exp(abc_smc$weight[i, ]))
-  plot(theta_density,
-     main = paste0("Iteration ", i),
-     xlab = "Theta",
-     ylab = "Density",
-     xlim = c(-20, 20),
-     col = "black",
-     lwd = 2)
-}
-par(mfrow = c(1, 1))
-```
-
-```{r}
-#| echo: true
-par(mfrow = c(5, 1), mar = c(2, 4, 2, 1))
-for (i in 6:10) {
-  theta_density <- density(abc_smc$theta[1, ,i], bw = 0.5,
-                           weights = exp(abc_smc$weight[i, ]))
-  plot(theta_density,
-     main = paste0("Iteration ", i),
-     xlab = "Theta",
-     ylab = "Density",
-     xlim = c(-20, 20),
-     col = "black",
-     lwd = 2)
-}
-par(mfrow = c(1, 1))
-```
-
-```{r}
-#| echo: true
-par(mfrow = c(5, 1), mar = c(2, 4, 2, 1))
-for (i in 11:15) {
-  theta_density <- density(abc_smc$theta[1, ,i], bw = 0.5,
-                           weights = exp(abc_smc$weight[i, ]))
-  plot(theta_density,
-     main = paste0("Iteration ", i),
-     xlab = "Theta",
-     ylab = "Density",
-     xlim = c(-20, 20),
-     col = "black",
-     lwd = 2)
-}
-par(mfrow = c(1, 1))
-```
-
-```{r}
-#| echo: true
-par(mfrow = c(3, 1), mar = c(2, 4, 2, 1))
-for (i in 16:tol_n) {
-  theta_density <- density(abc_smc$theta[1, ,i], bw = 0.5,
-                           weights = exp(abc_smc$weight[i, ]))
-  plot(theta_density,
-     main = paste0("Iteration ", i),
-     xlab = "Theta",
-     ylab = "Density",
-     xlim = c(-20, 20),
-     col = "black",
-     lwd = 2)
-}
-par(mfrow = c(1, 1))
-```
-
-```{r}
-#| echo: true
-theta_density <- density(abc_smc$theta[1, ,tol_n],
-                         bw = 0.5,
-                         weights = exp(abc_smc$weight[tol_n, ]))
+theta_density <- density(abc_smc$theta[1, ,tol_n])
 
 plot(theta_vec, post,
      main = "Density functions",
@@ -490,8 +393,18 @@ plot(theta_vec, post,
      lwd = 2)
 lines(theta_density, col = "blue", lwd = 2, lty = 4)
 legend("topleft",
-       c("pi(theta|y_obs)", "pi_ABC(theta|s_obs)"),
+       c("pi(theta|s_obs)", "pi_ABC(theta|s_obs)"),
        col = c("black", "blue"),
        lty = c(1, 4),
        lwd = 2)
 ```
+
+
+
+
+
+
+
+
+
+
