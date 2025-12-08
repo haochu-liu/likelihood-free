@@ -328,7 +328,8 @@ df$VU.time[iter] <- var(measure_mat[, 6]) * mean(measure_mat[, 5])
 df$VL.time[iter] <- var(measure_mat[, 7]) * mean(measure_mat[, 5])
 df$VE.time[iter] <- var(measure_mat[, 3]) * mean(measure_mat[, 5])
 
-
+# Save df
+saveRDS(df, file="df_acc_eff.rds")
 
 
 
