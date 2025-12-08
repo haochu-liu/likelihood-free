@@ -94,7 +94,7 @@ df <- data.frame(method=c("ABC-MCMC", "ABC-SMC", "SL-MCMC", "SL-SMC",
                  VE.time = NA)
 
 # Run
-num_runs <- 20
+num_runs <- 100
 measure_mat <- matrix(NA, nrow=num_runs, ncol=7)
 colnames(measure_mat) <- c("Wasserstein_dist", "MMD", "est_mean", "est_sd",
                            "time", "QU", "QL")
@@ -330,6 +330,5 @@ df$VE.time[iter] <- var(measure_mat[, 3]) * mean(measure_mat[, 5])
 
 # Save df
 saveRDS(df, file="df_acc_eff.rds")
-
 
 
