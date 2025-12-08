@@ -87,7 +87,13 @@ plot(theta_vec, post,
      xlab = expression(theta),
      ylab = "Density",
      type = "l",
-     main="Posterior")
+     main="Posterior",
+     lwd = 2,
+     col = alpha("green", 0.5))
+lines(theta_vec, dnorm(theta_vec,
+                       mean=9*s_obs/(0.05+9),
+                       sd=sqrt(1/(1/0.05+1/9))),
+      col = alpha("darkblue", 0.5), lwd = 2, lty = 4)
 abline(v = posterior_mean, col = "red", lwd = 2)
 ```
 
