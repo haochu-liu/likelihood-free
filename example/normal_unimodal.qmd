@@ -398,13 +398,3 @@ legend("topleft",
        lty = c(1, 4),
        lwd = 2)
 ```
-
-
-
-
-
-
-
-
-
-
