@@ -5,3 +5,7 @@
 .Ruserdata
 
 # --- Python ---
+sbi_env/
+.venv/
+venv/
+env/
