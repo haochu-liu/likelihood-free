@@ -3,7 +3,7 @@ library(rjags)
 library(coda)
 library(matrixStats)
 library(rmatio)
-source("R/BSL/SL_MCMC.R")
+source("R/BSL/SL_MCMC2.R")
 set.seed(100)
 
 
@@ -41,9 +41,11 @@ legend("topright",
 
 # BSL setup
 init_theta <- c(rgamma(1, shape=alpha, rate=beta))
+
 prior_func <- function(theta){
   dgamma(theta, shape=alpha, rate=beta, log=TRUE)
 }
+
 sample_func <- function(theta, n, N) {
   x_mat <- matrix(rpois(n*N, theta), nrow=N, ncol=n)
   s <- colMeans(x_mat)
@@ -57,6 +59,13 @@ sample_func_fix_sigma <- function(theta, n, N) {
               sigma=matrix(theta/N, ncol=1, nrow=1)))
 }
 
+proposal <- function(theta_old){
+  theta_new <- rnorm(1, mean=theta_old, sd=1)
+  while (theta_new <= 0) {
+    theta_new <- rnorm(1, mean=theta_old, sd=1)
+  }
+  return(theta_new)
+}
 
 
 
