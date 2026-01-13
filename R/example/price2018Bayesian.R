@@ -202,9 +202,3 @@ for (i in 1:nrow(mcmc_quality2)) {
 save(mcmc_quality2, file="mcmc_quality2.RData")
 
 
-
-
-
-
-
-
