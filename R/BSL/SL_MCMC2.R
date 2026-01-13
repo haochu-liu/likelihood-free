@@ -49,7 +49,7 @@ SL_MCMC2 <- function(M, iter, obs, init_theta, prior_func, sample_func, proposal
 
   result_list <- list(theta=theta_matrix)
   if (acc_rate) {
-    print(paste0("Acceptance rate: ", accept_num/iter))
+    # print(paste0("Acceptance rate: ", accept_num/iter))
     result_list$acc_rate = accept_num/iter
   }
   return(result_list)
