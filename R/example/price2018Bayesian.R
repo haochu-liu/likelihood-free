@@ -4,7 +4,6 @@ library(coda)
 library(matrixStats)
 library(rmatio)
 source("R/BSL/SL_MCMC2.R")
-set.seed(100)
 
 
 lambda <- 30
@@ -41,17 +40,21 @@ legend("topright",
        lwd = 2)
 
 # BSL setup
-init_theta <- c(rgamma(1, shape=alpha, rate=beta))
+init_theta <- lambda
 
 prior_func <- function(theta){
-  dgamma(theta, shape=alpha, rate=beta, log=TRUE)
+  (alpha - 1) * log(theta) - beta * theta
 }
 
 sample_func <- function(theta, n) {
-  x_mat <- matrix(rpois(n*N, theta), nrow=N, ncol=n)
-  s <- colMeans(x_mat)
-  return(list(mean=c(mean(s)),
-              sigma=matrix(var(s), ncol=1, nrow=1)))
+  repeat {
+    x_mat <- matrix(rpois(n*N, theta), nrow=N, ncol=n)
+    s <- colMeans(x_mat)
+    if (var(s) > 0) {
+      return(list(mean=c(mean(s)),
+                  sigma=matrix(var(s), ncol=1, nrow=1)))
+    }
+  }
 }
 sample_func_fix_sigma <- function(theta, n) {
   x_mat <- matrix(rpois(n*N, theta), nrow=N, ncol=n)
@@ -71,6 +74,7 @@ proposal <- function(theta_old){
 }
 
 # Fix T = 100000, change n
+set.seed(100)
 T_iter <- 100000
 mcmc_quality1 <- data.frame(n=c(1, 2, 5, 6, 7, 10, 15, 20),
                             acc.rate=NA,
@@ -78,9 +82,9 @@ mcmc_quality1 <- data.frame(n=c(1, 2, 5, 6, 7, 10, 15, 20),
                             var_log=NA)
 for (i in 1:nrow(mcmc_quality1)) {
   n <- mcmc_quality1$n[i]
-  acc_rate_vec <- rep(NA, 100)
-  ess_vec <- rep(NA, 100)
-  for (j in 1:100) {
+  acc_rate_vec <- rep(NA, 10)
+  ess_vec <- rep(NA, 10)
+  for (j in 1:10) {
     bsl_out <- SL_MCMC2(n, T_iter, s_obs, init_theta, prior_func, sample_func_fix_sigma,
                         proposal, acc_rate=TRUE)
     acc_rate_vec[j] <- bsl_out$acc_rate

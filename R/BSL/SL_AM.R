@@ -39,7 +39,7 @@ SL_AM <- function(M, iter, burn_in, obs, init_theta, prior_func, sample_func,
     log_alpha <- min(0, log_alpha)
     log_u <- log(runif(1))
 
-    if (log_u < log_alpha) {
+    if (log_u < log_alpha & !is.na(log_u < log_alpha)) {
       theta_matrix[, i] <- theta_new
       theta_old <- theta_new
       stats_old <- stats_new
@@ -60,7 +60,7 @@ SL_AM <- function(M, iter, burn_in, obs, init_theta, prior_func, sample_func,
     cov_sigma <- s_d*cov(t(theta_matrix[, 1:burn_in])) + s_d*epsilon*diag(n_theta)
   }
   if (acc_rate) {accept_num_after <- 0}
-  
+
   # Adaptive M-H
   for (i in (burn_in+1):iter) {
     theta_new <- theta_old + as.vector(rmvnorm(n=1, sigma=cov_sigma))
@@ -71,7 +71,7 @@ SL_AM <- function(M, iter, burn_in, obs, init_theta, prior_func, sample_func,
     log_alpha <- min(0, log_alpha)
     log_u <- log(runif(1))
 
-    if (log_u < log_alpha) {
+    if (log_u < log_alpha & !is.na(log_u < log_alpha)) {
       theta_matrix[, i] <- theta_new
       theta_old <- theta_new
       stats_old <- stats_new

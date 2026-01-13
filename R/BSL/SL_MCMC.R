@@ -36,7 +36,7 @@ SL_MCMC <- function(M, iter, obs, init_theta, prior_func, sample_func, q_sigma,
     log_alpha <- min(0, log_alpha)
     log_u <- log(runif(1))
 
-    if (log_u < log_alpha) {
+    if (log_u < log_alpha & !is.na(log_u < log_alpha)) {
       theta_matrix[, i] <- theta_new
       theta_old <- theta_new
       stats_old <- stats_new
