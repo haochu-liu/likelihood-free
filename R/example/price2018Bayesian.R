@@ -77,11 +77,15 @@ proposal <- function(theta_old){
 set.seed(100)
 T_iter <- 100000
 mcmc_quality1 <- data.frame(n=c(1, 2, 5, 6, 7, 10, 15, 20),
-                            acc.rate=NA,
-                            ess=NA,
-                            var_log=NA)
+                            acc_rate.fix_var=NA,
+                            ess.fix_var=NA,
+                            var_log.fix_var=NA,
+                            acc_rate.est_var=NA,
+                            ess.est_var=NA,
+                            var_log.est_var=NA)
 for (i in 1:nrow(mcmc_quality1)) {
   n <- mcmc_quality1$n[i]
+
   acc_rate_vec <- rep(NA, 10)
   ess_vec <- rep(NA, 10)
   for (j in 1:10) {
@@ -91,8 +95,8 @@ for (i in 1:nrow(mcmc_quality1)) {
     ess_vec[j] <- as.numeric(effectiveSize(as.mcmc(bsl_out$theta[1, ])))
   }
 
-  mcmc_quality1$acc.rate[i] <- mean(acc_rate_vec)
-  mcmc_quality1$ess[i] <- mean(ess_vec)
+  mcmc_quality1$acc_rate.fix_var[i] <- mean(acc_rate_vec)
+  mcmc_quality1$ess.fix_var[i] <- mean(ess_vec)
 
   log_like_vec <- rep(NA, 100)
   for (k in 1:100) {
@@ -102,14 +106,100 @@ for (i in 1:nrow(mcmc_quality1)) {
                          sigma=stats_n$sigma,
                          log=TRUE)
   }
-  mcmc_quality1$var_log[i] <- var(log_like_vec)
+  mcmc_quality1$var_log.fix_var[i] <- var(log_like_vec)
+
+  if (n > 1) {
+    acc_rate_vec <- rep(NA, 10)
+    ess_vec <- rep(NA, 10)
+    for (j in 1:10) {
+      bsl_out <- SL_MCMC2(n, T_iter, s_obs, init_theta, prior_func, sample_func,
+                          proposal, acc_rate=TRUE)
+      acc_rate_vec[j] <- bsl_out$acc_rate
+      ess_vec[j] <- as.numeric(effectiveSize(as.mcmc(bsl_out$theta[1, ])))
+    }
+
+    mcmc_quality1$acc_rate.est_var[i] <- mean(acc_rate_vec)
+    mcmc_quality1$ess.est_var[i] <- mean(ess_vec)
+
+    log_like_vec <- rep(NA, 100)
+    for (k in 1:100) {
+      stats_n <- sample_func(lambda, n)
+      log_like_vec[k] <- dmvnorm(x=s_obs,
+                                 mean=stats_n$mean,
+                                 sigma=stats_n$sigma,
+                                 log=TRUE)
+    }
+    mcmc_quality1$var_log.est_var[i] <- var(log_like_vec)
+  }
 
   print(paste0("n = ", n, " finish."))
 }
 
+save(mcmc_quality1, file="mcmc_quality1.RData")
 
+# Fix n*T = 100000, change n and T
+set.seed(100)
+mcmc_quality2 <- data.frame(n=c(1, 2, 5, 6, 7, 10, 15, 20),
+                            acc_rate.fix_var=NA,
+                            ess.fix_var=NA,
+                            var_log.fix_var=NA,
+                            acc_rate.est_var=NA,
+                            ess.est_var=NA,
+                            var_log.est_var=NA)
+for (i in 1:nrow(mcmc_quality2)) {
+  n <- mcmc_quality2$n[i]
+  T_iter <- as.integer(100000 / n)
 
+  acc_rate_vec <- rep(NA, 10)
+  ess_vec <- rep(NA, 10)
+  for (j in 1:10) {
+    bsl_out <- SL_MCMC2(n, T_iter, s_obs, init_theta, prior_func, sample_func_fix_sigma,
+                        proposal, acc_rate=TRUE)
+    acc_rate_vec[j] <- bsl_out$acc_rate
+    ess_vec[j] <- as.numeric(effectiveSize(as.mcmc(bsl_out$theta[1, ])))
+  }
 
+  mcmc_quality2$acc_rate.fix_var[i] <- mean(acc_rate_vec)
+  mcmc_quality2$ess.fix_var[i] <- mean(ess_vec)
+
+  log_like_vec <- rep(NA, 100)
+  for (k in 1:100) {
+    stats_n <- sample_func_fix_sigma(lambda, n)
+    log_like_vec[k] <- dmvnorm(x=s_obs,
+                               mean=stats_n$mean,
+                               sigma=stats_n$sigma,
+                               log=TRUE)
+  }
+  mcmc_quality2$var_log.fix_var[i] <- var(log_like_vec)
+
+  if (n > 1) {
+    acc_rate_vec <- rep(NA, 10)
+    ess_vec <- rep(NA, 10)
+    for (j in 1:10) {
+      bsl_out <- SL_MCMC2(n, T_iter, s_obs, init_theta, prior_func, sample_func,
+                          proposal, acc_rate=TRUE)
+      acc_rate_vec[j] <- bsl_out$acc_rate
+      ess_vec[j] <- as.numeric(effectiveSize(as.mcmc(bsl_out$theta[1, ])))
+    }
+
+    mcmc_quality2$acc_rate.est_var[i] <- mean(acc_rate_vec)
+    mcmc_quality2$ess.est_var[i] <- mean(ess_vec)
+
+    log_like_vec <- rep(NA, 100)
+    for (k in 1:100) {
+      stats_n <- sample_func(lambda, n)
+      log_like_vec[k] <- dmvnorm(x=s_obs,
+                                 mean=stats_n$mean,
+                                 sigma=stats_n$sigma,
+                                 log=TRUE)
+    }
+    mcmc_quality2$var_log.est_var[i] <- var(log_like_vec)
+  }
+
+  print(paste0("n = ", n, " finish."))
+}
+
+save(mcmc_quality2, file="mcmc_quality2.RData")
 
 
 
