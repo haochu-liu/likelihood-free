@@ -50,8 +50,12 @@ sample_func <- function(theta, n, N) {
   return(list(mean=c(mean(s)),
               sigma=matrix(var(s), ncol=1, nrow=1)))
 }
-
-
+sample_func_fix_sigma <- function(theta, n, N) {
+  x_mat <- matrix(rpois(n*N, theta), nrow=N, ncol=n)
+  s <- colMeans(x_mat)
+  return(list(mean=c(mean(s)),
+              sigma=matrix(theta/N, ncol=1, nrow=1)))
+}
 
 
 
