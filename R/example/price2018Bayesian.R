@@ -1,5 +1,4 @@
 library(mvtnorm)
-library(rjags)
 library(coda)
 library(matrixStats)
 library(rmatio)
