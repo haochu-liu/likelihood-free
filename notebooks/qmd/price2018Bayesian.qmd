@@ -14,7 +14,7 @@ library(coda)
 library(matrixStats)
 library(rmatio)
 library(R.matlab)
-source("R/BSL/SL_MCMC2.R")
+source("../../R/BSL/SL_MCMC2.R")
 ```
 
 ## Toy example
@@ -139,20 +139,23 @@ print(normalized_ess_est)
 #| echo: true
 data_list <- readMat("../../data/price2018Bayesian_results.mat")
 
-paper_normalized_ess_fix <- rep(NA, length())
-paper_normalized_ess_est <- rep(NA, 8)
+paper_normalized_ess_fix <- rep(NA, length(mcmc_quality1$n))
+paper_normalized_ess_est <- rep(NA, length(mcmc_quality1$n))
 names(paper_normalized_ess_fix) <- mcmc_quality1$n
 names(paper_normalized_ess_est) <- mcmc_quality1$n
 
-for (i in 1:8) {
+for (i in 1:length(mcmc_quality1$n)) {
   ess <- as.numeric(effectiveSize(as.mcmc(data_list$chain.fix.var[, i])))
   paper_normalized_ess_fix[i] <- ess / mcmc_quality1$n[i]
   
   if (i > 1) {
-    
+    ess <- as.numeric(effectiveSize(as.mcmc(data_list$chain.est.var[, i])))
+    paper_normalized_ess_est[i] <- ess / mcmc_quality1$n[i]
   }
 }
 
+print(paper_normalized_ess_fix)
+print(paper_normalized_ess_est)
 ```
 
 ### Fix n\*T = 100000
