@@ -121,6 +121,7 @@ proposal <- function(theta_old){
 #### Estimated posterior density
 
 #### Comparison with different n
+
 ```{r}
 #| echo: true
 load("../../data/mcmc_quality1.RData")
@@ -135,27 +136,40 @@ print(normalized_ess_est)
 ```
 
 #### MCMC chains from the paper's code
+
 ```{r}
 #| echo: true
 data_list <- readMat("../../data/price2018Bayesian_results.mat")
 
-paper_normalized_ess_fix <- rep(NA, length(mcmc_quality1$n))
-paper_normalized_ess_est <- rep(NA, length(mcmc_quality1$n))
-names(paper_normalized_ess_fix) <- mcmc_quality1$n
-names(paper_normalized_ess_est) <- mcmc_quality1$n
+paper_mcmc <- data.frame(n=c(1, 2, 5, 6, 7, 10, 15, 20),
+                         acc_rate.fix_var=NA,
+                         ess.fix_var=NA,
+                         norm_ess.fix_var=NA,
+                         acc_rate.est_var=NA,
+                         ess.est_var=NA,
+                         norm_ess.est_var=NA)
 
-for (i in 1:length(mcmc_quality1$n)) {
-  ess <- as.numeric(effectiveSize(as.mcmc(data_list$chain.fix.var[, i])))
-  paper_normalized_ess_fix[i] <- ess / mcmc_quality1$n[i]
+for (i in 1:nrow(data_list$acc.fix.var)) {
+  paper_mcmc$acc_rate.fix_var[i] <- mean(data_list$acc.fix.var[i, ])
+  ess_vec <- rep(NA, 10)
+  for (j in 1:10) {
+    ess_vec[j] <- as.numeric(effectiveSize(as.mcmc(data_list$chain.fix.var[ ,(i-1)*10+j])))
+  }
+  paper_mcmc$ess.fix_var[i] <- mean(ess_vec)
+  paper_mcmc$norm_ess.fix_var[i] <- mean(ess_vec) / paper_mcmc$n[i]
   
   if (i > 1) {
-    ess <- as.numeric(effectiveSize(as.mcmc(data_list$chain.est.var[, i])))
-    paper_normalized_ess_est[i] <- ess / mcmc_quality1$n[i]
+    paper_mcmc$acc_rate.est_var[i] <- mean(data_list$acc.est.var[i, ])
+    ess_vec <- rep(NA, 10)
+    for (j in 1:10) {
+      ess_vec[j] <- as.numeric(effectiveSize(as.mcmc(data_list$chain.est.var[ ,(i-1)*10+j])))
+    }
+    paper_mcmc$ess.est_var[i] <- mean(ess_vec)
+    paper_mcmc$norm_ess.est_var[i] <- mean(ess_vec) / paper_mcmc$n[i]
   }
 }
 
-print(paper_normalized_ess_fix)
-print(paper_normalized_ess_est)
+print(paper_mcmc)
 ```
 
 ### Fix n\*T = 100000
@@ -165,6 +179,7 @@ print(paper_normalized_ess_est)
 #### Estimated posterior density
 
 #### Comparison with different n
+
 ```{r}
 #| echo: true
 load("../../data/mcmc_quality2.RData")
