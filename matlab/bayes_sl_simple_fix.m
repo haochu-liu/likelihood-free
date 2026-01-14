@@ -56,7 +56,7 @@ for i = 1:M
         theta_curr = theta_prop;
         loglike_ind_curr = loglike_ind_prop;
         logprior_curr = logprior_prop;
-        acc_count = account + 1;
+        acc_count = acc_count + 1;
     end
     theta(i,:) = theta_curr;
     
