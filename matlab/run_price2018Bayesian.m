@@ -22,7 +22,7 @@ for i = 1:8
         chain_est_var(:, i) = mcmc_chain;
     end
 
-    fprintf('Finish n = %d\n.', n(i));
+    fprintf('Finish n = %d.\n', n(i));
 end
 
 save('price2018Bayesian_results.mat', 'mcmc_acc1', 'chain_fix_var', 'chain_est_var');
