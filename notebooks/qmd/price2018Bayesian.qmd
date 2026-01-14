@@ -13,6 +13,7 @@ library(mvtnorm)
 library(coda)
 library(matrixStats)
 library(rmatio)
+library(R.matlab)
 source("R/BSL/SL_MCMC2.R")
 ```
 
@@ -120,6 +121,39 @@ proposal <- function(theta_old){
 #### Estimated posterior density
 
 #### Comparison with different n
+```{r}
+#| echo: true
+load("../../data/mcmc_quality1.RData")
+print(mcmc_quality1)
+
+normalized_ess_fix <- mcmc_quality1$ess.fix_var / mcmc_quality1$n
+normalized_ess_est <- mcmc_quality1$ess.est_var / mcmc_quality1$n
+names(normalized_ess_fix) <- mcmc_quality1$n
+names(normalized_ess_est) <- mcmc_quality1$n
+print(normalized_ess_fix)
+print(normalized_ess_est)
+```
+
+#### MCMC chains from the paper's code
+```{r}
+#| echo: true
+data_list <- readMat("../../data/price2018Bayesian_results.mat")
+
+paper_normalized_ess_fix <- rep(NA, length())
+paper_normalized_ess_est <- rep(NA, 8)
+names(paper_normalized_ess_fix) <- mcmc_quality1$n
+names(paper_normalized_ess_est) <- mcmc_quality1$n
+
+for (i in 1:8) {
+  ess <- as.numeric(effectiveSize(as.mcmc(data_list$chain.fix.var[, i])))
+  paper_normalized_ess_fix[i] <- ess / mcmc_quality1$n[i]
+  
+  if (i > 1) {
+    
+  }
+}
+
+```
 
 ### Fix n\*T = 100000
 
@@ -128,6 +162,8 @@ proposal <- function(theta_old){
 #### Estimated posterior density
 
 #### Comparison with different n
-
-
-
+```{r}
+#| echo: true
+load("../../data/mcmc_quality2.RData")
+print(mcmc_quality2)
+```
