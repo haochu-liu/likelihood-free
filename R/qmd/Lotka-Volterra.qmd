@@ -1,0 +1,145 @@
+---
+title: "Lotka-Volterra"
+author: "Haochu"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(mvtnorm)
+library(ggplot2)
+library(GGally)
+source("../BSL/SL_MCMC.R")
+source("../BSL/SL_AM.R")
+source("Lotka-Volterra.R")
+source("L-V_summary_stats.R")
+set.seed(100)
+```
+
+## Lotka-Volterra Model
+
+### Description
+
+Let X represent the number of predators and Y the number of prey. We have:
+
+-   $Y$ increases by one with rate $\theta_1Y$.
+
+-   $Y$ decreases by one and $X$ increases by one with rate $\theta_2XY$.
+
+-   $X$ decreases by one with rate $\theta_3X$.
+Set the initial population size as $X=50, Y=100$. Let the true parameter be $(\theta_1, \theta_2, \theta_3) = (1, 0.01, 0.6)$.
+
+### Code
+
+```{r}
+#| echo: true
+theta <- c(1.0, 0.01, 0.6)
+state <- c(100, 50)
+time_points <- c(0, seq(2, 64, by=2))
+S <- matrix(c(
+  1, 0,
+  -1, 1,
+  0, -1
+), nrow = 3, byrow = TRUE)
+
+obs_results <- Lotka_Volterra(theta, state, time_points, S)
+
+ggplot(obs_results, aes(x = Time)) +
+  geom_line(aes(y = Prey, color = "Prey")) +
+  geom_line(aes(y = Predator, color = "Predator")) +
+  geom_point(aes(y = Prey, color = "Prey")) +
+  geom_point(aes(y = Predator, color = "Predator")) +
+  labs(title = "Lotka-Volterra Simulation",
+       y = "Population Size", x = "Time") +
+  scale_color_manual(values = c("Prey" = "darkred", "Predator" = "darkblue"), name = "Species")
+```
+
+### Summary statistics
+
+```{r}
+#| echo: true
+obs <- L_V_summary_stats(obs_results)
+print(obs)
+```
+
+```{r}
+#| echo: true
+stats_mat <- matrix(NA, nrow=100, ncol=9)
+for (i in 1:100) {
+  results <- Lotka_Volterra(theta, state, time_points, S)
+  stats_mat[i, ] <- L_V_summary_stats(results)
+  if (i %% 10 == 0) {print(paste0("Finish iteration ", i))}
+}
+
+stats_df <- as.data.frame(stats_mat)
+colnames(stats_df) <- c("mean.prey", "mean.predator",
+                        "log(var).prey", "log(var).predator",
+                        "acf_lag1.prey", "acf_lag2.prey",
+                        "acf_lag1.predator", "acf_lag2.predator",
+                        "cross_corr")
+ggpairs(stats_df)
+```
+
+## BSL MCMC
+
+### Setup
+
+In this example, we set the prior to be $\theta \sim N((0.5, 0.005, 0.5), diag(0.5^2, 0.01^2, 0.5^2))$.
+
+```{r}
+#| echo: true
+iter <- 50000
+init_theta <- rmvnorm(1, mean=c(0.5, 0.005, 0.5),
+                      sigma=diag(c(0.5^2, 0.01^2, 0.5^2)))
+prior_func <- function(theta){
+  dmvnorm(theta, mean=c(0.5, 0.005, 0.5),
+          sigma=diag(c(0.5^2, 0.01^2, 0.5^2)),
+          log=TRUE)
+  }
+sample_func <- function(theta, M) {
+  summary_stats_mat <- matrix(NA, nrow=M, ncol=9)
+  for (i in 1:M) {
+    results_i <- Lotka_Volterra(theta, state, time_points, S)
+    summary_stats_mat[i, ] <- L_V_summary_stats(results_i)
+  }
+  return(list(mean=colMeans(summary_stats_mat),
+              sigma=var(summary_stats_mat)))
+}
+```
+
+### Find M
+
+```{r}
+#| echo: true
+M_seq <- seq(5, 100, by=5)
+log_likelihood <- rep(NA, length(M_seq))
+for (j in 1:length(M_seq)) {
+  M <- M_seq[j]
+  sl_vec <- rep(NA, 100)
+  for (i in 1:100) {
+    stats_M <- sample_func(init_theta, M)
+    sl_vec[i] <- dmvnorm(x=obs,
+                         mean=stats_M$mean,
+                         sigma=stats_M$sigma,
+                         log=TRUE)
+  }
+  log_likelihood[j] <- var(sl_vec)
+}
+
+print(log_likelihood)
+M <- M_seq[5]
+```
+
+### M-H algorithm
+
+```{r}
+#| echo: true
+theta_seq <- SL_MCMC(M, iter, obs, init_theta, prior_func, sample_func, 0.1,
+                     acc_rate=TRUE)
+```
+
+
+
