@@ -148,9 +148,3 @@ toy_fix_var <- list(acc_rate=acc_rate.fix_var,
                     var_log=var_log.fix_var)
 
 save(toy_fix_var, file="data/toy_fix_var.RData")
-
-
-
-
-
-
