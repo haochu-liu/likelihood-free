@@ -1,6 +1,7 @@
 import torch
 import numpy as np
-from sbi.inference import NPE_C, simulate_for_sbi
+from sbi.inference import NLE_A, simulate_for_sbi
+from sbi.neural_nets import likelihood_nn
 from sbi.utils.user_input_checks import (
     check_sbi_inputs,
     process_prior,
@@ -12,22 +13,35 @@ from config import torch_device
 torch.set_default_device(torch_device)
 
 
-def two_moons_npe_c(
+def two_moons_nle(
     simulation_budget, seed, prior, x_obs, simulator, num_posterior_samples=1000, dir_prefix=""
 ):
     prior, num_parameters, prior_returns_numpy = process_prior(prior)
     simulator = process_simulator(simulator, prior, prior_returns_numpy)
     check_sbi_inputs(simulator, prior)
 
-    inference = NPE_C(prior=prior, density_estimator="nsf", device=torch_device)
+    density_estimator_fun = likelihood_nn(
+        model="maf",
+        hidden_features=50,
+        z_score_x="independent",
+        z_score_theta="independent",
+    )
 
-    learning_rate = 0.0005  # default value
+    inference = NLE_A(
+        prior=prior,
+        density_estimator=density_estimator_fun,
+        device=torch_device,
+    )
+
+    learning_rate = 0.0005
 
     torch.manual_seed(seed)
     np.random.seed(seed)
 
     theta, x = simulate_for_sbi(
-        simulator=simulator, proposal=prior, num_simulations=simulation_budget
+        simulator=simulator,
+        proposal=prior,
+        num_simulations=simulation_budget,
     )
 
     density_estimator = inference.append_simulations(theta, x).train(
@@ -39,7 +53,7 @@ def two_moons_npe_c(
     theta_trained = theta_trained.reshape((num_posterior_samples, 2))
 
     np.savetxt(
-        f"output/two_moons/{dir_prefix}npec_post_sims{simulation_budget}_seed{seed}.csv",
+        f"output/two_moons/{dir_prefix}nle_post_sims{simulation_budget}_seed{seed}.csv",
         theta_trained.detach().cpu().numpy(),
         delimiter=",",
     )
@@ -50,7 +64,7 @@ if __name__ == "__main__":
 
     for seed in config.seeds:
         for simulation_budget in [5000]:
-            two_moons_npe_c(
+            two_moons_nle(
                 simulation_budget=simulation_budget,
                 seed=seed,
                 prior=two_moon_sim_torch.prior_torch,

@@ -38,7 +38,6 @@ def two_moons_snle(
         prior=prior,
         density_estimator=density_estimator_fun,
         device=torch_device,
-        show_progress_bars=False,
     )
 
     learning_rate = 0.0005
