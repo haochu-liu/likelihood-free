@@ -116,10 +116,6 @@ proposal <- function(theta_old){
 
 ### Fix T = 100000
 
-#### Run MCMC chains
-
-#### Estimated posterior density
-
 #### Comparison with different n
 
 ```{r}
@@ -173,10 +169,6 @@ print(paper_mcmc)
 ```
 
 ### Fix n\*T = 100000
-
-#### Run MCMC chains
-
-#### Estimated posterior density
 
 #### Comparison with different n
 
