@@ -31,7 +31,7 @@ def two_moons_npe_c(
     )
 
     density_estimator = inference.append_simulations(theta, x).train(
-        max_num_epochs=50, learning_rate=learning_rate
+        max_num_epochs=100, learning_rate=learning_rate
     )
     posterior = inference.build_posterior(density_estimator).set_default_x(x_obs)
 
@@ -39,7 +39,7 @@ def two_moons_npe_c(
     theta_trained = theta_trained.reshape((num_posterior_samples, 2))
 
     np.savetxt(
-        f"output/{dir_prefix}npec_post_sims{simulation_budget}_seed{seed}.csv",
+        f"output/two_moons/{dir_prefix}npec_post_sims{simulation_budget}_seed{seed}.csv",
         theta_trained.detach().cpu().numpy(),
         delimiter=",",
     )
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     import config
 
     for seed in config.seeds:
-        for simulation_budget in [2000]:
+        for simulation_budget in [5000]:
             two_moons_npe_c(
                 simulation_budget=simulation_budget,
                 seed=seed,
