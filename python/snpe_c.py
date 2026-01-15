@@ -1,7 +1,7 @@
 import sbi.inference
 import torch
 import numpy as np
-from sbi.inference import NPE, simulate_for_sbi
+from sbi.inference import NPE_C, simulate_for_sbi
 from sbi.utils.user_input_checks import (
     check_sbi_inputs,
     process_prior,
@@ -27,7 +27,7 @@ def two_moons_snpe_c(
     simulator = process_simulator(simulator, prior, prior_returns_numpy)
     check_sbi_inputs(simulator, prior)
 
-    inference = NPE(prior=prior, density_estimator="nsf", device=torch_device)
+    inference = NPE_C(prior=prior, density_estimator="nsf", device=torch_device)
 
     learning_rate = 0.0005  # default value
 
@@ -47,10 +47,9 @@ def two_moons_snpe_c(
         density_estimator = inference.append_simulations(theta, x, proposal=proposal).train(
             max_num_epochs=100, learning_rate=learning_rate
         )
-        posterior = inference.build_posterior(density_estimator)
-        # assert isinstance(posterior, sbi.inference.DirectPosterior)
+        posterior = inference.build_posterior(density_estimator).set_default_x(x_obs)
         # posteriors.append(posterior)
-        proposal = posterior.set_default_x(x_obs)
+        proposal = posterior
 
     # for i in range(num_rounds):
     #     theta_trained = posteriors[i].sample((num_posterior_samples,), x=x_obs)

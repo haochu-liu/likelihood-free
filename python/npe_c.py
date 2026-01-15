@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from sbi.inference import NPE, simulate_for_sbi
+from sbi.inference import NPE_C, simulate_for_sbi
 from sbi.utils.user_input_checks import (
     check_sbi_inputs,
     process_prior,
@@ -19,7 +19,7 @@ def two_moons_npe_c(
     simulator = process_simulator(simulator, prior, prior_returns_numpy)
     check_sbi_inputs(simulator, prior)
 
-    inference = NPE(prior=prior, density_estimator="nsf", device=torch_device)
+    inference = NPE_C(prior=prior, density_estimator="nsf", device=torch_device)
 
     learning_rate = 0.0005  # default value
 
