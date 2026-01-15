@@ -14,6 +14,7 @@ library(coda)
 library(matrixStats)
 library(rmatio)
 library(R.matlab)
+library(fields)
 source("../../R/BSL/SL_MCMC2.R")
 ```
 
@@ -176,4 +177,19 @@ print(paper_mcmc)
 #| echo: true
 load("../../data/mcmc_quality2.RData")
 print(mcmc_quality2)
+```
+
+### Fix T = 10000 and change n and N
+
+```{r}
+#| echo: true
+load("../../data/toy_fix_var.RData")
+
+par(mfrow = c(1, 2), mar = c(5, 4, 4, 5)) 
+image.plot(toy_fix_var$acc_rate, main = "Acceptance rate",
+           col = hcl.colors(12, "YlOrRd"))
+image.plot(toy_fix_var$var_log, main = "Var log likelihood",
+           col = hcl.colors(12, "Viridis"))
+
+print(toy_fix_var$norm_ess)
 ```
