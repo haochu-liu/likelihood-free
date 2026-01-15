@@ -1,7 +1,11 @@
 import torch
 import numpy as np
-import time
-from sbi.inference import SNPE, prepare_for_sbi, simulate_for_sbi
+from sbi.inference import NPE, simulate_for_sbi
+from sbi.utils.user_input_checks import (
+    check_sbi_inputs,
+    process_prior,
+    process_simulator,
+)
 import two_moon_sim_torch
 from config import torch_device
 
@@ -9,18 +13,18 @@ torch.set_default_device(torch_device)
 
 
 def two_moons_npe_c(
-    simulation_budget, seed, prior, simulator, num_posterior_samples=1000, dir_prefix=""
+    simulation_budget, seed, prior, x_obs, simulator, num_posterior_samples=1000, dir_prefix=""
 ):
-    simulator, prior = prepare_for_sbi(simulator, prior)
+    prior, num_parameters, prior_returns_numpy = process_prior(prior)
+    simulator = process_simulator(simulator, prior, prior_returns_numpy)
+    check_sbi_inputs(simulator, prior)
 
-    inference = SNPE(prior=prior, density_estimator="nsf", device=torch_device)
+    inference = NPE(prior=prior, density_estimator="nsf", device=torch_device)
 
     learning_rate = 0.0005  # default value
 
     torch.manual_seed(seed)
     np.random.seed(seed)
-
-    start = time.time()
 
     theta, x = simulate_for_sbi(
         simulator=simulator, proposal=prior, num_simulations=simulation_budget
@@ -29,15 +33,9 @@ def two_moons_npe_c(
     density_estimator = inference.append_simulations(theta, x).train(
         max_num_epochs=50, learning_rate=learning_rate
     )
-    posterior = inference.build_posterior(density_estimator).set_default_x(x_o)
+    posterior = inference.build_posterior(density_estimator).set_default_x(x_obs)
 
-    end = time.time()
-    run_time = end - start
-
-    # run and save inference for each iteration
-    start = time.time()
-
-    theta_trained = posterior.sample((num_posterior_samples,), x=x_o)
+    theta_trained = posterior.sample((num_posterior_samples,), x=x_obs)
     theta_trained = theta_trained.reshape((num_posterior_samples, 2))
 
     np.savetxt(
@@ -46,36 +44,18 @@ def two_moons_npe_c(
         delimiter=",",
     )
 
-    end = time.time()
-    run_time_posterior_inference = end - start
-
-    if simulation_budget == 10000:
-        with open(f"output/{dir_prefix}npec_metadata_seed{seed}.txt", "w") as f:
-            f.write(f"Training time: {run_time:.4f}\n")
-            f.write(
-                f"Inference time (posterior) 10k: {run_time_posterior_inference:.4f}\n"
-            )
-
 
 if __name__ == "__main__":
     import config
 
     for seed in config.seeds:
-        for simulation_budget in [2000, 6000, 10000]:
+        for simulation_budget in [2000]:
             two_moons_npe_c(
                 simulation_budget=simulation_budget,
                 seed=seed,
-                prior=two_moons_wiqvist_torch.prior_torch,
-                simulator=two_moons_wiqvist_torch.simulator_torch,
+                prior=two_moon_sim_torch.prior_torch,
+                x_obs=two_moon_sim_torch.x_o,
+                simulator=two_moon_sim_torch.simulator_torch,
                 num_posterior_samples=config.num_posterior_samples,
-                dir_prefix="simulator_1/",
-            )
-
-            two_moons_npe_c(
-                simulation_budget=simulation_budget,
-                seed=seed,
-                prior=two_moons_wiqvist_torch.prior_torch,
-                simulator=sbibm.get_task("two_moons").get_simulator(),
-                num_posterior_samples=config.num_posterior_samples,
-                dir_prefix="simulator_2/",
+                dir_prefix="",
             )

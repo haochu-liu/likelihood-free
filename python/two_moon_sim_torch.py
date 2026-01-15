@@ -1,6 +1,6 @@
 import torch
 from config import torch_device
-from sbi.utils import BoxUniform
+from sbi.utils.torchutils import BoxUniform
 
 
 mean_radius = 0.1
@@ -22,8 +22,8 @@ def simulator_torch(theta):
     p = torch.tensor(
         [r * torch.cos(a) + baseoffset, r * torch.sin(a)], device=torch_device
     )
-    z0 = -torch.abs(theta[0] + theta[1]) / torch.sqrt(2)
-    z1 = (-theta[0] + theta[1]) / torch.sqrt(2)
+    z0 = -torch.abs(theta[0] + theta[1]) / torch.sqrt(torch.tensor(2.0))
+    z1 = (-theta[0] + theta[1]) / torch.sqrt(torch.tensor(2.0))
     return p + torch.tensor([z0, z1], device=torch_device)
 
 
