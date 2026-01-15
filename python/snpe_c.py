@@ -7,7 +7,7 @@ from sbi.utils.user_input_checks import (
     process_prior,
     process_simulator,
 )
-import two_moon_sim_torch
+import two_moon_sim
 from config import torch_device
 
 torch.set_default_device(torch_device)
