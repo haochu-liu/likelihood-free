@@ -50,9 +50,6 @@ posterior_mean <- function(y, N_val) {
   return((alpha + sum(y)) / (beta + N_val))
 }
 
-posterior_var <- function(y, N_val) {
-  return((alpha + sum(y)) / (beta + N_val)^2)
-}
 
 # Fix T = 10000, change n
 set.seed(100)
@@ -85,12 +82,8 @@ rownames(var_log.fix_var) <- n
 # rownames(var_log.est_var) <- n
 
 err_mean.fix_var <- matrix(NA, nrow=length(n), ncol=length(N))
-colnames(var_log.fix_var) <- N
-rownames(var_log.fix_var) <- n
-
-err_var.fix_var <- matrix(NA, nrow=length(n), ncol=length(N))
-colnames(var_log.fix_var) <- N
-rownames(var_log.fix_var) <- n
+colnames(err_mean.fix_var) <- N
+rownames(err_mean.fix_var) <- n
 
 
 for (i in 1:length(N)) {
@@ -100,15 +93,18 @@ for (i in 1:length(N)) {
 
     acc_rate_vec <- rep(NA, 10)
     ess_vec <- rep(NA, 10)
+    err_mean_vec <- rep(NA, 10)
     for (k in 1:10) {
       bsl_out <- SL_MCMC2(n_val, T_iter, y_obs[1:N_val], init_theta, prior_func, sample_func_fix_sigma,
                           proposal, acc_rate=TRUE)
       acc_rate_vec[k] <- bsl_out$acc_rate
       ess_vec[k] <- as.numeric(effectiveSize(as.mcmc(bsl_out$theta[1, ])))
+      err_mean_vec[k] = abs(posterior_mean(y_obs[1:N_val], N_val) - mean(bsl_out$theta[1, 5000:10000]))
     }
 
     acc_rate.fix_var[j, i] <- mean(acc_rate_vec)
     ess.fix_var[j, i] <- mean(ess_vec)
+    err_mean.fix_var[j, i] <- mean(err_mean_vec)
 
     log_like_vec <- rep(NA, 100)
     for (k in 1:100) {
@@ -161,6 +157,7 @@ for (i in 1:length(N)) {
 toy_fix_var <- list(acc_rate=acc_rate.fix_var,
                     ess=ess.fix_var,
                     norm_ess=norm_ess.fix_var,
-                    var_log=var_log.fix_var)
+                    var_log=var_log.fix_var,
+                    err_mean=err_mean.fix_var)
 
 save(toy_fix_var, file="data/toy_fix_var.RData")
