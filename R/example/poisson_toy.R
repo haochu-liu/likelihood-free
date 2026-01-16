@@ -54,6 +54,7 @@ posterior_mean <- function(y, N_val) {
 # Fix T = 10000, change n
 set.seed(100)
 T_iter <- 10000
+burn_in <- as.integer(T_iter/2)
 n <- c(1, 2, 5, 6, 7, 10, 15, 20)
 N <- c(1, 2, 5, 6, 7, 10, 15, 20)
 
@@ -99,7 +100,7 @@ for (i in 1:length(N)) {
                           proposal, acc_rate=TRUE)
       acc_rate_vec[k] <- bsl_out$acc_rate
       ess_vec[k] <- as.numeric(effectiveSize(as.mcmc(bsl_out$theta[1, ])))
-      err_mean_vec[k] = abs(posterior_mean(y_obs[1:N_val], N_val) - mean(bsl_out$theta[1, 5000:10000]))
+      err_mean_vec[k] = abs(posterior_mean(y_obs[1:N_val], N_val) - mean(bsl_out$theta[1, burn_in:T_iter]))
     }
 
     acc_rate.fix_var[j, i] <- mean(acc_rate_vec)
