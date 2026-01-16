@@ -46,6 +46,14 @@ proposal <- function(theta_old){
   }
 }
 
+posterior_mean <- function(y, N_val) {
+  return((alpha + sum(y)) / (beta + N_val))
+}
+
+posterior_var <- function(y, N_val) {
+  return((alpha + sum(y)) / (beta + N_val)^2)
+}
+
 # Fix T = 10000, change n
 set.seed(100)
 T_iter <- 10000
@@ -75,6 +83,14 @@ rownames(var_log.fix_var) <- n
 # var_log.est_var <- matrix(NA, nrow=length(n), ncol=length(N))
 # colnames(var_log.est_var) <- N
 # rownames(var_log.est_var) <- n
+
+err_mean.fix_var <- matrix(NA, nrow=length(n), ncol=length(N))
+colnames(var_log.fix_var) <- N
+rownames(var_log.fix_var) <- n
+
+err_var.fix_var <- matrix(NA, nrow=length(n), ncol=length(N))
+colnames(var_log.fix_var) <- N
+rownames(var_log.fix_var) <- n
 
 
 for (i in 1:length(N)) {
