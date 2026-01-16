@@ -14,7 +14,6 @@ library(coda)
 library(matrixStats)
 library(rmatio)
 library(R.matlab)
-library(fields)
 source("../../R/BSL/SL_MCMC2.R")
 ```
 
@@ -145,28 +144,42 @@ paper_mcmc <- data.frame(n=c(1, 2, 5, 6, 7, 10, 15, 20),
                          acc_rate.est_var=NA,
                          ess.est_var=NA,
                          norm_ess.est_var=NA)
+err_mean.fix_var <- rep(0, 8)
+err_mean.est_var <- rep(0, 8)
 
 for (i in 1:nrow(data_list$acc.fix.var)) {
   paper_mcmc$acc_rate.fix_var[i] <- mean(data_list$acc.fix.var[i, ])
   ess_vec <- rep(NA, 10)
   for (j in 1:10) {
-    ess_vec[j] <- as.numeric(effectiveSize(as.mcmc(data_list$chain.fix.var[ ,(i-1)*10+j])))
+    ess_vec[j] <- as.numeric(effectiveSize(
+      as.mcmc(data_list$chain.fix.var[, (i-1)*10+j])
+    ))
+    err_mean.fix_var[i] <- err_mean.fix_var[i] +
+      abs(posterior_mean - mean(data_list$chain.fix.var[50000:100000, (i-1)*10+j]))
   }
   paper_mcmc$ess.fix_var[i] <- mean(ess_vec)
   paper_mcmc$norm_ess.fix_var[i] <- mean(ess_vec) / paper_mcmc$n[i]
+  err_mean.fix_var[i] <- err_mean.fix_var[i] / 10
   
   if (i > 1) {
     paper_mcmc$acc_rate.est_var[i] <- mean(data_list$acc.est.var[i, ])
     ess_vec <- rep(NA, 10)
     for (j in 1:10) {
-      ess_vec[j] <- as.numeric(effectiveSize(as.mcmc(data_list$chain.est.var[ ,(i-1)*10+j])))
+      ess_vec[j] <- as.numeric(effectiveSize(
+        as.mcmc(data_list$chain.est.var[ ,(i-1)*10+j])
+      ))
+      err_mean.est_var[i] <- err_mean.est_var[i] +
+        abs(posterior_mean - mean(data_list$chain.est.var[50000:100000, (i-1)*10+j]))
     }
     paper_mcmc$ess.est_var[i] <- mean(ess_vec)
     paper_mcmc$norm_ess.est_var[i] <- mean(ess_vec) / paper_mcmc$n[i]
+    err_mean.fix_var[i] <- err_mean.fix_var[i] / 10
   }
 }
 
 print(paper_mcmc)
+print(err_mean.fix_var)
+print(err_mean.est_var)
 ```
 
 ### Fix n\*T = 100000
