@@ -92,9 +92,9 @@ if __name__ == "__main__":
             num_simulations_per_round=int(5000/config.num_rounds),
             num_rounds=config.num_rounds,
             seed=seed,
-            prior=two_moon_sim_torch.prior_torch,
-            x_obs=two_moon_sim_torch.x_o,
-            simulator=two_moon_sim_torch.simulator_torch,
+            prior=two_moon_sim.prior_torch,
+            x_obs=two_moon_sim.x_o,
+            simulator=two_moon_sim.simulator_torch,
             num_posterior_samples=config.num_posterior_samples,
             dir_prefix="",
         )
