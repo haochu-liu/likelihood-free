@@ -210,3 +210,22 @@ image.plot(toy_fix_var$var_log, main = "Var log likelihood",
 
 print(toy_fix_var$norm_ess)
 ```
+
+```{r}
+#| echo: true
+# Example Matrix
+my_matrix <- matrix(rnorm(9), nrow = 3, 
+                    dimnames = list(c("Row 1", "Row 2", "Row 3"), 
+                                   c("Col A", "Col B", "Col C")))
+
+library(gt)
+library(tidyverse)
+
+df <- as.data.frame(my_matrix)
+
+df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "Parameters") %>%  # <--- Label for the Row Names
+  tab_spanner(label = "Sample Sizes (n)", columns = everything()) %>% # <--- Label for Columns
+  tab_header(title = "MCMC Convergence Results")
+```
