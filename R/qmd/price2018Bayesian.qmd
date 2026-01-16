@@ -184,11 +184,15 @@ print(mcmc_quality2)
 ```{r}
 #| echo: true
 load("../../data/toy_fix_var.RData")
-
+library(fields)
 par(mfrow = c(1, 2), mar = c(5, 4, 4, 5)) 
 image.plot(toy_fix_var$acc_rate, main = "Acceptance rate",
+           xlab = "dim(y)", 
+           ylab = "n",
            col = hcl.colors(12, "YlOrRd"))
 image.plot(toy_fix_var$var_log, main = "Var log likelihood",
+           xlab = "dim(y)", 
+           ylab = "n",
            col = hcl.colors(12, "Viridis"))
 
 print(toy_fix_var$norm_ess)
