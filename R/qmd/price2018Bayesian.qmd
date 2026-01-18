@@ -14,6 +14,8 @@ library(coda)
 library(matrixStats)
 library(rmatio)
 library(R.matlab)
+library(gt)
+library(tidyverse)
 source("../../R/BSL/SL_MCMC2.R")
 ```
 
@@ -192,40 +194,36 @@ load("../../data/mcmc_quality2.RData")
 print(mcmc_quality2)
 ```
 
-### Fix T = 10000 and change n and N
+### Fix T = 100000 and change n and N
 
 ```{r}
 #| echo: true
 load("../../data/toy_fix_var.RData")
-library(fields)
-par(mfrow = c(1, 2), mar = c(5, 4, 4, 5)) 
-image.plot(toy_fix_var$acc_rate, main = "Acceptance rate",
-           xlab = "dim(y)", 
-           ylab = "n",
-           col = hcl.colors(12, "YlOrRd"))
-image.plot(toy_fix_var$var_log, main = "Var log likelihood",
-           xlab = "dim(y)", 
-           ylab = "n",
-           col = hcl.colors(12, "Viridis"))
 
-print(toy_fix_var$norm_ess)
+acc_df <- as.data.frame(round(toy_fix_var$acc_rate, 3))
+acc_df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = "Acceptance rate")
 ```
 
 ```{r}
 #| echo: true
-# Example Matrix
-my_matrix <- matrix(rnorm(9), nrow = 3, 
-                    dimnames = list(c("Row 1", "Row 2", "Row 3"), 
-                                   c("Col A", "Col B", "Col C")))
-
-library(gt)
-library(tidyverse)
-
-df <- as.data.frame(my_matrix)
-
-df %>%
+var_log_df <- as.data.frame(round(toy_fix_var$var_log, 3))
+var_log_df %>%
   gt(rownames_to_stub = TRUE) %>% 
-  tab_stubhead(label = "Parameters") %>%  # <--- Label for the Row Names
-  tab_spanner(label = "Sample Sizes (n)", columns = everything()) %>% # <--- Label for Columns
-  tab_header(title = "MCMC Convergence Results")
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = md("$\\text{var}(\\log p_{SL}(y|\\lambda=30))$"))
+```
+
+```{r}
+#| echo: true
+norm_ess_df <- as.data.frame(round(toy_fix_var$norm_ess))
+norm_ess_df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = "Normalized ESS")
 ```
