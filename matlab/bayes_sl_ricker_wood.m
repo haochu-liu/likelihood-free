@@ -1,4 +1,4 @@
-function theta = bayes_sl_ricker_wood(y,N,M,n,cov_rw)
+function [theta, acc_rate] = bayes_sl_ricker_wood(y,N,M,n,cov_rw)
 % bayes_sl_ricker_wood performs MCMC BSL on the Ricker example, using the same summary statistics as Wood (2010).
 %
 % INPUT:
@@ -10,6 +10,7 @@ function theta = bayes_sl_ricker_wood(y,N,M,n,cov_rw)
 %
 % OUTPUT:
 % theta - MCMC samples from the BSL target
+% acc_rate - acceptance rate of MCMC chain
 
 
 theta_curr = [3.8 10 0.3];
@@ -19,6 +20,7 @@ T=length(y);
 
 theta = zeros(M,3);
 ssx = zeros(n,ns);
+acc_count = 0;
 
 % simulating n data sets
 %parfor k = 1:n % for parallel computing
@@ -58,9 +60,12 @@ for i = 1:M
     if (exp(loglike_ind_prop - loglike_ind_curr) > rand)
         theta_curr = theta_prop;
         loglike_ind_curr = loglike_ind_prop;
+        acc_count = acc_count + 1;
     end
     theta(i,:) = theta_curr;
     
 end
+
+acc_rate = acc_count / M;
 
 end
