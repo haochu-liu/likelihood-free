@@ -220,6 +220,18 @@ var_log_df %>%
 
 ```{r}
 #| echo: true
+load("../../data/toy_like_fix_var.RData")
+
+est_df <- as.data.frame(round(toy_like_fix_var$est, 3))
+est_df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = md("$\\text{var}(p_{SL}(y|\\lambda=30)) / \\text{E}(p_{SL}(y|\\lambda=30))^2$"))
+```
+
+```{r}
+#| echo: true
 norm_ess_df <- as.data.frame(round(toy_fix_var$norm_ess))
 norm_ess_df %>%
   gt(rownames_to_stub = TRUE) %>% 
