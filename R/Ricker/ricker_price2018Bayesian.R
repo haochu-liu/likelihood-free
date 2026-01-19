@@ -96,9 +96,10 @@ SL_MCMC2 <- function(M, iter, obs, init_theta, prior_func, sample_func, proposal
 # Fix T = 500000, change n between 2 and 120
 set.seed(100)
 # T_iter <- 500000
-T_iter <- 1000
+T_iter <- 5000
 burn_in <- as.integer(T_iter/2)
-n <- seq(5, 120, by=5)
+# n <- seq(5, 120, by=5)
+n <- c(30, 40, 50, 60, 70)
 s_obs <- ricker_summstats(y_obs, y_obs)
 ricker_50 <- list(n=n,
                   acc_rate=rep(NA, length(n)),
@@ -114,7 +115,7 @@ for (i in 1:length(n)) {
   n_val <- n[i]
 
   # --- PARALLELIZE FIRST K LOOP ---
-  results_k1 <- future_lapply(1:100, function(k) {
+  results_k1 <- future_lapply(1:10, function(k) {
     bsl_out <- SL_MCMC2(n_val, T_iter, s_obs, init_theta,
                         prior_func, sample_func,
                         proposal, acc_rate=TRUE)
@@ -129,38 +130,29 @@ for (i in 1:length(n)) {
     )
   }, future.seed = TRUE)
 
-  ricker_50$acc_rate[i] <- mean(sapply(results_k1, `[[`, "acc"))
-  ricker_50$ess[, i]      <- mean(sapply(results_k1, `[[`, "ess"))
-  ricker_50$post_mean[, i] <- mean(sapply(results_k1, `[[`, "post_mean"))
+  ricker_50$acc_rate[i]    <- mean(sapply(results_k1, `[[`, "acc"))
+  ricker_50$ess[, i]       <- rowMeans(sapply(results_k1, `[[`, "ess"))
+  ricker_50$norm_ess[, i]  <- ricker_50$ess[, i] / n_val
+  ricker_50$post_mean[, i] <- rowMeans(sapply(results_k1, `[[`, "post_mean"))
 
   # --- PARALLELIZE SECOND K LOOP ---
   log_like_vec <- future_sapply(1:100, function(k) {
-    stats_n <- sample_func_fix_sigma(lambda, n_val)
-    dmvnorm(x = y_obs[1:N_val],
+    stats_n <- sample_func(theta, n_val)
+    dmvnorm(x = s_obs,
             mean = stats_n$mean,
             sigma = stats_n$sigma,
             log = TRUE)
   }, future.seed = TRUE)
 
-  var_log.fix_var[j, i] <- var(log_like_vec)
+  ricker_50$var_log_like[i] <- var(log_like_vec)
+  like_vec <- exp(log_like_vec)
+  ricker_50$var_mean_square[i] <- var(like_vec) / (mean(like_vec)^2)
 
   print(paste0("n = ", n_val, " finish."))
 }
 
 plan(sequential)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+save(ricker_50, file="data/ricker_50.RData")
 
 
