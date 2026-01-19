@@ -95,11 +95,9 @@ SL_MCMC2 <- function(M, iter, obs, init_theta, prior_func, sample_func, proposal
 
 # Fix T = 500000, change n between 2 and 120
 set.seed(100)
-# T_iter <- 500000
-T_iter <- 5000
+T_iter <- 500000
 burn_in <- as.integer(T_iter/2)
-# n <- seq(5, 120, by=5)
-n <- c(30, 40, 50, 60, 70)
+n <- c(20, 30, 40, 50, 80, 100, 250)
 s_obs <- ricker_summstats(y_obs, y_obs)
 ricker_50 <- list(n=n,
                   acc_rate=rep(NA, length(n)),
@@ -115,7 +113,7 @@ for (i in 1:length(n)) {
   n_val <- n[i]
 
   # --- PARALLELIZE FIRST K LOOP ---
-  results_k1 <- future_lapply(1:10, function(k) {
+  results_k1 <- future_lapply(1:20, function(k) {
     bsl_out <- SL_MCMC2(n_val, T_iter, s_obs, init_theta,
                         prior_func, sample_func,
                         proposal, acc_rate=TRUE)
