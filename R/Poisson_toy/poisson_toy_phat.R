@@ -36,6 +36,10 @@ est.fix_var <- matrix(NA, nrow=length(n), ncol=length(N))
 colnames(est.fix_var) <- N
 rownames(est.fix_var) <- n
 
+log_est.fix_var <- matrix(NA, nrow=length(n), ncol=length(N))
+colnames(log_est.fix_var) <- N
+rownames(log_est.fix_var) <- n
+
 plan(multisession, workers = 10)
 
 for (i in 1:length(N)) {
@@ -55,6 +59,7 @@ for (i in 1:length(N)) {
     like_vec <- exp(log_like_vec)
     var_log.fix_var[j, i] <- var(log_like_vec)
     est.fix_var[j, i] <- var(like_vec) / (mean(like_vec)^2)
+    log_est.fix_var[j, i] <- log(var(like_vec)) - 2*log(mean(like_vec))
 
     print(paste0("N = ", N_val, ", n = ", n_val, " finish."))
   }
@@ -64,6 +69,7 @@ plan(sequential)
 
 
 toy_like_fix_var <- list(var_log=var_log.fix_var,
-                         est=est.fix_var)
+                         est=est.fix_var,
+                         log_est=log_est.fix_var)
 
 save(toy_like_fix_var, file="data/toy_like_fix_var.RData")
