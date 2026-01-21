@@ -15,6 +15,8 @@ prior_torch = BoxUniform(
 x_o = torch.tensor([0, 0], device=torch_device)
 x_o = x_o.flatten()
 
+x_o_numpy = x_o.cpu().numpy()
+
 
 def simulator_torch(theta):
     theta = theta.reshape(-1)
@@ -45,7 +47,7 @@ def simulator_numpy(theta):
     p = np.array([r * np.cos(a) + baseoffset, r * np.sin(a)])
     z0 = -np.abs(theta[0] + theta[1]) / np.sqrt(2.0)
     z1 = (-theta[0] + theta[1]) / np.sqrt(2.0)
-    return p + np.array([z0, z1])
+    return p.reshape(-1) + np.array([z0, z1])
 
 
 def analytic_posterior_numpy(x_o, n_samples=1):
