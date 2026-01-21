@@ -93,7 +93,7 @@ SL_MCMC2 <- function(M, iter, obs, init_theta, prior_func, sample_func, proposal
   return(result_list)
 }
 
-# Fix T = 500000, change n between 2 and 120
+# Fix T = 500000, change n between 20 and 250
 set.seed(100)
 T_iter <- 500000
 burn_in <- as.integer(T_iter/2)
