@@ -9,3 +9,6 @@ sbi_env/
 .venv/
 venv/
 env/
+sbi-logs/
+python/sbi_logs/
+python/__pycache__/
