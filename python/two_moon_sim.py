@@ -18,7 +18,7 @@ x_o = x_o.flatten()
 
 def simulator_torch(theta):
     theta = theta.reshape(-1)
-    a = torch.tensor(torch.pi * (torch.rand(1) - 0.5), device=torch_device)
+    a = (torch.pi * (torch.rand(1) - 0.5)).to(torch_device)
     r = mean_radius + torch.randn(1, device=torch_device) * sd_radius
     p = torch.tensor(
         [r * torch.cos(a) + baseoffset, r * torch.sin(a)], device=torch_device
