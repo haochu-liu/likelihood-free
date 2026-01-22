@@ -47,7 +47,7 @@ for (i in 1:length(N)) {
   for (j in 1:length(n)) {
     n_val <- n[j]
 
-    # --- PARALLELIZE SECOND K LOOP ---
+    # --- PARALLELIZE K LOOP ---
     log_like_vec <- future_sapply(1:10000, function(k) {
       stats_n <- sample_func_fix_sigma(lambda, n_val)
       dmvnorm(x = y_obs[1:N_val],
