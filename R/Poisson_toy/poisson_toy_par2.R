@@ -116,6 +116,10 @@ var_W.fix_var <- matrix(NA, nrow=length(n), ncol=length(N))
 colnames(var_W.fix_var) <- N
 rownames(var_W.fix_var) <- n
 
+var_log_W.fix_var <- matrix(NA, nrow=length(n), ncol=length(N))
+colnames(var_log_W.fix_var) <- N
+rownames(var_log_W.fix_var) <- n
+
 
 plan(multisession, workers = 10)
 
@@ -125,7 +129,7 @@ for (i in 1:length(N)) {
     n_val <- n[j]
 
     # --- PARALLELIZE K LOOP ---
-    results_k <- future_lapply(1:100, function(k) {
+    results_k <- future_lapply(1:20, function(k) {
       bsl_out <- SL_MCMC2(n_val, T_iter, y_obs[1:N_val], init_theta,
                           prior_func, sample_func_fix_sigma,
                           proposal, acc_rate=TRUE)
@@ -148,6 +152,7 @@ for (i in 1:length(N)) {
     W_vec <- est_post / true_post
     E_W.fix_var[j, i] <- mean(W_vec)
     var_W.fix_var[j, i] <- var(W_vec)
+    var_log_W.fix_var[j, i] <- var(log(W_vec))
 
     print(paste0("N = ", N_val, ", n = ", n_val, " finish."))
   }
@@ -169,6 +174,7 @@ toy_fix_var <- list(acc_rate=acc_rate.fix_var,
                     ess=ess.fix_var,
                     norm_ess=norm_ess.fix_var,
                     E_W=E_W.fix_var,
-                    var_W=var_W.fix_var)
+                    var_W=var_W.fix_var,
+                    var_log_W=var_log_W.fix_var)
 
 save(toy_fix_var, file="data/toy_fix_var2.RData")
