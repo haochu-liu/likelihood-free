@@ -41,13 +41,13 @@ save(simbac_time, file="data/simbac_time.RData")
 
 load("data/simbac_time.RData")
 
-simbac_time_long <- simbac_time %>%
+simbac_time_long <- simbac_time[, 1:4] %>%
   pivot_longer(cols = everything(), names_to = "Func", values_to = "Time") %>%
-  mutate(Language = ifelse(Func %in% c("R", "R_Rcpp"), "R", "R_in_python"))
+  mutate(Language = ifelse(Func %in% c("R", "R_Rcpp"), "R", "python"))
 
 ggplot(simbac_time_long, aes(x = Func, y = Time, fill = Language)) +
   geom_boxplot() +
-  labs(title = "Simbac function running time",
+  labs(title = "Simbac(L=100000) running time",
        x = "Functions",
        y = "Time(sec)") +
   theme_minimal() +
