@@ -8,6 +8,7 @@ R_time_vec <- rep(NA, 100)
 Rcpp_time_vec <- rep(NA, 100)
 for (i in 1:100) {
   set.seed(i)
+  
   time_result <- system.time(
     simbac_ARG(n, rho_site, 1e5L, delta, node_max = 1000)
   )
