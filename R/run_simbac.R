@@ -6,7 +6,7 @@ library(dplyr)
 
 
 n <- 20L
-rho_site <- 10 / 1e4
+rho_site <- 10 / 1e5
 delta <- 30
 R_time_vec <- rep(NA, 100)
 Rcpp_time_vec <- rep(NA, 100)
@@ -14,12 +14,12 @@ for (i in 1:100) {
   set.seed(i)
 
   start_time_R <- Sys.time()
-  simbac_ARG(n, rho_site, 1e4L, delta, node_max = 1000)
+  simbac_ARG(n, rho_site, 1e5L, delta, node_max = 1000)
   end_time_R <- Sys.time()
   R_time_vec[i] <- end_time_R - start_time_R
 
   start_time_Rcpp <- Sys.time()
-  simbac_ARG.decimal(n, rho_site, 1e4L, delta, node_max = 1000)
+  simbac_ARG.decimal(n, rho_site, 1e5L, delta, node_max = 1000)
   end_time_Rcpp <- Sys.time()
   Rcpp_time_vec[i] <- end_time_Rcpp - start_time_Rcpp
 
