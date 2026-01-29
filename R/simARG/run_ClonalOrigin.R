@@ -20,7 +20,7 @@ for (i in 1:100) {
   end_time <- Sys.time()
   R_time[i] <- end_time - start_time
 
-  print(paste("Complete", i, "iterations"))
+  print(paste("Complete", i, "iteration."))
 }
 
 write.csv(R_time, file="data/ClonalOrigin_time.csv",
