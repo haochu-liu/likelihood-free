@@ -27,7 +27,7 @@ with_progress({
       param_mat[3, i],
       100000L,
       param_mat[2, i],
-      100,
+      200,
       c(50L, 200L, 2000L)
     )
     p(message = sprintf("Finish %g iteration", i))
@@ -65,3 +65,7 @@ points(param_mat[2, ], summary_stats_mat[6, ], pch=4, col="darkgreen")
 plot(param_mat[3, ], summary_stats_mat[4, ], pch=4, col="darkred")
 points(param_mat[3, ], summary_stats_mat[5, ], pch=4, col="darkblue")
 points(param_mat[3, ], summary_stats_mat[6, ], pch=4, col="darkgreen")
+
+plot(param_mat[1, ], summary_stats_mat[7, ], pch=4, col="darkred")
+plot(param_mat[2, ], summary_stats_mat[7, ], pch=4, col="darkred")
+plot(param_mat[3, ], summary_stats_mat[7, ], pch=4, col="darkred")
