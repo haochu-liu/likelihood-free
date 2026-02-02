@@ -31,4 +31,4 @@ def birth_death_sim(n, rho):
             k += 1
             num += 2
             
-    return {"t": t, "n": num}
+    return [t, num]
