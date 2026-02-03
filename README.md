@@ -99,6 +99,7 @@ Bacterial recombination inference from genomic data:
 
 ## Repository Structure
 
+```
 likelihood-free/
 ├── R/ # R implementations
 │ ├── ABC/ # ABC methods
@@ -121,3 +122,4 @@ likelihood-free/
 ├── data/ # Results and datasets
 ├── output/ # Output files and results
 └── sbi_env/ # Python virtual environment
+```
