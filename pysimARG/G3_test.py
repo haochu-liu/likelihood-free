@@ -22,12 +22,15 @@ def G3_test(mat):
     if mat.shape[0] < 3:
         raise ValueError("`mat` must have at least 3 rows.")
     
+    col1 = mat[:, 0].astype(bool)
+    col2 = mat[:, 1].astype(bool)
+    
     # Count pattern 01: first column False, second column True
-    num01 = np.sum(~mat[:, 0] & mat[:, 1])
+    num01 = np.sum(~col1 & col2)
     # Count pattern 10: first column True, second column False
-    num10 = np.sum(mat[:, 0] & ~mat[:, 1])
+    num10 = np.sum(col1 & ~col2)
     # Count pattern 11: both columns True
-    num11 = np.sum(mat[:, 0] & mat[:, 1])
+    num11 = np.sum(col1 & col2)
     
     # Check if all patterns are present (non-zero counts)
     if num01 > 0 and num10 > 0 and num11 > 0:
