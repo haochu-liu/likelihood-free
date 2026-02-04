@@ -38,9 +38,9 @@ class clonal_tree(tree):
             raise ValueError("`n` must be a single integer >= 2!")
         
         super().__init__(n)
-        self._simulate_coalescent()
+        self._simulate_clonal_tree()
     
-    def _simulate_coalescent(self):
+    def _simulate_clonal_tree(self):
         """Simulate coalescent backwards in time to construct the clonal tree."""
         n = self.n
         k = n
@@ -93,4 +93,3 @@ class clonal_tree(tree):
     
     def __repr__(self):
         return f"{self.__class__.__name__}(n={self.n})"
-    
