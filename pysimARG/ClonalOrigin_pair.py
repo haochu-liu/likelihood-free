@@ -123,7 +123,7 @@ class ARG(tree):
                 # Sample edges with probability proportional to edge length
                 edge_probs = clonal_edge[:, 2] / np.sum(clonal_edge[:, 2])
                 recomb_edge[n_recomb:n_recomb + R_new, 0] = np.random.choice(
-                    2 * (n - 1), R_new, replace=True, p=edge_probs
+                    range(1, (2*n-1)), R_new, replace=True, p=edge_probs
                 )
                 
                 for j in range(R_new):
@@ -133,7 +133,7 @@ class ARG(tree):
                     # Simulate b_height
                     recomb_edge[idx, 1] = (
                         np.random.uniform(0, clonal_edge[b_edge_idx, 2]) +
-                        clonal_node_height[int(clonal_edge[b_edge_idx, 1])]
+                        clonal_node_height[int(clonal_edge[b_edge_idx, 1])-1]
                     )
                     
                     # Identify a_height
@@ -171,9 +171,9 @@ class ARG(tree):
                         a_height = recomb_edge[idx, 3]
                         # Find edges that span the a_height
                         pool_edge = np.where(
-                            (clonal_node_height[clonal_edge[:, 0].astype(int)] >= a_height) &
-                            (clonal_node_height[clonal_edge[:, 1].astype(int)] < a_height)
-                        )[0]
+                            (clonal_node_height[clonal_edge[:, 0].astype(int)-1] >= a_height) &
+                            (clonal_node_height[clonal_edge[:, 1].astype(int)-1] < a_height)
+                        )[0] + 1
                         recomb_edge[idx, 2] = np.random.choice(pool_edge)
                     else:
                         # Root edge (using edge index 2*n-2 for 0-indexed)
@@ -208,7 +208,7 @@ class ARG(tree):
         # Columns: index, height, recomb, clonal
         
         node_mat[:n, :] = True
-        node_info[:, 0] = np.arange(node_max)
+        node_info[:, 0] = np.arange(1, node_max + 1)
         
         # Set clonal node info
         node_info[:2*n-1, 1] = clonal_node_height
@@ -220,7 +220,7 @@ class ARG(tree):
         for r in range(n_recomb):
             base_idx = 2 * n - 1 + 2 * r
             node_info[base_idx, 1] = recomb_edge[r, 1]      # b_height
-            node_info[base_idx, 2] = -r                     # negative recomb index (1-indexed)
+            node_info[base_idx, 2] = -(r + 1)               # negative recomb index (1-indexed)
             node_info[base_idx, 3] = 1                      # clonal = True
             
             node_info[base_idx + 1, 1] = recomb_edge[r, 1]  # same b_height
@@ -231,7 +231,7 @@ class ARG(tree):
         for r in range(n_recomb):
             idx = 2 * n - 1 + 2 * n_recomb + r
             node_info[idx, 1] = recomb_edge[r, 3]           # a_height
-            node_info[idx, 2] = r                           # positive recomb index (1-indexed)
+            node_info[idx, 2] = r + 1                       # positive recomb index (1-indexed)
             node_info[idx, 3] = 1                           # clonal = True
         
         # Sort by height
@@ -241,7 +241,7 @@ class ARG(tree):
         # Recombination nodes on every edge
         # Use 1-indexed edge indices to match R behavior
         recomb_node = []
-        for edge_idx in range(2 * n - 1):
+        for edge_idx in range(1, 2 * n):
             # Convert to 1-indexed for ClonalOrigin_nodes
             nodes = ClonalOrigin_nodes(recomb_edge, edge_idx)
             recomb_node.append(nodes)
