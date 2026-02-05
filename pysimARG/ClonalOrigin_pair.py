@@ -235,7 +235,7 @@ class ARG(tree):
             node_info[idx, 3] = 1                           # clonal = True
         
         # Sort by height
-        sort_order = np.argsort(node_info[:, 1])
+        sort_order = np.lexsort((node_info[:, 0], node_info[:, 1]))
         node_info = node_info[sort_order, :]
         
         # Recombination nodes on every edge
