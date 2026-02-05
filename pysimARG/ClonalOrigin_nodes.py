@@ -32,16 +32,13 @@ def ClonalOrigin_nodes(matrix_data, n):
     found_nodes = np.full((total_rows, 2), np.nan)
     
     if len(rows_type_a) > 0:
-        # R is 1-indexed, Python is 0-indexed
-        # Store 1-indexed row numbers to match R behavior
-        found_nodes[:len(rows_type_a), 0] = rows_type_a + 1
+        found_nodes[:len(rows_type_a), 0] = rows_type_a
         found_nodes[:len(rows_type_a), 1] = matrix_data[rows_type_a, 3]
     
     if len(rows_type_b) > 0:
         start_idx = len(rows_type_a)
         end_idx = start_idx + len(rows_type_b)
-        # Negative 1-indexed row numbers to match R behavior
-        found_nodes[start_idx:end_idx, 0] = -(rows_type_b + 1)
+        found_nodes[start_idx:end_idx, 0] = -rows_type_b
         found_nodes[start_idx:end_idx, 1] = matrix_data[rows_type_b, 1]
     
     if found_nodes.shape[0] > 1:
