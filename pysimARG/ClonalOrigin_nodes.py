@@ -38,7 +38,7 @@ def ClonalOrigin_nodes(matrix_data, n):
     if len(rows_type_b) > 0:
         start_idx = len(rows_type_a)
         end_idx = start_idx + len(rows_type_b)
-        found_nodes[start_idx:end_idx, 0] = -rows_type_b
+        found_nodes[start_idx:end_idx, 0] = - rows_type_b
         found_nodes[start_idx:end_idx, 1] = matrix_data[rows_type_b, 1]
     
     if found_nodes.shape[0] > 1:

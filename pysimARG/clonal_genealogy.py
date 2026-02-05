@@ -43,8 +43,8 @@ class ClonalTree(tree):
 
         # Initialize variables and vector
         edge_index = 0
-        node_index = n
-        pool = list(range(n))
+        node_index = n + 1
+        pool = list(range(1, n+1))
 
         # Clonal tree by coalescent only
         while k > 1:
@@ -72,7 +72,7 @@ class ClonalTree(tree):
             self.edge[edge_index : edge_index+2, 2] = t_sum - child_heights
 
             # Append root node height
-            self.node_height[node_index] = t_sum
+            self.node_height[node_index-1] = t_sum
 
             # Updates for iteration
             pool = [x for x in pool if x not in leaf_nodes]
