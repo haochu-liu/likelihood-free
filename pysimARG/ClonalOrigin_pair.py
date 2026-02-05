@@ -259,7 +259,7 @@ class ARG(tree):
                 leaf_edge = np.where(clonal_edge[:, 0] == node_index)[0]
                 leaf_index = np.full(2, np.nan)
                 leaf_node = np.full(2, np.nan)
-                
+
                 for le_idx in range(2):
                     le = leaf_edge[le_idx]
                     if len(recomb_node[le]) > 0:
@@ -270,20 +270,20 @@ class ARG(tree):
                     else:
                         leaf_node[le_idx] = clonal_edge[le, 1]
                         leaf_index[le_idx] = np.where(node_info[:, 0] == leaf_node[le_idx])[0][0]
-                
+
                 # Append edges
-                edge_matrix[edge_index:edge_index+2, 0] = i
-                edge_matrix[edge_index:edge_index+2, 1] = leaf_index
+                edge_matrix[edge_index:edge_index+2, 0] = i + 1
+                edge_matrix[edge_index:edge_index+2, 1] = leaf_index + 1
                 edge_matrix[edge_index:edge_index+2, 2] = node_info[i, 1] - node_info[leaf_index.astype(int), 1]
-                edge_mat_index[edge_index:edge_index+2] = leaf_index
-                
+                edge_mat_index[edge_index:edge_index+2] = leaf_index + 1
+
                 # Append root node material
                 li0, li1 = int(leaf_index[0]), int(leaf_index[1])
                 node_mat[i, :] = np.logical_or(
                     np.nan_to_num(node_mat[li0, :], nan=0).astype(bool),
                     np.nan_to_num(node_mat[li1, :], nan=0).astype(bool)
                 )
-                
+
                 edge_index += 2
                 i += 1
                 
@@ -292,39 +292,34 @@ class ARG(tree):
                 node_index = node_info[i:i+2, 0].astype(int)
                 recomb_idx = int(abs(node_info[i, 2])) - 1
                 leaf_edge = int(recomb_edge[recomb_idx, 0]) - 1
-                
-                tar_node_pos = np.where(recomb_node[leaf_edge] == node_info[i, 2])[0]
-                if len(tar_node_pos) > 0:
-                    tar_node_pos = tar_node_pos[0]
-                    if tar_node_pos == 0:
-                        leaf_node = clonal_edge[leaf_edge, 1]
-                    else:
-                        prev_node = recomb_node[leaf_edge][tar_node_pos]
-                        leaf_node = node_info[np.where(node_info[:, 2] == prev_node)[0][0], 0]
-                else:
+
+                tar_node = np.where(recomb_node[leaf_edge] == node_info[i, 2])[0]
+                if tar_node == 0:
                     leaf_node = clonal_edge[leaf_edge, 1]
-                
+                else:
+                    leaf_node = node_info[np.where(recomb_node[leaf_edge][tar_node-1] == node_info[:, 2])[0][0], 0]
+
                 leaf_index = int(np.where(node_info[:, 0] == leaf_node)[0][0])
-                
+
                 # Append edges
-                edge_matrix[edge_index:edge_index+2, 0] = [i, i + 1]
-                edge_matrix[edge_index:edge_index+2, 1] = leaf_index
+                edge_matrix[edge_index:edge_index+2, 0] = [i + 1, i + 2]
+                edge_matrix[edge_index:edge_index+2, 1] = leaf_index + 1
                 edge_matrix[edge_index:edge_index+2, 2] = node_info[i, 1] - node_info[leaf_index, 1]
-                edge_mat_index[edge_index:edge_index+2] = [i, i + 1]
-                
+                edge_mat_index[edge_index:edge_index+2] = [i + 1, i + 2]
+
                 x = int(recomb_edge[recomb_idx, 4])
                 y = int(recomb_edge[recomb_idx, 5])
-                
+
                 # Append root node material
                 node_mat[i:i+2, :] = False
                 # x:y in R is inclusive, in Python x-1:y is equivalent for 1-indexed to 0-indexed
                 node_mat[i + 1, x-1:y] = np.nan_to_num(node_mat[leaf_index, x-1:y], nan=0).astype(bool)
-                
+
                 # For the complement (-(x:y) in R means all except x:y)
                 mask = np.ones(2, dtype=bool)
                 mask[x-1:y] = False
                 node_mat[i, mask] = np.nan_to_num(node_mat[leaf_index, mask], nan=0).astype(bool)
-                
+
                 edge_index += 2
                 i += 2
                 
@@ -333,43 +328,33 @@ class ARG(tree):
                 node_index = int(node_info[i, 0])
                 recomb_idx = int(node_info[i, 2]) - 1
                 leaf_edge = int(recomb_edge[recomb_idx, 2]) - 1
-                
-                tar_node_pos = np.where(recomb_node[leaf_edge] == node_info[i, 2])[0]
-                if len(tar_node_pos) > 0:
-                    tar_node_pos = tar_node_pos[0]
-                    if tar_node_pos == 0:
-                        if leaf_edge == 2 * n - 2:  # Root edge (0-indexed)
-                            leaf_node = 2 * n - 2
-                        else:
-                            leaf_node = clonal_edge[leaf_edge, 1]
+
+                tar_node = np.where(recomb_node[leaf_edge] == node_info[i, 2])[0]
+                if tar_node == 0:
+                    if leaf_edge== 2*n - 2:
+                        leaf_node = 2*n - 1
                     else:
-                        prev_node = recomb_node[leaf_edge][tar_node_pos]
-                        leaf_node = node_info[np.where(node_info[:, 2] == prev_node)[0][0], 0]
+                        leaf_node = clonal_edge[leaf_edge, 1]
                 else:
-                    leaf_node = clonal_edge[leaf_edge, 1]
-                
+                    leaf_node = node_info[np.where(recomb_node[leaf_edge][tar_node-1] == node_info[:, 2])[0][0], 0]
+
                 leaf_index = np.full(2, np.nan)
                 leaf_index[0] = int(np.where(node_info[:, 0] == leaf_node)[0][0])
-                
-                # Find the corresponding out node
-                neg_recomb = -node_info[i, 2]
-                out_node_idx = np.where(node_info[:, 2] == neg_recomb)[0]
-                if len(out_node_idx) > 0:
-                    leaf_index[1] = out_node_idx[0] + 1
-                
+                leaf_index[1] = int(np.where(node_info[:, 2] == (-node_info[i, 2]))[0][0]) + 1
+
                 # Append edges
-                edge_matrix[edge_index:edge_index+2, 0] = i
-                edge_matrix[edge_index:edge_index+2, 1] = leaf_index
+                edge_matrix[edge_index:edge_index+2, 0] = i + 1
+                edge_matrix[edge_index:edge_index+2, 1] = leaf_index + 1
                 edge_matrix[edge_index:edge_index+2, 2] = node_info[i, 1] - node_info[leaf_index.astype(int), 1]
-                edge_mat_index[edge_index:edge_index+2] = leaf_index
-                
+                edge_mat_index[edge_index:edge_index+2] = leaf_index + 1
+
                 # Append root node material
                 li0, li1 = int(leaf_index[0]), int(leaf_index[1])
                 node_mat[i, :] = np.logical_or(
                     np.nan_to_num(node_mat[li0, :], nan=0).astype(bool),
                     np.nan_to_num(node_mat[li1, :], nan=0).astype(bool)
                 )
-                
+
                 edge_index += 2
                 i += 1
             else:
