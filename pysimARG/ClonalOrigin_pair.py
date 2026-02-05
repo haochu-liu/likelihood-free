@@ -290,8 +290,8 @@ class ARG(tree):
             elif recomb_val < 0:
                 # Recombination edge out node
                 node_index = node_info[i:i+2, 0].astype(int)
-                recomb_idx = int(abs(node_info[i, 2]))
-                leaf_edge = int(recomb_edge[recomb_idx, 0])
+                recomb_idx = int(abs(node_info[i, 2])) - 1
+                leaf_edge = int(recomb_edge[recomb_idx, 0]) - 1
                 
                 tar_node_pos = np.where(recomb_node[leaf_edge] == node_info[i, 2])[0]
                 if len(tar_node_pos) > 0:
@@ -331,8 +331,8 @@ class ARG(tree):
             elif recomb_val > 0:
                 # Recombination edge in node
                 node_index = int(node_info[i, 0])
-                recomb_idx = int(node_info[i, 2])
-                leaf_edge = int(recomb_edge[recomb_idx, 2])
+                recomb_idx = int(node_info[i, 2]) - 1
+                leaf_edge = int(recomb_edge[recomb_idx, 2]) - 1
                 
                 tar_node_pos = np.where(recomb_node[leaf_edge] == node_info[i, 2])[0]
                 if len(tar_node_pos) > 0:
