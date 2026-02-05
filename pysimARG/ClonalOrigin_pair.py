@@ -97,7 +97,7 @@ class ARG(tree):
                 R_new = np.random.poisson(rho_site * delta2 * tree_length / 2)
                 
                 if len(survive_index) >= 0:
-                    R_old = np.random.binomial(len(survive_index), (1 - 1/delta) ** k) if len(survive_index) > 0 else 0
+                    R_old = np.random.binomial(len(survive_index), (1 - 1/delta) ** k)
                     if len(survive_index) == 1:
                         remain_index = survive_index.copy()
                     elif len(survive_index) > 1 and R_old > 0:
@@ -128,7 +128,7 @@ class ARG(tree):
                 
                 for j in range(R_new):
                     idx = n_recomb + j
-                    b_edge_idx = int(recomb_edge[idx, 0])
+                    b_edge_idx = int(recomb_edge[idx, 0]) - 1
                     
                     # Simulate b_height
                     recomb_edge[idx, 1] = (
@@ -177,7 +177,7 @@ class ARG(tree):
                         recomb_edge[idx, 2] = np.random.choice(pool_edge)
                     else:
                         # Root edge (using edge index 2*n-2 for 0-indexed)
-                        recomb_edge[idx, 2] = 2 * n - 2
+                        recomb_edge[idx, 2] = 2 * n - 1
             
             if R_old > 0 and len(remain_index) > 0:
                 recomb_edge[remain_index, 5] = i
