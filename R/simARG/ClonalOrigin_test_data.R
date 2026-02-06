@@ -1,5 +1,6 @@
 # devtools::install_github("haochu-liu/simARG")
 library(simARG)
+library(jsonlite)
 
 
 set.seed(100)
@@ -24,6 +25,14 @@ ARG_length_height <- data.frame(
   length = length_vec,
   height = height_vec
 )
+tree_example <- list(
+  edge = tree$edge,
+  node = tree$node,
+  n = tree$n
+)
+
 
 write.csv(ARG_length_height, file="pysimARG/test_data/ARG_length_height.csv",
           row.names=FALSE, col.names=FALSE)
+write_json(tree_example, "pysimARG/test_data/tree_example.json",
+           pretty = TRUE, auto_unbox = TRUE)
