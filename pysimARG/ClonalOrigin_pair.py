@@ -200,21 +200,21 @@ class ARG(tree):
         # Build full ARG
         node_max = 2 * n - 1 + 3 * n_recomb
         edge_max = 2 * (n - 1) + 4 * n_recomb
-        
+
         edge_matrix = np.full((edge_max, 3), np.nan)
         edge_mat_index = np.full(edge_max, np.nan)
         node_mat = np.full((node_max, 2), np.nan)
         node_info = np.full((node_max, 4), np.nan)
         # Columns: index, height, recomb, clonal
-        
+
         node_mat[:n, :] = True
         node_info[:, 0] = np.arange(1, node_max + 1)
-        
+
         # Set clonal node info
         node_info[:2*n-1, 1] = clonal_node_height
         node_info[:2*n-1, 2] = 0
         node_info[:2*n-1, 3] = 1  # True -> 1
-        
+
         # Set recombination out nodes (b nodes)
         # Interleave: for each recomb event, add two nodes at b_height
         for r in range(n_recomb):
@@ -226,7 +226,7 @@ class ARG(tree):
             node_info[base_idx + 1, 1] = recomb_edge[r, 1]  # same b_height
             node_info[base_idx + 1, 2] = np.nan             # NA
             node_info[base_idx + 1, 3] = 0                  # clonal = False
-        
+
         # Set recombination in nodes (a nodes)
         for r in range(n_recomb):
             idx = 2 * n - 1 + 2 * n_recomb + r
@@ -237,7 +237,7 @@ class ARG(tree):
         # Sort by height
         sort_order = np.lexsort((node_info[:, 0], node_info[:, 1]))
         node_info = node_info[sort_order, :]
-        
+
         # Recombination nodes on every edge
         # Use 1-indexed edge indices to match R behavior
         recomb_node = []
@@ -249,7 +249,7 @@ class ARG(tree):
         # Build ARG edges and track ancestral material
         i = n  # Start after leaf nodes (0-indexed)
         edge_index = 0
-        
+
         while i < node_max:
             recomb_val = node_info[i, 2]
             
@@ -369,6 +369,8 @@ class ARG(tree):
         self.node_mat = node_mat
         self.node_clonal = node_info[:, 3].astype(bool)
         self.sum_time = node_info[node_max - 1, 1]
+        self.height = np.max(self.node_height)
+        self.length = np.sum(self.edge[:, 2])
     
     def __repr__(self):
         return f"ARG(n={self.n}, rho={self.rho}, L={self.L}, delta={self.delta})"
@@ -388,5 +390,7 @@ class ARG(tree):
             "n": self.n,
             "rho": self.rho,
             "L": self.L,
-            "delta": self.delta
+            "delta": self.delta,
+            "height": self.height,
+            "length": self.length
         }
