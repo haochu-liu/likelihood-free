@@ -68,7 +68,7 @@ class ClonalTree(tree):
             self.edge[edge_index : edge_index+2, 1] = leaf_nodes
             
             # 3. Edge lengths (current time - height of child)
-            child_heights = self.node_height[leaf_nodes]
+            child_heights = self.node_height[leaf_nodes-1]
             self.edge[edge_index : edge_index+2, 2] = t_sum - child_heights
 
             # Append root node height
