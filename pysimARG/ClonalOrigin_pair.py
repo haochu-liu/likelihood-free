@@ -368,7 +368,6 @@ class ARG(tree):
         self.node_height = node_info[:, 1]
         self.node_mat = node_mat
         self.node_clonal = node_info[:, 3].astype(bool)
-        self.sum_time = node_info[node_max - 1, 1]
         self.height = np.max(self.node_height)
         self.length = np.sum(self.edge[:, 2])
     
@@ -386,7 +385,6 @@ class ARG(tree):
             "node_height": self.node_height,
             "node_mat": self.node_mat,
             "node_clonal": self.node_clonal,
-            "sum_time": self.sum_time,
             "n": self.n,
             "rho": self.rho,
             "L": self.L,
