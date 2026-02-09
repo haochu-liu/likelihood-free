@@ -20,10 +20,8 @@ def add_mutation(arg, theta_site):
         - node_site: np.ndarray (if binary=True) incidence matrix
         - node_gene: list of lists containing mutation sites at each node
     """
-    num_sites = arg.node_mat.shape[1]
-    theta = theta_site * num_sites
-    l = np.sum(arg.edge[:, 2])
-    n_mutations = np.random.poisson(theta * l / 2)
+    theta = theta_site * arg.L
+    n_mutations = np.random.poisson(theta * arg.length / 2)
     
     # Initialize mutation matrix
     arg.mutation = np.full((n_mutations, 3), np.nan)
@@ -40,12 +38,12 @@ def add_mutation(arg, theta_site):
     
     # If there are mutations
     # Sample edges with probability proportional to edge length
-    edge_probs = arg.edge[:, 2] / np.sum(arg.edge[:, 2])
+    edge_probs = arg.edge[:, 2] / arg.length
     mutate_edge = np.random.choice(
         len(arg.edge), n_mutations, replace=True, p=edge_probs
     )
     # Sample sites uniformly (0-indexed)
-    mutate_site = np.random.choice(num_sites, n_mutations, replace=True)
+    mutate_site = np.random.choice(arg.L, n_mutations, replace=True)
     
     # Ignore mutations not in the edge material
     keep_mutation = []
@@ -81,7 +79,7 @@ def add_mutation(arg, theta_site):
         parent_seq.extend(edge_mutations)
         
         # Remove mutations for sites not in edge material
-        for j in range(num_sites):
+        for j in range(arg.L):
             if arg.edge_mat[i, j] == 0:
                 parent_seq = [m for m in parent_seq if m != j]
         

@@ -41,14 +41,16 @@ class ARG(tree):
             Node material matrix.
         node_clonal : np.ndarray
             Boolean array indicating clonal nodes.
-        sum_time : float
-            Total time (height of root).
         rho : float
             Total recombination rate (L * rho_site).
         L : int
             Number of sites.
         delta : float
             Mean recombinant segment length.
+        height : float
+            Height of the ARG.
+        length : float
+            Total length of the ARG.
         """
         # Input validation
         if not isinstance(tree_obj, ClonalTree):
@@ -191,7 +193,8 @@ class ARG(tree):
             self.node_height = clonal_node_height
             self.node_mat = np.full((2 * n - 1, 2), True)
             self.node_clonal = np.full(2 * n - 1, True)
-            self.sum_time = np.max(clonal_node_height)
+            self.height = np.max(clonal_node_height)
+            self.length = np.sum(clonal_edge[:, 2])
             return
         
         # Trim recomb_edge to actual size
