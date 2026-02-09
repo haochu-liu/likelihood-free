@@ -1,0 +1,16 @@
+{
+  "r": [0.0476, 0, 0, 0, 0, 0, 0, 0.1667, 0, 0.1111],
+  "g3": [false, false, false, false, false, false, false, false, false, true],
+  "leaf": [
+    [false, true, true, false, false, false, false, true, false, false, false, true, true, true, true, false, true, false, false, true],
+    [false, false, true, false, false, false, false, true, false, true, false, false, true, true, false, false, true, false, false, true],
+    [false, false, true, false, false, false, false, false, false, true, false, true, true, false, false, true, true, false, true, false],
+    [true, false, true, false, false, false, false, true, false, true, false, true, true, true, false, true, true, false, true, true],
+    [false, false, true, false, false, false, false, true, false, false, false, false, true, true, true, false, true, false, false, true],
+    [false, false, true, true, false, true, false, true, false, false, false, false, true, true, false, false, true, false, true, true],
+    [false, false, true, true, false, true, false, true, false, false, false, false, true, true, false, false, true, false, true, true],
+    [false, false, true, true, false, true, false, true, false, false, false, false, true, true, false, false, true, false, true, true],
+    [false, true, true, false, false, false, false, true, false, false, false, false, true, true, true, false, true, false, false, true],
+    [false, true, true, false, false, false, false, true, false, false, false, false, true, true, true, false, true, false, false, true]
+  ]
+}
