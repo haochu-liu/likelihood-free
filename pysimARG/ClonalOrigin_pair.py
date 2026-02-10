@@ -366,8 +366,7 @@ class ARG(tree):
         
         # Store results
         self.edge = edge_matrix
-        valid_indices = ~np.isnan(edge_mat_index)
-        self.edge_mat = node_mat[edge_mat_index[valid_indices].astype(int), :]
+        self.edge_mat = node_mat[edge_mat_index.astype(int) - 1, :]
         self.node_height = node_info[:, 1]
         self.node_mat = node_mat
         self.node_clonal = node_info[:, 3].astype(bool)
