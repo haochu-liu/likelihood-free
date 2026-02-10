@@ -1,121 +1,81 @@
 import numpy as np
 
 
-def fsm_mutation(arg, theta_site, binary=False):
+def FSM_mutation_fast(arg, theta_site):
     """
     Add mutations uniformly onto the edges of ARG with infinite site assumption.
-    
+    Return only the incidence matrix of nodes.
+
+    No mutation matrix and only keep mutate_edge and mutate_site.
+    No node dataframe, simulate node_site through the tree.
+
     Parameters
     ----------
     arg : FSM_ARG
-        An FSM_ARG object to add mutations to.
+        A FSM_ARG object.
     theta_site : float
         The mutation rate per site.
-    binary : bool, optional
-        If True, return the incidence matrix of nodes, instead of sequences.
-        Default is False.
-    
+
     Returns
     -------
     arg
-        The FSM_ARG object with added attributes:
-        - mutation: np.ndarray with columns [edge_index, pos, site]
-        - node_site: np.ndarray (if binary=True) boolean incidence matrix
-        - node_gene: list of lists containing mutation sites at each node
-        - node_gene_str: list of strings representing mutations (if binary=False)
-    
-    Examples
-    --------
-    >>> ARG = fsm_arg(20, 1, 100)
-    >>> ARG_mutation = fsm_mutation(ARG, 2)
+        The FSM_ARG object with added node_site matrix (boolean incidence matrix).
     """
-    # Check class (assuming FSM_ARG has a type attribute or similar)
-    if not hasattr(arg, 'node_mat') or not hasattr(arg, 'edge'):
-        raise ValueError("Object must be of class 'FSM_ARG'")
-    
-    L = arg.node_mat.shape[1]  # number of sites
-    num_nodes = arg.node_mat.shape[0]
-    
-    theta = theta_site * L
-    total_edge_length = np.sum(arg.edge[:, 2])
-    n_mutations = np.random.poisson(theta * total_edge_length / 2)
-    
-    # Initialize mutation matrix
-    arg.mutation = np.full((n_mutations, 3), np.nan)
-    # Columns: edge_index, pos, site
-    
-    if binary:
-        arg.node_site = np.zeros((num_nodes, L), dtype=bool)
-    
-    # Initialize node gene information
-    arg.node_gene = [[] for _ in range(num_nodes)]
-    arg.node_gene_str = ["[]"] * num_nodes
-    
+    theta = theta_site * arg.node_mat.shape[1]
+    l = np.sum(arg.edge[:, 2])
+    n = np.random.poisson(theta * l / 2)  # num of mutations | l ~ Poisson(theta*l/2)
+
+    # Initialize node_site matrix (boolean)
+    arg.node_site = np.zeros(
+        (arg.node_mat.shape[0], arg.node_mat.shape[1]), dtype=bool
+    )
+
     # If there is no mutation
-    if n_mutations == 0:
+    if n == 0:
         return arg
-    
+
     # If there are mutations
     # Sample edges with probability proportional to edge length
-    edge_probs = arg.edge[:, 2] / total_edge_length
-    mutate_edge = np.random.choice(
-        len(arg.edge), n_mutations, replace=True, p=edge_probs
-    )
-    # Sample sites uniformly (0-indexed in Python, 1-indexed in R)
-    mutate_site = np.random.choice(L, n_mutations, replace=True)
-    
+    edge_probs = arg.edge[:, 2] / l
+    mutate_edge = np.random.choice(len(arg.edge), n, replace=True, p=edge_probs)
+    # Sample sites uniformly (0-indexed)
+    num_sites = arg.node_mat.shape[1]
+    mutate_site = np.random.choice(num_sites, n, replace=True)
+
     # Ignore mutations not in the edge material
     keep_mutation = []
-    for i in range(n_mutations):
+    for i in range(n):
         if arg.edge_mat[mutate_edge[i], mutate_site[i]]:
             keep_mutation.append(i)
-    
-    if len(keep_mutation) == 0:
-        arg.mutation = np.full((0, 3), np.nan)
-        return arg
-    
+
     mutate_edge = mutate_edge[keep_mutation]
     mutate_site = mutate_site[keep_mutation]
-    arg.mutation = arg.mutation[keep_mutation, :]
-    
-    # Store mutation information
-    arg.mutation[:, 0] = mutate_edge
-    arg.mutation[:, 2] = mutate_site
-    for i in range(len(mutate_edge)):
-        arg.mutation[i, 1] = np.random.uniform(0, arg.edge[mutate_edge[i], 2])
-    
+
+    if len(keep_mutation) == 0:
+        return arg
+
     # Simulate the mutations at every node
     # Process edges from last to first (bottom-up in the tree)
     for i in range(len(arg.edge) - 1, -1, -1):
-        # Get mutations on this edge
-        edge_mutations = arg.mutation[arg.mutation[:, 0] == i, 2].astype(int).tolist()
-        
+        # Get mutations on this edge (sites that have mutations on edge i)
+        edge_mutation = mutate_site[mutate_edge == i]
+
         parent_idx = int(arg.edge[i, 0])
         child_idx = int(arg.edge[i, 1])
-        
-        # Get parent sequence and add edge mutations
-        parent_seq = arg.node_gene[parent_idx].copy()
-        parent_seq.extend(edge_mutations)
-        
-        # Remove mutations for sites not in edge material
-        for j in range(L):
-            if arg.edge_mat[i, j] == 0:
-                parent_seq = [m for m in parent_seq if m != j]
-        
-        # Combine with existing child sequence and sort
-        arg.node_gene[child_idx] = sorted(arg.node_gene[child_idx] + parent_seq)
-    
-    if binary:
-        # Convert to incidence matrix
-        for i in range(num_nodes):
-            for j in range(L):
-                num_mutation = arg.node_gene[i].count(j)
-                if num_mutation % 2 == 1:
-                    arg.node_site[i, j] = True
-    else:
-        # Convert to string
-        for i in range(num_nodes):
-            gene_rounded = [round(g, 3) for g in arg.node_gene[i]]
-            arg.node_gene_str[i] = "[" + ", ".join(map(str, gene_rounded)) + "]"
-    
+
+        # Get parent sequence
+        parent_seq = arg.node_site[parent_idx, :].copy()
+
+        # Count mutations at each site (equivalent to R's tabulate)
+        flip_counts = np.bincount(edge_mutation, minlength=len(parent_seq))
+
+        # XOR with whether flip count is odd
+        parent_seq = np.logical_xor(parent_seq, flip_counts % 2 == 1)
+
+        # Get material range for this edge
+        material_range = arg.edge_mat[i, :]
+
+        # Update child node sequence only where there's material
+        arg.node_site[child_idx, material_range] = parent_seq[material_range]
+
     return arg
