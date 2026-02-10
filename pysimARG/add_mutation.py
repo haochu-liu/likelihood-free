@@ -23,7 +23,7 @@ def add_mutation(arg, theta_site):
     
     # Initialize node_site matrix (boolean)
     arg.node_site = np.zeros(
-        (arg.node_mat.shape[0], arg.L), dtype=bool
+        (arg.node_mat.shape[0], arg.node_mat.shape[1]), dtype=bool
     )
 
     # If there is no mutation
@@ -35,7 +35,7 @@ def add_mutation(arg, theta_site):
     edge_probs = arg.edge[:, 2] / arg.length
     mutate_edge = np.random.choice(len(arg.edge), n_mutations, replace=True, p=edge_probs)
     # Sample sites uniformly (0-indexed)
-    mutate_site = np.random.choice(arg.L, n_mutations, replace=True)
+    mutate_site = np.random.choice(arg.node_mat.shape[1], n_mutations, replace=True)
 
     # Ignore mutations not in the edge material
     keep_mutation = []
@@ -55,8 +55,8 @@ def add_mutation(arg, theta_site):
         # Get mutations on this edge (sites that have mutations on edge i)
         edge_mutation = mutate_site[mutate_edge == i]
 
-        parent_idx = int(arg.edge[i, 0])
-        child_idx = int(arg.edge[i, 1])
+        parent_idx = int(arg.edge[i, 0]) - 1
+        child_idx = int(arg.edge[i, 1]) - 1
 
         # Get parent sequence
         parent_seq = arg.node_site[parent_idx, :].copy()
@@ -71,6 +71,6 @@ def add_mutation(arg, theta_site):
         material_range = arg.edge_mat[i, :]
 
         # Update child node sequence only where there's material
-        arg.node_site[child_idx, material_range] = parent_seq[material_range]
+        arg.node_site[child_idx, material_range==True] = parent_seq[material_range==True]
     
     return arg
