@@ -40,18 +40,18 @@ for i = 1:M
     while theta_prop<0 %cannot have negative parameter values
         theta_prop = normrnd(theta_curr,sigma);
     end
-    
+
 	% simulating n data sets using the proposed parameters
     x = poissrnd(theta_prop,T,n);
     ssx = mean(x);
-    
+
     the_mean = mean(ssx);
     the_var = var(ssx);
-    
+
     % estimating the SL for the proposed parameter values
     loglike_ind_prop = -normlike([the_mean sqrt(the_var)],ssy);
     logprior_prop = (alpha-1)*log(theta_prop)-beta*theta_prop;
-    
+
     if (exp(loglike_ind_prop + logprior_prop - loglike_ind_curr - logprior_curr) > rand)
         theta_curr = theta_prop;
         loglike_ind_curr = loglike_ind_prop;
@@ -59,7 +59,7 @@ for i = 1:M
         acc_count = acc_count + 1;
     end
     theta(i,:) = theta_curr;
-    
+
 end
 
 acc_rate = acc_count / M;
