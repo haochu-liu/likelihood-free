@@ -1,0 +1,252 @@
+---
+title: "BSL toy example (Price et al. 2018)"
+author: "Haochu"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(coda)
+library(matrixStats)
+library(rmatio)
+library(R.matlab)
+library(gt)
+library(tidyverse)
+```
+
+## Toy example
+
+We set:
+
+-   $\lambda \sim Gamma(\alpha, \beta)$,
+
+-   $y_{1:N}|\lambda \sim^{iid} Poisson(\lambda)$,
+
+-   $s(y_{1:N}) = \frac{1}{N} \sum_{i=1}^N y_i$,
+
+-   $\lambda | s(y_{1:N}) \sim Gamma(\alpha+\sum y_i, \beta + N)$
+
+Let the true parameter be $\lambda = 30$. And we set $\alpha = \beta = 0.001$, $N = 100$.
+
+```{r}
+#| echo: true
+lambda <- 30
+alpha <- 0.001
+beta <- 0.001
+N <- 100
+```
+
+### Observed data and true posterior
+
+We load the observed data from Price et al. (2018) paper's GitHub repository. Since this is a very simple example with conjugate prior, we can compute the true posterior density.
+
+```{r}
+#| echo: true
+# Load obs data
+github_url <- "https://raw.githubusercontent.com/cdrovandi/Bayesian-Synthetic-Likelihood/master/Simple/data_poisson.mat"
+data_list <- read.mat(github_url)
+
+# Sampling and densities
+y_obs <- data_list$y
+s_obs <- mean(y_obs)
+lambda_vec <- seq(0, 50, length.out = 50001)
+prior_density <- dgamma(lambda_vec, shape=alpha, rate=beta)
+posterior_density <- dgamma(lambda_vec, shape=alpha+sum(y_obs), rate=beta+N)
+posterior_mean <- (alpha + sum(y_obs)) / (beta + N)
+
+plot(lambda_vec, prior_density,
+     ylim = c(0, max(posterior_density)),
+     xlab = expression(lambda),
+     ylab = "Density",
+     type = "l",
+     main="Prior and posterior densities",
+     lwd = 2,
+     col = "green")
+lines(lambda_vec, posterior_density,
+      col = "darkblue", lwd = 2)
+abline(v = posterior_mean, col = "red", lwd = 2)
+legend("topright",
+       c("prior", "posterior", "posterior mean"),
+       col = c("green", "darkblue", "red"),
+       lwd = 2)
+```
+
+### BSL setup
+
+Define functions and variables for BSL-MCMC.
+
+```{r}
+#| echo: true
+init_theta <- lambda
+
+prior_func <- function(theta){
+  (alpha - 1) * log(theta) - beta * theta
+}
+
+sample_func <- function(theta, n) {
+  repeat {
+    x_mat <- matrix(rpois(n*N, theta), nrow=N, ncol=n)
+    s <- colMeans(x_mat)
+    if (var(s) > 0) {
+      return(list(mean=c(mean(s)),
+                  sigma=matrix(var(s), ncol=1, nrow=1)))
+    }
+  }
+}
+sample_func_fix_sigma <- function(theta, n) {
+  x_mat <- matrix(rpois(n*N, theta), nrow=N, ncol=n)
+  s <- colMeans(x_mat)
+  return(list(mean=c(mean(s)),
+              sigma=matrix(theta/N, ncol=1, nrow=1)))
+}
+
+sd_proposal <- sqrt(alpha + sum(y_obs)) / (beta + N)
+proposal <- function(theta_old){
+  repeat {
+    theta_new <- rnorm(1, mean=theta_old, sd=sd_proposal)
+    if (theta_new > 0) {
+      return(c(theta_new))
+    }
+  }
+}
+```
+
+### Fix T = 100000
+
+#### Comparison with different n
+
+```{r}
+#| echo: true
+load("../../data/mcmc_quality1.RData")
+print(mcmc_quality1)
+
+normalized_ess_fix <- mcmc_quality1$ess.fix_var / mcmc_quality1$n
+normalized_ess_est <- mcmc_quality1$ess.est_var / mcmc_quality1$n
+names(normalized_ess_fix) <- mcmc_quality1$n
+names(normalized_ess_est) <- mcmc_quality1$n
+print(normalized_ess_fix)
+print(normalized_ess_est)
+```
+
+#### MCMC chains from the paper's code
+
+```{r}
+#| echo: true
+data_list <- readMat("../../data/price2018Bayesian_results.mat")
+
+paper_mcmc <- data.frame(n=c(1, 2, 5, 6, 7, 10, 15, 20),
+                         acc_rate.fix_var=NA,
+                         ess.fix_var=NA,
+                         norm_ess.fix_var=NA,
+                         acc_rate.est_var=NA,
+                         ess.est_var=NA,
+                         norm_ess.est_var=NA)
+err_mean.fix_var <- rep(0, 8)
+err_mean.est_var <- rep(0, 8)
+
+for (i in 1:nrow(data_list$acc.fix.var)) {
+  paper_mcmc$acc_rate.fix_var[i] <- mean(data_list$acc.fix.var[i, ])
+  ess_vec <- rep(NA, 10)
+  for (j in 1:10) {
+    ess_vec[j] <- as.numeric(effectiveSize(
+      as.mcmc(data_list$chain.fix.var[, (i-1)*10+j])
+    ))
+    err_mean.fix_var[i] <- err_mean.fix_var[i] +
+      abs(posterior_mean - mean(data_list$chain.fix.var[50000:100000, (i-1)*10+j]))
+  }
+  paper_mcmc$ess.fix_var[i] <- mean(ess_vec)
+  paper_mcmc$norm_ess.fix_var[i] <- mean(ess_vec) / paper_mcmc$n[i]
+  err_mean.fix_var[i] <- err_mean.fix_var[i] / 10
+  
+  if (i > 1) {
+    paper_mcmc$acc_rate.est_var[i] <- mean(data_list$acc.est.var[i, ])
+    ess_vec <- rep(NA, 10)
+    for (j in 1:10) {
+      ess_vec[j] <- as.numeric(effectiveSize(
+        as.mcmc(data_list$chain.est.var[ ,(i-1)*10+j])
+      ))
+      err_mean.est_var[i] <- err_mean.est_var[i] +
+        abs(posterior_mean - mean(data_list$chain.est.var[50000:100000, (i-1)*10+j]))
+    }
+    paper_mcmc$ess.est_var[i] <- mean(ess_vec)
+    paper_mcmc$norm_ess.est_var[i] <- mean(ess_vec) / paper_mcmc$n[i]
+    err_mean.fix_var[i] <- err_mean.fix_var[i] / 10
+  }
+}
+
+print(paper_mcmc)
+print(err_mean.fix_var)
+print(err_mean.est_var)
+```
+
+```{r}
+#| echo: true
+plot(lambda_vec, posterior_density,
+      col = "black", lwd = 2, type = "l",)
+abline(v = posterior_mean, col = "red", lwd = 2)
+lines(density(data_list$chain.est.var[, 15]), col="green", lwd=3)
+
+legend("topright",
+       c("true posterior", "posterior mean", "est posterior"),
+       col = c("black", "red", "green"),
+       lwd = 2)
+```
+
+### Fix n\*T = 100000
+
+#### Comparison with different n
+
+```{r}
+#| echo: true
+load("../../data/mcmc_quality2.RData")
+print(mcmc_quality2)
+```
+
+### Fix T = 100000 and change n and N
+
+```{r}
+#| echo: true
+load("../../data/toy_fix_var.RData")
+
+acc_df <- as.data.frame(round(toy_fix_var$acc_rate, 3))
+acc_df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = "Acceptance rate")
+```
+
+```{r}
+#| echo: true
+var_log_df <- as.data.frame(round(toy_fix_var$var_log, 3))
+var_log_df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = md("$\\text{var}(\\log p_{SL}(y|\\lambda=30))$"))
+```
+
+```{r}
+#| echo: true
+load("../../data/toy_like_fix_var.RData")
+
+est_df <- as.data.frame(round(toy_like_fix_var$est, 3))
+est_df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = md("$\\text{var}(p_{SL}(y|\\lambda=30)) / \\text{E}(p_{SL}(y|\\lambda=30))^2$"))
+```
+
+```{r}
+#| echo: true
+norm_ess_df <- as.data.frame(round(toy_fix_var$norm_ess))
+norm_ess_df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = "Normalized ESS")
+```
