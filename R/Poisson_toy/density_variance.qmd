@@ -119,6 +119,24 @@ legend("topright",
        lwd = 2)
 ```
 
+### Normalize ESS
+
+```{r}
+#| echo: true
+norm_ess_df <- as.data.frame(round(paper_mcmc$norm_ess))
+colnames(norm_ess_df) <- paper_mcmc$n
+norm_ess_df %>%
+  gt(rownames_to_stub = FALSE) %>% 
+  tab_spanner(label = "n", columns = everything()) %>%
+  tab_header(title = "Normalized ESS") %>%
+  # add average
+  grand_summary_rows(
+    columns = everything(),
+    fns = list(Average = ~mean(., na.rm = TRUE)),
+    decimals = 0
+  )
+```
+
 ### Posterior mean
 
 ```{r}
