@@ -97,17 +97,9 @@ class ARG(tree):
                 survive_index = np.where(recomb_edge[:n_recomb, 5] == 1)[0] if n_recomb > 0 else np.array([], dtype=int)
                 delta2 = np.sum((1 - 1/delta) ** np.arange(k))
                 R_new = np.random.poisson(rho_site * delta2 * tree_length / 2)
-                
-                if len(survive_index) >= 0:
-                    R_old = np.random.binomial(len(survive_index), (1 - 1/delta) ** k)
-                    if len(survive_index) == 1:
-                        remain_index = survive_index.copy()
-                    elif len(survive_index) > 1 and R_old > 0:
-                        remain_index = np.random.choice(survive_index, R_old, replace=False)
-                    else:
-                        remain_index = np.array([], dtype=int)
-                else:
-                    R_old = 0
+
+                R_old = np.random.binomial(len(survive_index), (1 - 1/delta) ** k)
+                remain_index = np.random.choice(survive_index, R_old, replace=False)
             
             if R_new > 0:
                 # Expand matrix if needed
