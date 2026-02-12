@@ -233,6 +233,16 @@ class ARG(tree):
         sort_order = np.lexsort((node_info[:, 0], node_info[:, 1]))
         node_info = node_info[sort_order, :]
 
+        # Add variables for searching node_info[, 0]
+        ord_node_info_0 = np.argsort(node_info[:, 0])
+
+        # Create a dict for searching clonal nodes
+        sort_idx = np.argsort(clonal_edge[:, 0])
+        sorted_vec = clonal_edge[sort_idx, 0]
+        unique_vals, start_indices = np.unique(sorted_vec, return_index=True)
+        grouped_indices = np.split(sort_idx, start_indices[1:])
+        clonal_edge_dict = dict(zip(unique_vals, grouped_indices))
+
         # Recombination nodes on every edge
         # Use 1-indexed edge indices to match R behavior
         recomb_node = []
@@ -251,7 +261,7 @@ class ARG(tree):
             if recomb_val == 0:
                 # Clonal tree node
                 node_index = int(node_info[i, 0])
-                leaf_edge = np.where(clonal_edge[:, 0] == node_index)[0]
+                leaf_edge = clonal_edge_dict[node_index]
                 leaf_index = np.full(2, np.nan)
                 leaf_node = np.full(2, np.nan)
 
@@ -260,11 +270,11 @@ class ARG(tree):
                     if len(recomb_node[le]) > 0:
                         # Target node is last element
                         tar_node = recomb_node[le][-1]
-                        leaf_index[le_idx] = np.where(node_info[:, 2] == tar_node)[0][0]
+                        leaf_index[le_idx] = np.argmax(node_info[:, 2] == tar_node)
                         leaf_node[le_idx] = node_info[int(leaf_index[le_idx]), 0]
                     else:
                         leaf_node[le_idx] = clonal_edge[le, 1]
-                        leaf_index[le_idx] = np.where(node_info[:, 0] == leaf_node[le_idx])[0][0]
+                        leaf_index[le_idx] = ord_node_info_0[int(leaf_node[le_idx]-1)]
 
                 # Append edges
                 edge_matrix[edge_index:edge_index+2, 0] = i + 1
@@ -288,13 +298,13 @@ class ARG(tree):
                 recomb_idx = int(abs(node_info[i, 2])) - 1
                 leaf_edge = int(recomb_edge[recomb_idx, 0]) - 1
 
-                tar_node = np.where(recomb_node[leaf_edge] == node_info[i, 2])[0]
+                tar_node = np.argmax(recomb_node[leaf_edge] == node_info[i, 2])
                 if tar_node == 0:
                     leaf_node = clonal_edge[leaf_edge, 1]
                 else:
-                    leaf_node = node_info[np.where(recomb_node[leaf_edge][tar_node-1] == node_info[:, 2])[0][0], 0]
+                    leaf_node = node_info[np.argmax(recomb_node[leaf_edge][tar_node-1] == node_info[:, 2]), 0]
 
-                leaf_index = int(np.where(node_info[:, 0] == leaf_node)[0][0])
+                leaf_index = ord_node_info_0[int(leaf_node-1)]
 
                 # Append edges
                 edge_matrix[edge_index:edge_index+2, 0] = [i + 1, i + 2]
@@ -324,18 +334,18 @@ class ARG(tree):
                 recomb_idx = int(node_info[i, 2]) - 1
                 leaf_edge = int(recomb_edge[recomb_idx, 2]) - 1
 
-                tar_node = np.where(recomb_node[leaf_edge] == node_info[i, 2])[0]
+                tar_node = np.argmax(recomb_node[leaf_edge] == node_info[i, 2])
                 if tar_node == 0:
                     if leaf_edge== 2*n - 2:
                         leaf_node = 2*n - 1
                     else:
                         leaf_node = clonal_edge[leaf_edge, 1]
                 else:
-                    leaf_node = node_info[np.where(recomb_node[leaf_edge][tar_node-1] == node_info[:, 2])[0][0], 0]
+                    leaf_node = node_info[np.argmax(recomb_node[leaf_edge][tar_node-1] == node_info[:, 2]), 0]
 
                 leaf_index = np.full(2, np.nan)
-                leaf_index[0] = int(np.where(node_info[:, 0] == leaf_node)[0][0])
-                leaf_index[1] = int(np.where(node_info[:, 2] == (-node_info[i, 2]))[0][0]) + 1
+                leaf_index[0] = ord_node_info_0[int(leaf_node-1)]
+                leaf_index[1] = int(np.argmax(node_info[:, 2] == (-node_info[i, 2]))) + 1
 
                 # Append edges
                 edge_matrix[edge_index:edge_index+2, 0] = i + 1
@@ -355,7 +365,7 @@ class ARG(tree):
             else:
                 # NaN case - skip
                 i += 1
-        
+
         # Store results
         self.edge = edge_matrix
         self.edge_mat = node_mat[edge_mat_index.astype(int) - 1, :]
