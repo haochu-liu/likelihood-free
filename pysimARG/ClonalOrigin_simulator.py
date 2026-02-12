@@ -1,5 +1,6 @@
 import numpy as np
 from ClonalOrigin_pair import ARG
+from add_mutation import add_mutation
 from G3_test import G3_test
 from LD_r import LD_r
 
@@ -49,8 +50,8 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
         
         for i in range(N):
             arg = ARG(tree, rho_site, L, delta, k_vec[j])
-            arg.add_mutation(theta_site)
-            mat = arg.node_site[:tree_width, :]
+            node_site = add_mutation(arg, theta_site)
+            mat = node_site[:tree_width, :]
             
             v_r[i] = LD_r(mat)
             v_g3[i] = G3_test(mat)
