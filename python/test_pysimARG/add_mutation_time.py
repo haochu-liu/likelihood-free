@@ -1,5 +1,6 @@
 import numpy as np
-import time
+import sys
+sys.path.append('pysimARG')
 from clonal_genealogy import ClonalTree
 from ClonalOrigin_pair import ARG
 
