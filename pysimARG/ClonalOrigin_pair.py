@@ -166,7 +166,7 @@ class ARG(tree):
                         # Find edges that span the a_height
                         pool_edge = np.where(
                             (clonal_node_height[clonal_edge[:, 0].astype(int)-1] >= a_height) &
-                            (clonal_node_height[clonal_edge[:, 1].astype(int)-1] < a_height)
+                            (clonal_node_height[clonal_edge[:, 1].astype(int)-1] <  a_height)
                         )[0] + 1
                         recomb_edge[idx, 2] = np.random.choice(pool_edge)
                     else:
