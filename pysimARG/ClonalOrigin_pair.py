@@ -2,7 +2,6 @@ import numpy as np
 from tree import tree
 from clonal_genealogy import ClonalTree
 from ClonalOrigin_nodes import ClonalOrigin_nodes
-from add_mutation import add_mutation as _add_mutation
 
 
 class ARG(tree):
@@ -377,9 +376,6 @@ class ARG(tree):
     
     def __repr__(self):
         return f"ARG(n={self.n}, rho={self.rho}, L={self.L}, delta={self.delta})"
-    
-    def add_mutation(self, theta_site):
-        return _add_mutation(self, theta_site)
     
     def to_dict(self):
         """Returns the ARG as a dictionary, similar to the R list output."""

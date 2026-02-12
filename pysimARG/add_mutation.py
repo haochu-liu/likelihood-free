@@ -14,21 +14,19 @@ def add_mutation(arg, theta_site):
     
     Returns
     -------
-    arg
-        The ARG object with added mutation attributes:
-        - node_site: np.ndarray (if binary=True) incidence matrix
+    node_site : np.ndarray incidence matrix
     """
     theta = theta_site * arg.L
     n_mutations = np.random.poisson(theta * arg.length / 2)
     
     # Initialize node_site matrix (boolean)
-    arg.node_site = np.zeros(
+    node_site = np.zeros(
         (arg.node_mat.shape[0], arg.node_mat.shape[1]), dtype=bool
     )
 
     # If there is no mutation
     if n_mutations == 0:
-        return arg
+        return node_site
     
     # If there are mutations
     # Sample edges with probability proportional to edge length
@@ -47,7 +45,7 @@ def add_mutation(arg, theta_site):
     mutate_site = mutate_site[keep_mutation]
 
     if len(keep_mutation) == 0:
-        return arg
+        return node_site
     
     # Simulate the mutations at every node
     # Process edges from last to first (bottom-up in the tree)
@@ -57,11 +55,11 @@ def add_mutation(arg, theta_site):
         parent_idx = int(arg.edge[i, 0]) - 1
         child_idx = int(arg.edge[i, 1]) - 1
 
-        parent_seq = arg.node_site[parent_idx, :].copy()
+        parent_seq = node_site[parent_idx, :].copy()
         flip_counts = np.bincount(edge_mutation, minlength=len(parent_seq))
         parent_seq = np.logical_xor(parent_seq, flip_counts % 2 == 1)
 
         material_range = arg.edge_mat[i, :]
-        arg.node_site[child_idx, material_range==True] = parent_seq[material_range==True]
+        node_site[child_idx, material_range==True] = parent_seq[material_range==True]
     
-    return arg
+    return node_site
