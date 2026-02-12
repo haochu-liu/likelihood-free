@@ -1,6 +1,10 @@
 import numpy as np
+import time
+from clonal_genealogy import ClonalTree
+from ClonalOrigin_pair import ARG
 
 
+@profile
 def add_mutation(arg, theta_site):
     """
     Add mutations uniformly onto the edges of ARG with infinite site assumption.
@@ -63,3 +67,14 @@ def add_mutation(arg, theta_site):
         node_site[child_idx, material_range==True] = parent_seq[material_range==True]
     
     return node_site
+
+
+if __name__ == "__main__":
+    tree = ClonalTree(n=15)
+    rho_site = 0.2
+    L = 100000
+    delta = 300
+    k = 2000
+    theta_site = 0.2
+    ARG = ARG(tree, rho_site, L, delta, k)
+    node_site = add_mutation(ARG, theta_site)
