@@ -1,5 +1,6 @@
 import sys
-sys.path.append('..')
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
 from pysimARG.birth_death_sim import birth_death_sim
 import numpy as np
 
