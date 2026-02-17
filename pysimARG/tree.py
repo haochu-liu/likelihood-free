@@ -1,6 +1,3 @@
-import numpy as np
-
-
 class tree:
     """Base class for representing a phylogenetic tree structure."""
     

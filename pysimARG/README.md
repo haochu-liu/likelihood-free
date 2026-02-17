@@ -13,3 +13,5 @@ This is a small package that translate and modify R package [simARG](https://git
 `G3_test.py`: compute three-gamete test.
 
 `LD_r.py`: compute the square of correlation coefficient for LD.
+
+`ClonalOrigin_simulator.py`: simulate summary statistics by ClonalOrigin pair models with mutations.
