@@ -71,6 +71,6 @@ if __name__ == "__main__":
 
     # Reset directory and save simulation results
     output_file = data_path / 'ClonalOrigin'
-    np.savetxt(output_file / 'x_o.csv', x_o_numpy, delimiter=",", fmt='%d')
-    np.savetxt(output_file / 'theta.csv', theta.cpu().numpy(), delimiter=",", fmt='%d')
-    np.savetxt(output_file / 'x.csv', x.cpu().numpy(), delimiter=",", fmt='%d')
+    np.savetxt(output_file / 'x_o.csv', x_o_numpy, delimiter=",")
+    np.savetxt(output_file / 'theta.csv', theta.cpu().numpy(), delimiter=",")
+    np.savetxt(output_file / 'x.csv', x.cpu().numpy(), delimiter=",")
