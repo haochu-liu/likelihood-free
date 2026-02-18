@@ -284,8 +284,8 @@ class ARG(tree):
                 # Append root node material
                 li0, li1 = int(leaf_index[0]), int(leaf_index[1])
                 node_mat[i, :] = np.logical_or(
-                    np.nan_to_num(node_mat[li0, :], nan=0).astype(bool),
-                    np.nan_to_num(node_mat[li1, :], nan=0).astype(bool)
+                    node_mat[li0, :],
+                    node_mat[li1, :]
                 )
 
                 edge_index += 2
@@ -317,12 +317,12 @@ class ARG(tree):
                 # Append root node material
                 node_mat[i:i+2, :] = False
                 # x:y in R is inclusive, in Python x-1:y is equivalent for 1-indexed to 0-indexed
-                node_mat[i + 1, x-1:y] = np.nan_to_num(node_mat[leaf_index, x-1:y], nan=0).astype(bool)
+                node_mat[i + 1, x-1:y] = node_mat[leaf_index, x-1:y]
 
                 # For the complement (-(x:y) in R means all except x:y)
                 mask = np.ones(2, dtype=bool)
                 mask[x-1:y] = False
-                node_mat[i, mask] = np.nan_to_num(node_mat[leaf_index, mask], nan=0).astype(bool)
+                node_mat[i, mask] = node_mat[leaf_index, mask]
 
                 edge_index += 2
                 i += 2
@@ -355,8 +355,8 @@ class ARG(tree):
                 # Append root node material
                 li0, li1 = int(leaf_index[0]), int(leaf_index[1])
                 node_mat[i, :] = np.logical_or(
-                    np.nan_to_num(node_mat[li0, :], nan=0).astype(bool),
-                    np.nan_to_num(node_mat[li1, :], nan=0).astype(bool)
+                    node_mat[li0, :],
+                    node_mat[li1, :]
                 )
 
                 edge_index += 2
