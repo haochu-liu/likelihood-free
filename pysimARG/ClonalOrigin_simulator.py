@@ -6,7 +6,7 @@ from LD_r import LD_r
 
 
 def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
-                                    k_vec=[50, 200, 2000]):
+                           k_vec=[50, 200, 2000]):
     """
     Simulate approximated ARG using ClonalOrigin with pair method.
     
