@@ -18,13 +18,67 @@ handlers(global = TRUE)
 
 print("Starting simulation...")
 
-summary_stats_list <- with_progress({
+rho_site_list <- with_progress({
   p <- progressor(along = 1:nrow(x_mat))
 
   result <- future_lapply(1:nrow(x_mat), function(i) {
 
     rho_site   <- x_mat[i, 1]
+    delta      <- 300
+    theta_site <- 0.05
+
+    s_vec <- ClonalOrigin_pair_seq.simulator_fast(
+      tree,
+      rho_site,
+      theta_site,
+      1e6L,
+      delta,
+      2000
+    )
+
+    p()
+
+    return(s_vec)
+
+  }, future.seed = TRUE, future.packages = "simARG")
+})
+
+rho_site_mat <- do.call(rbind, rho_site_list)
+
+delta_list <- with_progress({
+  p <- progressor(along = 1:nrow(x_mat))
+
+  result <- future_lapply(1:nrow(x_mat), function(i) {
+
+    rho_site   <- 0.02
     delta      <- x_mat[i, 2]
+    theta_site <- 0.05
+
+    s_vec <- ClonalOrigin_pair_seq.simulator_fast(
+      tree,
+      rho_site,
+      theta_site,
+      1e6L,
+      delta,
+      2000
+    )
+
+    p()
+
+    return(s_vec)
+
+  }, future.seed = TRUE, future.packages = "simARG")
+})
+
+delta_mat <- do.call(rbind, delta_list)
+
+theta_site_list <- with_progress({
+  p <- progressor(along = 1:nrow(x_mat))
+
+  result <- future_lapply(1:nrow(x_mat), function(i) {
+
+    rho_site   <- 0.02
+    delta      <- 300
     theta_site <- x_mat[i, 3]
 
     s_vec <- ClonalOrigin_pair_seq.simulator_fast(
@@ -43,11 +97,13 @@ summary_stats_list <- with_progress({
   }, future.seed = TRUE, future.packages = "simARG")
 })
 
-summary_stats_mat <- do.call(rbind, summary_stats_list)
+theta_site_mat <- do.call(rbind, theta_site_list)
 
 plan(sequential)
 
 write.csv(x_mat, file = "x_mat.csv", row.names = FALSE, col.names = FALSE)
-write.csv(summary_stats_mat, file = "summary_stats_mat.csv", row.names = FALSE, col.names = FALSE)
+write.csv(rho_site_mat, file = "rho_site_mat.csv", row.names = FALSE, col.names = FALSE)
+write.csv(delta_mat, file = "delta_matt.csv", row.names = FALSE, col.names = FALSE)
+write.csv(theta_site_mat, file = "theta_site_mat.csv", row.names = FALSE, col.names = FALSE)
 
 print("Finish!")

@@ -22,11 +22,11 @@ torch_device = "cpu"
 
 
 np.random.seed(100)
-tree = ClonalTree(n=10)
+tree = ClonalTree(n=15)
 
 rho_site = 0.02
 theta_site = 0.05
-L = 100000
+L = 1000000
 delta = 300
 
 x_o = ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N=2000, k_vec=[50, 200, 2000])
