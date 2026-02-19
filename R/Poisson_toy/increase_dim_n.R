@@ -135,7 +135,7 @@ for (i in 1:length(N)) {
     n_val <- n[j]
 
     # BSL-MCMC
-    results_k <- future_lapply(1:20, function(k) {
+    results_k <- future_lapply(1:100, function(k) {
       bsl_out <- SL_MCMC2(n_val, T_iter, y_obs[1:N_val], init_theta,
                           prior_func, sample_func,
                           proposal, acc_rate=TRUE)
@@ -155,7 +155,7 @@ for (i in 1:length(N)) {
     err_var[j, i] <- mean(sapply(results_k, `[[`, "err_var"))
 
     # Compute var log-likelihood
-    log_like_vec <- future_sapply(1:100, function(k) {
+    log_like_vec <- future_sapply(1:1000, function(k) {
       stats_n <- sample_func(lambda, n_val)
       dmvnorm(x = y_obs[1:N_val],
               mean = stats_n$mean,
