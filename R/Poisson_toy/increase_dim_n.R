@@ -24,11 +24,9 @@ prior_func <- function(theta){
 }
 
 sample_func <- function(theta, n) {
-  repeat {
-    x_mat <- matrix(rpois(n*N_val, theta), nrow=N_val, ncol=n)
-    return(list(mean=rowMeans(x_mat),
-                sigma=var(t(x_mat))))
-  }
+  x_mat <- matrix(rpois(n*N_val, theta), nrow=N_val, ncol=n)
+  return(list(mean=rowMeans(x_mat),
+              sigma=var(t(x_mat))))
 }
 
 proposal <- function(theta_old){
@@ -99,8 +97,8 @@ SL_MCMC2 <- function(M, iter, obs, init_theta, prior_func, sample_func, proposal
 set.seed(100)
 T_iter <- 10000
 burn_in <- as.integer(T_iter/2)
-n <- c(c(2, 5, 6, 7), seq(from=10, to=100, by=5))
-N <- c(c(2, 5, 6, 7), seq(from=10, to=100, by=5))
+n <- c(c(2, 5, 6, 7), seq(from=10, to=50, by=5))
+N <- c(c(2, 5, 6, 7), seq(from=10, to=50, by=5))
 
 acc_rate <- matrix(NA, nrow=length(n), ncol=length(N))
 colnames(acc_rate) <- N
@@ -135,7 +133,7 @@ for (i in 1:length(N)) {
     n_val <- n[j]
 
     # BSL-MCMC
-    results_k <- future_lapply(1:100, function(k) {
+    results_k <- future_lapply(1:10, function(k) {
       bsl_out <- SL_MCMC2(n_val, T_iter, y_obs[1:N_val], init_theta,
                           prior_func, sample_func,
                           proposal, acc_rate=TRUE)
@@ -155,7 +153,7 @@ for (i in 1:length(N)) {
     err_var[j, i] <- mean(sapply(results_k, `[[`, "err_var"))
 
     # Compute var log-likelihood
-    log_like_vec <- future_sapply(1:1000, function(k) {
+    log_like_vec <- future_sapply(1:100, function(k) {
       stats_n <- sample_func(lambda, n_val)
       dmvnorm(x = y_obs[1:N_val],
               mean = stats_n$mean,
