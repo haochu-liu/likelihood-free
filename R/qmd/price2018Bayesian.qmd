@@ -252,3 +252,44 @@ norm_ess_df %>%
   tab_spanner(label = "dim(y)", columns = everything()) %>%
   tab_header(title = "Normalized ESS")
 ```
+
+```{r}
+#| echo: true
+load("../../data/poisson_toy_table.RData")
+acc_rate_df <- as.data.frame(round(poisson_toy_table$acc_rate, 3))
+acc_rate_df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = "Acceptance rate")
+```
+
+```{r}
+#| echo: true
+norm_ess_df <- as.data.frame(round(poisson_toy_table$norm_ess, 3))
+norm_ess_df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = "Normalized ESS")
+```
+
+```{r}
+#| echo: true
+var_log_df <- as.data.frame(round(poisson_toy_table$var_log, 1))
+var_log_df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = md("$\\text{var}(\\log p_{SL}(y|\\lambda=30))$"))
+```
+
+```{r}
+#| echo: true
+est_df <- as.data.frame(round(poisson_toy_table$est, 1))
+est_df %>%
+  gt(rownames_to_stub = TRUE) %>% 
+  tab_stubhead(label = "n") %>%
+  tab_spanner(label = "dim(y)", columns = everything()) %>%
+  tab_header(title = md("$\\text{var}(p_{SL}(y|\\lambda=30)) / \\text{E}(p_{SL}(y|\\lambda=30))^2$"))
+```
