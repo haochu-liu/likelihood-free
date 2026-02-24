@@ -401,7 +401,7 @@ if __name__ == "__main__":
     tree = ClonalTree(n=15)
     rho_site = 0.2
     L = 100000
-    delta = 300
+    delta = 2000
     k = 2000
     theta_site = 0.2
     ARG = ARG(tree, rho_site, L, delta, k)
