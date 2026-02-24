@@ -106,8 +106,8 @@ class ARG(tree):
             if R_new > 0:
                 # Expand matrix if needed
                 if n_recomb + R_new >= nrow_max:
-                    recomb_edge = np.vstack([recomb_edge, np.full((nrow_max, 6), np.nan)])
-                    nrow_max = 2 * nrow_max
+                    recomb_edge = np.vstack([recomb_edge, np.full(((nrow_max + n_recomb + R_new), 6), np.nan)])
+                    nrow_max = 2 * nrow_max + n_recomb + R_new
                 
                 # Set x and y columns
                 recomb_edge[n_recomb:n_recomb + R_new, 4] = i  # x
