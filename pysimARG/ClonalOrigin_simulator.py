@@ -44,22 +44,22 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
     tree_width = tree.n
     v_s = np.full(N * 3, np.nan)
     
-    for j in range(3):
-        v_r = np.full(N, np.nan)
-        v_g3 = np.full(N, np.nan)
+    # for j in range(3):
+    #     v_r = np.full(N, np.nan)
+    #     v_g3 = np.full(N, np.nan)
         
-        for i in range(N):
-            arg = ARG(tree, rho_site, L, delta, k_vec[j])
-            node_site = add_mutation(arg, theta_site)
-            mat = node_site[:tree_width, :]
+    #     for i in range(N):
+    #         arg = ARG(tree, rho_site, L, delta, k_vec[j])
+    #         node_site = add_mutation(arg, theta_site)
+    #         mat = node_site[:tree_width, :]
             
-            v_r[i] = LD_r(mat)
-            v_g3[i] = G3_test(mat)
-            v_s[i + j * N] = np.any(mat[:, 0].astype(bool))
+    #         v_r[i] = LD_r(mat)
+    #         v_g3[i] = G3_test(mat)
+    #         v_s[i + j * N] = np.any(mat[:, 0].astype(bool))
         
-        s_vec[j] = np.mean(v_r)
-        s_vec[j + 3] = np.mean(v_g3)
+    #     s_vec[j] = np.mean(v_r)
+    #     s_vec[j + 3] = np.mean(v_g3)
     
-    s_vec[6] = np.mean(v_s)
+    # s_vec[6] = np.mean(v_s)
     
     return s_vec
