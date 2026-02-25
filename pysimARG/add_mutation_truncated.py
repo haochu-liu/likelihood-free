@@ -9,11 +9,9 @@ def truncated_poisson(lam, size=1):
     p0 = np.exp(-lam)
 
     eps = np.finfo(float).eps
-    u = np.random.uniform(low=eps, high=1.0, size=size)
+    u = np.random.uniform(low=eps+p0, high=1.0, size=size)
 
-    v = p0 + (1 - p0) * u
-
-    return poisson.ppf(v, lam).astype(int)
+    return poisson.ppf(u, lam).astype(int)
 
 
 def add_mutation_truncated(arg, theta_site):
