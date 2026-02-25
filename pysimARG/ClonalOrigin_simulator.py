@@ -1,6 +1,7 @@
 import numpy as np
+import scipy.stats as stats
 from ClonalOrigin_pair import ARG
-from add_mutation import add_mutation
+from add_mutation_truncated import add_mutation_truncated
 from G3_test import G3_test
 from LD_r import LD_r
 
@@ -43,6 +44,7 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
     s_vec = np.full(7, np.nan)
     tree_width = tree.n
     v_s = np.full(N * 3, np.nan)
+    theta = theta_site * 2
     
     # for j in range(3):
     #     v_r = np.full(N, np.nan)
@@ -61,5 +63,37 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
     #     s_vec[j + 3] = np.mean(v_g3)
     
     # s_vec[6] = np.mean(v_s)
+
+    for j in range(3):
+        v_r = np.full(N, np.nan)
+        v_g3 = np.full(N, np.nan)
+
+        arg_list = [None] * N
+        log_weight_list = [None] * N
+        for i in range(N):
+            ARG_i = ARG(tree, rho_site, L, delta, k_vec[j])
+            arg_list[i] = ARG_i
+            log_weight_list[i] = stats.expon.logcdf(ARG_i.length, scale=1/(theta/2))
+        
+        x = np.array(range(N))
+        log_weight_list = np.array(log_weight_list)
+        shifted_log_p = log_weight_list - np.max(log_weight_list)
+        weights = np.exp(shifted_log_p)
+        probs = weights / np.sum(weights)
+
+        sampled_values = np.random.choice(x, size=N, replace=True, p=probs)
+        
+        for i in range(N):
+            node_site = add_mutation_truncated(arg_list[sampled_values[i]], theta_site)
+            mat = node_site[:tree_width, :]
+            
+            v_r[i] = LD_r(mat)
+            v_g3[i] = G3_test(mat)
+            v_s[i + j * N] = np.any(mat[:, 0].astype(bool))
+        
+        s_vec[j] = np.mean(v_r)
+        s_vec[j + 3] = np.mean(v_g3)
+    
+    s_vec[6] = np.mean(v_s)
     
     return s_vec
