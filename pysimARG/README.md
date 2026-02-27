@@ -10,8 +10,14 @@ This is a small package that translate and modify R package [simARG](https://git
 
 `add_mutation.py`: simulate mutations for the ARG object.
 
+`add_mutation_truncated.py`: simulate mutations for the ARG object given the sites all polymorphic.
+
+`localtree.py`: pick the local tree from the ARG object.
+
 `G3_test.py`: compute three-gamete test.
 
 `LD_r.py`: compute the square of correlation coefficient for LD.
+
+`homoplasy_index.py`: compute the homoplasy index for a given ARG and leaf node data.
 
 `ClonalOrigin_simulator.py`: simulate summary statistics by ClonalOrigin pair models with mutations.
