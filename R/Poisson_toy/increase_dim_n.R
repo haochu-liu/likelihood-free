@@ -97,8 +97,10 @@ SL_MCMC2 <- function(M, iter, obs, init_theta, prior_func, sample_func, proposal
 set.seed(100)
 T_iter <- 10000
 burn_in <- as.integer(T_iter/2)
-n <- seq(from=5, to=200, by=5) # simulations
-N <- seq(from=2, to=30, by=2)  # dimensions
+n <- seq(from=5, to=20, by=5) # simulations
+N <- seq(from=2, to=10, by=2)  # dimensions
+# n <- seq(from=5, to=200, by=5) # simulations
+# N <- seq(from=2, to=30, by=2)  # dimensions
 
 acc_rate <- matrix(NA, nrow=length(n), ncol=length(N))
 colnames(acc_rate) <- N
@@ -174,8 +176,7 @@ plan(sequential)
 
 norm_ess <- ess
 for (j in 1:length(n)) {
-  n_val <- n[j]
-  norm_ess[j, ] <- ess[j, ] / n_val
+  norm_ess[j, ] <- ess[j, ] / n[j]
 }
 
 poisson_toy_table <- list(acc_rate=acc_rate,
