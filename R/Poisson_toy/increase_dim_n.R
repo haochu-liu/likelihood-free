@@ -97,8 +97,8 @@ SL_MCMC2 <- function(M, iter, obs, init_theta, prior_func, sample_func, proposal
 set.seed(100)
 T_iter <- 10000
 burn_in <- as.integer(T_iter/2)
-n <- c(c(2, 5, 6, 7), seq(from=10, to=50, by=5))
-N <- c(c(2, 5, 6, 7), seq(from=10, to=50, by=5))
+n <- seq(from=5, to=200, by=5) # simulations
+N <- seq(from=2, to=30, by=2)  # dimensions
 
 acc_rate <- matrix(NA, nrow=length(n), ncol=length(N))
 colnames(acc_rate) <- N
@@ -120,9 +120,9 @@ var_log <- matrix(NA, nrow=length(n), ncol=length(N))
 colnames(var_log) <- N
 rownames(var_log) <- n
 
-est <- matrix(NA, nrow=length(n), ncol=length(N))
-colnames(est) <- N
-rownames(est) <- n
+relative_var <- matrix(NA, nrow=length(n), ncol=length(N))
+colnames(relative_var) <- N
+rownames(relative_var) <- n
 
 
 plan(multisession, workers = 10)
@@ -163,7 +163,7 @@ for (i in 1:length(N)) {
 
     like_vec <- exp(log_like_vec)
     var_log[j, i] <- var(log_like_vec)
-    est[j, i] <- var(like_vec) / (mean(like_vec)^2)
+    relative_var[j, i] <- var(like_vec) / (mean(like_vec)^2)
 
     print(paste0("N = ", N_val, ", n = ", n_val, " finish."))
   }
@@ -173,12 +173,9 @@ plan(sequential)
 
 
 norm_ess <- ess
-for (i in 1:length(N)) {
-  N_val <- N[i]
-  for (j in 1:length(n)) {
-    n_val <- n[j]
-    norm_ess[j, i] <- ess[j, i] / (N_val * n_val)
-  }
+for (j in 1:length(n)) {
+  n_val <- n[j]
+  norm_ess[j, ] <- ess[j, ] / n_val
 }
 
 poisson_toy_table <- list(acc_rate=acc_rate,
@@ -187,6 +184,6 @@ poisson_toy_table <- list(acc_rate=acc_rate,
                            err_mean=err_mean,
                            err_var=err_var,
                            var_log=var_log,
-                           est=est)
+                           relative_var=relative_var)
 
 save(poisson_toy_table, file="data/poisson_toy_table.RData")
