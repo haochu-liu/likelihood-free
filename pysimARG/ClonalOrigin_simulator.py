@@ -44,7 +44,6 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
     s_vec = np.full(7, np.nan)
     tree_width = tree.n
     v_s = np.full(N * 3, np.nan)
-    theta = theta_site * 2
     
     # for j in range(3):
     #     v_r = np.full(N, np.nan)
@@ -73,7 +72,9 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
         for i in range(N):
             ARG_i = ARG(tree, rho_site, L, delta, k_vec[j])
             arg_list[i] = ARG_i
-            log_weight_list[i] = stats.expon.logcdf(ARG_i.length, scale=1/(theta/2))
+            arg_1_length = np.sum(ARG_i.edge[ARG_i.edge_mat[:, 0] == 1, 2])
+            arg_2_length = np.sum(ARG_i.edge[ARG_i.edge_mat[:, 1] == 1, 2])
+            log_weight_list[i] = stats.expon.logcdf(arg_1_length, scale=1/(theta_site/2)) + stats.expon.logcdf(arg_2_length, scale=1/(theta_site/2))
         
         x = np.array(range(N))
         log_weight_list = np.array(log_weight_list)
