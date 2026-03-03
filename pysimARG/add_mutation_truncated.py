@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.stats import poisson
 
+from pysimARG.ClonalOrigin_pair import ARG
+
 
 def truncated_poisson(lam, size=1):
     """
@@ -29,19 +31,28 @@ def add_mutation_truncated(arg, theta_site):
     -------
     node_site : np.ndarray incidence matrix
     """
-    n_mutations = truncated_poisson(theta_site * arg.length / 2)
-    
+    num_site = arg.node_mat.shape[1]
+    n_list = np.zeros(num_site, dtype=int)
+    mutate_edge = list()
+    mutate_site = list()
+
     # Initialize node_site matrix (boolean)
     node_site = np.zeros(
         (arg.node_mat.shape[0], arg.node_mat.shape[1]), dtype=bool
     )
-    
-    # If there are mutations
-    # Sample edges with probability proportional to edge length
-    edge_probs = arg.edge[:, 2] / arg.length
-    mutate_edge = np.random.choice(len(arg.edge), n_mutations, replace=True, p=edge_probs)
-    # Sample sites uniformly (0-indexed)
-    mutate_site = np.random.choice(arg.node_mat.shape[1], n_mutations, replace=True)
+
+    # Simulate mutations for each site
+    for i in range(num_site):
+        # Length of local tree without reduction
+        local_edge = np.where(arg.edge_mat[:, i])[0]
+        local_length = arg.edge[local_edge, 2]
+        # Truncated Poisson distribution
+        local_n = truncated_poisson(theta_site * np.sum(local_length) / 2)
+        n_list[i] = local_n
+        mutate_site.extend([i] * local_n)
+        # Simulate edges
+        probs = local_length / np.sum(local_length)
+        mutate_edge.extend(np.random.choice(local_edge, local_n, replace=True, p=probs).tolist())
     
     # Simulate the mutations at every node
     # Process edges from last to first (bottom-up in the tree)
