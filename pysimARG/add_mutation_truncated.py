@@ -29,17 +29,12 @@ def add_mutation_truncated(arg, theta_site):
     -------
     node_site : np.ndarray incidence matrix
     """
-    theta = theta_site * arg.node_mat.shape[1]
-    n_mutations = truncated_poisson(theta * arg.length / 2)
+    n_mutations = truncated_poisson(theta_site * arg.length / 2)
     
     # Initialize node_site matrix (boolean)
     node_site = np.zeros(
         (arg.node_mat.shape[0], arg.node_mat.shape[1]), dtype=bool
     )
-
-    # If there is no mutation
-    if n_mutations == 0:
-        return node_site
     
     # If there are mutations
     # Sample edges with probability proportional to edge length
@@ -47,18 +42,6 @@ def add_mutation_truncated(arg, theta_site):
     mutate_edge = np.random.choice(len(arg.edge), n_mutations, replace=True, p=edge_probs)
     # Sample sites uniformly (0-indexed)
     mutate_site = np.random.choice(arg.node_mat.shape[1], n_mutations, replace=True)
-
-    # Ignore mutations not in the edge material
-    keep_mutation = []
-    for i in range(n_mutations):
-        if arg.edge_mat[mutate_edge[i], mutate_site[i]]:
-            keep_mutation.append(i)
-
-    mutate_edge = mutate_edge[keep_mutation]
-    mutate_site = mutate_site[keep_mutation]
-
-    if len(keep_mutation) == 0:
-        return node_site
     
     # Simulate the mutations at every node
     # Process edges from last to first (bottom-up in the tree)
