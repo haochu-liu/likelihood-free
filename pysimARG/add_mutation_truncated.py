@@ -52,6 +52,9 @@ def add_mutation_truncated(arg, theta_site):
         probs = local_length / np.sum(local_length)
         mutate_edge.extend(np.random.choice(local_edge, local_n, replace=True, p=probs).tolist())
     
+    mutate_edge = np.array(mutate_edge)
+    mutate_site = np.array(mutate_site)
+    
     # Simulate the mutations at every node
     # Process edges from last to first (bottom-up in the tree)
     for i in range(len(arg.edge) - 1, -1, -1):
