@@ -31,7 +31,7 @@ def homoplasy_index(arg, node_site):
     for site_loc in range(n_site):
         # Get local tree at this site
         arg_site = LocalTree(arg, site_loc)
-        node_vec = arg_site.node_index
+        node_vec = arg_site.node_index.astype(int)
         node_site_vec = node_site[node_vec - 1, site_loc]  # Convert to 0-indexed
 
         # Compute minimum possible changes
@@ -44,9 +44,7 @@ def homoplasy_index(arg, node_site):
         site_dict = {}
 
         # Initialize leaf nodes
-        for i in range(n_leaf):
-            node_id = node_vec[i]
-            site_dict[node_id] = {int(node_site_vec[i])}
+        site_dict = {node: {int(state)} for node, state in zip(node_vec[:n_leaf], leaf_states)}
 
         # Process internal nodes
         for i in range(n_leaf, len(node_vec)):
@@ -70,7 +68,7 @@ def homoplasy_index(arg, node_site):
             elif len(node_indices) == 1:
                 # Recombination structure (single child)
                 children_node = arg_site.edge[node_indices, 1].astype(int)
-                site_dict[parent_node] = site_dict[children_node]
+                site_dict[parent_node] = site_dict[children_node[0]]
 
         s_vec[site_loc] = s_site
 
