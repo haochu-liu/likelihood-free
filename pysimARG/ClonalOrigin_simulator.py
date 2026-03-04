@@ -4,6 +4,7 @@ from ClonalOrigin_pair import ARG
 from add_mutation_truncated import add_mutation_truncated
 from G3_test import G3_test
 from LD_r import LD_r
+from homoplasy_index import homoplasy_index
 
 
 def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
@@ -34,15 +35,16 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
     Returns
     -------
     np.ndarray
-        A 7-dimensional vector as the summary statistics of simulations.
+        A 8-dimensional vector as the summary statistics of simulations.
     """
     if max(k_vec) > L:
         raise ValueError("Site distance cannot be greater than the number of sites!")
     if len(k_vec) != 3:
         raise ValueError("`k_vec` must be a list of three integer values!")
     
-    s_vec = np.full(7, np.nan)
+    s_vec = np.full(8, np.nan)
     tree_width = tree.n
+    v_h = np.full(N * 3, np.nan)
     v_s = np.full(N * 3, np.nan)
     
     # for j in range(3):
@@ -90,11 +92,13 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
             
             v_r[i] = LD_r(mat)
             v_g3[i] = G3_test(mat)
+            v_h[i + j * N] = homoplasy_index(arg_list[sampled_values[i]], node_site)
             v_s[i + j * N] = np.any(mat[:, 0].astype(bool))
         
         s_vec[j] = np.mean(v_r)
         s_vec[j + 3] = np.mean(v_g3)
     
-    s_vec[6] = np.mean(v_s)
+    s_vec[6] = np.mean(v_h)
+    s_vec[7] = np.mean(v_s)
     
     return s_vec
