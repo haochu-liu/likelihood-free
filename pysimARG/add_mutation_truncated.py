@@ -1,8 +1,6 @@
 import numpy as np
 from scipy.stats import poisson
 
-from pysimARG.ClonalOrigin_pair import ARG
-
 
 def truncated_poisson(lam, size=1):
     """
