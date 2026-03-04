@@ -78,13 +78,12 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
             arg_2_length = np.sum(ARG_i.edge[ARG_i.edge_mat[:, 1] == 1, 2])
             log_weight_list[i] = stats.expon.logcdf(arg_1_length, scale=1/(theta_site/2)) + stats.expon.logcdf(arg_2_length, scale=1/(theta_site/2))
         
-        x = np.array(range(N))
         log_weight_list = np.array(log_weight_list)
         shifted_log_p = log_weight_list - np.max(log_weight_list)
         weights = np.exp(shifted_log_p)
         probs = weights / np.sum(weights)
 
-        sampled_values = np.random.choice(x, size=N, replace=True, p=probs)
+        sampled_values = np.random.choice(N, size=N, replace=True, p=probs)
         
         for i in range(N):
             node_site = add_mutation_truncated(arg_list[sampled_values[i]], theta_site)
