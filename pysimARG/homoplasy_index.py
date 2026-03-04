@@ -23,17 +23,15 @@ def homoplasy_index(arg, node_site):
     float
         The homoplasy index, ranging from 0 (no homoplasy) to 1 (maximum homoplasy).
     """
-    n_node = arg.node_mat.shape[0]
     n_leaf = arg.n
     n_site = arg.node_mat.shape[1]
-
     m_vec = np.zeros(n_site, dtype=int)
     s_vec = np.zeros(n_site, dtype=int)
 
     for site_loc in range(n_site):
         # Get local tree at this site
         arg_site = LocalTree(arg, site_loc)
-        node_vec = np.sort(np.unique(arg_site.edge[:, :2].flatten().astype(int)))
+        node_vec = arg_site.node_index
         node_site_vec = node_site[node_vec - 1, site_loc]  # Convert to 0-indexed
 
         # Compute minimum possible changes
@@ -43,7 +41,6 @@ def homoplasy_index(arg, node_site):
 
         # Compute actual changes using Fitch algorithm
         s_site = 0
-        # Dictionary mapping node index to set of possible states
         site_dict = {}
 
         # Initialize leaf nodes
@@ -54,14 +51,12 @@ def homoplasy_index(arg, node_site):
         # Process internal nodes
         for i in range(n_leaf, len(node_vec)):
             parent_node = node_vec[i]
-            # Find edges where this node is the parent
             node_indices = np.where(arg_site.edge[:, 0] == parent_node)[0]
-
             if len(node_indices) == 2:
                 # Coalescent structure (two children)
-                children_nodes = arg_site.edge[node_indices, 1].astype(int)
-                child_1_states = site_dict[children_nodes[0]]
-                child_2_states = site_dict[children_nodes[1]]
+                children_node = arg_site.edge[node_indices, 1].astype(int)
+                child_1_states = site_dict[children_node[0]]
+                child_2_states = site_dict[children_node[1]]
 
                 intersec = child_1_states & child_2_states
                 if len(intersec) == 0:
@@ -74,8 +69,8 @@ def homoplasy_index(arg, node_site):
 
             elif len(node_indices) == 1:
                 # Recombination structure (single child)
-                child_node = int(arg_site.edge[node_indices[0], 1])
-                site_dict[parent_node] = site_dict[child_node]
+                children_node = arg_site.edge[node_indices, 1].astype(int)
+                site_dict[parent_node] = site_dict[children_node]
 
         s_vec[site_loc] = s_site
 
