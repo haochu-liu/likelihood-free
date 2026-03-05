@@ -1,22 +1,16 @@
 import torch
 import numpy as np
-from config import torch_device
 from sbi.utils.torchutils import BoxUniform
 
 
+torch_device = "cpu"
 mean_radius = 0.1
 sd_radius = 0.01
 baseoffset = 0.25
 
 prior_torch = BoxUniform(
-    low=-1 * torch.ones(2),
-    high=1 * torch.ones(2),
-    device=torch_device
-)
-
-prior_torch_var = BoxUniform(
-    low=torch.tensor([-1.0, -1.0, 10], device=torch_device),
-    high=torch.tensor([1.0, 1.0, 100], device=torch_device),
+    low=torch.tensor([-1.0, -1.0, 100], device=torch_device),
+    high=torch.tensor([1.0, 1.0, 10000], device=torch_device),
     device=torch_device
 )
 
@@ -24,6 +18,11 @@ x_o = torch.tensor([0, 0], device=torch_device)
 x_o = x_o.flatten()
 
 x_o_numpy = x_o.cpu().numpy()
+
+x_o_var = torch.tensor([0, 0, 0, 0], device=torch_device)
+x_o_var = x_o_var.flatten()
+
+x_o_var_numpy = x_o_var.cpu().numpy()
 
 
 def simulator_torch(theta):
@@ -35,7 +34,8 @@ def simulator_torch(theta):
     )
     z0 = -torch.abs(theta[0] + theta[1]) / torch.sqrt(torch.tensor(2.0))
     z1 = (-theta[0] + theta[1]) / torch.sqrt(torch.tensor(2.0))
-    return p + torch.tensor([z0, z1], device=torch_device)
+    location = p + torch.tensor([z0, z1], device=torch_device) + torch.randn(2, device=torch_device) / torch.sqrt(theta[2])
+    return location
 
 
 def simulator_torch_batched(theta):
@@ -57,7 +57,7 @@ def simulator_torch_var(theta):
     )
     z0 = -torch.abs(theta[0] + theta[1]) / torch.sqrt(torch.tensor(2.0))
     z1 = (-theta[0] + theta[1]) / torch.sqrt(torch.tensor(2.0))
-    location = p + torch.tensor([z0, z1], device=torch_device) + torch.randn(2, device=torch_device) * 0.1 / torch.sqrt(theta[2])
+    location = p + torch.tensor([z0, z1], device=torch_device) + torch.randn(2, device=torch_device) / torch.sqrt(theta[2])
     summary = torch.cat((location, location**2), dim=0)
     return summary
 
