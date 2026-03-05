@@ -9,7 +9,15 @@ sd_radius = 0.01
 baseoffset = 0.25
 
 prior_torch = BoxUniform(
-    low=-1 * torch.ones(2), high=1 * torch.ones(2), device=torch_device
+    low=-1 * torch.ones(2),
+    high=1 * torch.ones(2),
+    device=torch_device
+)
+
+prior_torch_var = BoxUniform(
+    low=torch.tensor([-1.0, -1.0, 10], device=torch_device),
+    high=torch.tensor([1.0, 1.0, 100], device=torch_device),
+    device=torch_device
 )
 
 x_o = torch.tensor([0, 0], device=torch_device)
