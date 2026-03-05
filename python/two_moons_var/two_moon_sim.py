@@ -27,9 +27,7 @@ def simulator_torch(theta):
     )
     z0 = -torch.abs(theta[0] + theta[1]) / torch.sqrt(torch.tensor(2.0))
     z1 = (-theta[0] + theta[1]) / torch.sqrt(torch.tensor(2.0))
-    location = p + torch.tensor([z0, z1], device=torch_device) + torch.randn(2, device=torch_device) * 0.1 / torch.sqrt(theta[2])
-    summary = torch.cat((location, location**2), dim=0)
-    return summary
+    return p + torch.tensor([z0, z1], device=torch_device)
 
 
 def simulator_torch_batched(theta):
@@ -42,6 +40,30 @@ def simulator_torch_batched(theta):
     return x_samples
 
 
+def simulator_torch_var(theta):
+    theta = theta.reshape(-1)
+    a = (torch.pi * (torch.rand(1) - 0.5)).to(torch_device)
+    r = mean_radius + torch.randn(1, device=torch_device) * sd_radius
+    p = torch.tensor(
+        [r * torch.cos(a) + baseoffset, r * torch.sin(a)], device=torch_device
+    )
+    z0 = -torch.abs(theta[0] + theta[1]) / torch.sqrt(torch.tensor(2.0))
+    z1 = (-theta[0] + theta[1]) / torch.sqrt(torch.tensor(2.0))
+    location = p + torch.tensor([z0, z1], device=torch_device) + torch.randn(2, device=torch_device) * 0.1 / torch.sqrt(theta[2])
+    summary = torch.cat((location, location**2), dim=0)
+    return summary
+
+
+def simulator_torch_batched_var(theta):
+    n_sim, data_dim = theta.shape
+    x_samples = torch.zeros((n_sim, data_dim))
+
+    for i in range(n_sim):
+        x_samples[i,] = simulator_torch_var(theta[i,])
+
+    return x_samples
+
+
 def simulator_numpy(theta):
     theta = theta.reshape(-1)
     a = np.array(np.pi * (np.random.random(1) - 0.5))
@@ -49,9 +71,7 @@ def simulator_numpy(theta):
     p = np.array([r * np.cos(a) + baseoffset, r * np.sin(a)])
     z0 = -np.abs(theta[0] + theta[1]) / np.sqrt(2.0)
     z1 = (-theta[0] + theta[1]) / np.sqrt(2.0)
-    location = p.reshape(-1) + np.array([z0, z1]) + np.random.normal(loc=0, scale=0.1/np.sqrt(theta[2]), size=2)
-    summary = np.concatenate((location, location**2), axis=0)
-    return summary
+    return p.reshape(-1) + np.array([z0, z1])
 
 
 def analytic_posterior_numpy(x_o, n_samples=1):
