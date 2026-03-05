@@ -43,7 +43,7 @@ def compute_stats(seed, arg_obj, theta_site, tree_width):
     r_val = LD_r(mat)
     g3_val = G3_test(mat)
     h_val = homoplasy_index(arg_obj, node_site)
-    s_val = np.any(mat[:, 0].astype(bool))
+    s_val = np.mean(np.any(mat, axis=0) & ~np.all(mat, axis=0))
     
     return r_val, g3_val, h_val, s_val
 

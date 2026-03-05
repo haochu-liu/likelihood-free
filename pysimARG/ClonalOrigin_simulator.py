@@ -92,7 +92,7 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
             v_r[i] = LD_r(mat)
             v_g3[i] = G3_test(mat)
             v_h[i + j * N] = homoplasy_index(arg_list[sampled_values[i]], node_site)
-            v_s[i + j * N] = np.any(mat[:, 0].astype(bool))
+            v_s[i + j * N] = np.mean(np.any(mat, axis=0) & ~np.all(mat, axis=0))
         
         s_vec[j] = np.mean(v_r)
         s_vec[j + 3] = np.mean(v_g3)
