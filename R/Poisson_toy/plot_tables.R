@@ -60,7 +60,7 @@ ggplot(df_norm_ess_long, aes(x = Column, y = Row)) +
   # geom_text(aes(label = round(norm_ess, 2)), size = 4) +
   theme_minimal() +
   labs(title = "Heatmap of normalized ESS",
-       fill = "Rank of norm ESS for each dimension",
+       fill = "Rank of norm ESS \nfor each dimension",
        x = "Dimension",
        y = "Number of samples") +
   theme(plot.title = element_text(face = "bold", size = 12))
@@ -88,7 +88,7 @@ ggplot(df_var_log_long, aes(x = Column, y = Row)) +
   # geom_text(aes(label = round(Text_Value, 2)), size = 4) +
   geom_tile(data = df_var_log_highlight, fill = NA, color = "black", linewidth = 0.2) +
   theme_minimal() +
-  labs(title = "Heatmap of var[log-likelihood] (values between 1 and 3 are highlighted by boxes)",
+  labs(title = "Heatmap of var[log-likelihood]\n(values between 1 and 3 are highlighted by boxes)",
        fill = "Variance values \nthat squished to [0, 10]",
        x = "Dimension",
        y = "Number of samples") +
@@ -117,7 +117,7 @@ ggplot(df_relative_var_long, aes(x = Column, y = Row)) +
   # geom_text(aes(label = round(Text_Value, 2)), size = 4) +
   geom_tile(data = df_relative_var_highlight, fill = NA, color = "black", linewidth = 0.2) +
   theme_minimal() +
-  labs(title = "Heatmap of relative variance  (values between 1 and 2 are highlighted by boxes)",
+  labs(title = "Heatmap of relative variance\n(values between 1 and 2 are highlighted by boxes)",
        fill = "Relative variance values \nthat squished to [0, 10]",
        x = "Dimension",
        y = "Number of samples") +
