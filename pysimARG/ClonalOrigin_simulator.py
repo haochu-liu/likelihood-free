@@ -42,10 +42,12 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
     if len(k_vec) != 3:
         raise ValueError("`k_vec` must be a list of three integer values!")
     
-    s_vec = np.full(8, np.nan)
+    # s_vec = np.full(8, np.nan)
+    s_vec = np.full(9, np.nan)
     tree_width = tree.n
     v_h = np.full(N * 3, np.nan)
     v_s = np.full(N * 3, np.nan)
+    v_w = np.full(N * 3, np.nan)
     
     # for j in range(3):
     #     v_r = np.full(N, np.nan)
@@ -93,11 +95,13 @@ def ClonalOrigin_simulator(tree, rho_site, theta_site, L, delta, N,
             v_g3[i] = G3_test(mat)
             v_h[i + j * N] = homoplasy_index(arg_list[sampled_values[i]], node_site)
             v_s[i + j * N] = np.mean(np.any(mat, axis=0) & ~np.all(mat, axis=0))
+            v_w[i + j * N] = weights[sampled_values[i]]
         
         s_vec[j] = np.mean(v_r)
         s_vec[j + 3] = np.mean(v_g3)
     
     s_vec[6] = np.mean(v_h)
     s_vec[7] = np.mean(v_s)
+    s_vec[8] = np.mean(v_w)
     
     return s_vec
