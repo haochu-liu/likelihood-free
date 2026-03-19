@@ -12,7 +12,7 @@
 #' @param acc_rate Default acc_rate = FALSE, if TRUE, print acceptance rate and return it.
 #' @return A sequence of parameters from the BSL posterior.
 SL_MCMC2 <- function(M, iter, obs, init_theta, prior_func, sample_func, proposal,
-                    acc_rate=FALSE) {
+                     acc_rate=FALSE) {
   # Initial setup
   n_theta <- length(init_theta)
   n_obs <- length(obs)
