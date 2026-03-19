@@ -7,7 +7,7 @@
 #' @param N Number of particles for SMC.
 #' @param theta_d Dimension of parameter.
 #' @param obs A vector of the observed statistics.
-#' @param prior_sampler A function to draw samples form prior.
+#' @param prior_sampler A function to draw samples from prior.
 #' @param prior_func A density function of prior (log density).
 #' @param sample_func A function which takes theta and M and return sample mean and variance.
 #' @param q_sigma A scale matrix for the Gaussian proposal.
