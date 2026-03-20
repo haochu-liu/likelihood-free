@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
     for seed in config.seeds:
         two_moons_snpe_c(
-            num_simulations_per_round=int(5000/config.num_rounds),
+            num_simulations_per_round=int(10000/config.num_rounds),
             num_rounds=config.num_rounds,
             seed=seed,
             prior=two_moon_sim.prior_torch,

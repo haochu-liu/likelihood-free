@@ -63,7 +63,7 @@ if __name__ == "__main__":
     import config
 
     for seed in config.seeds:
-        for simulation_budget in [5000]:
+        for simulation_budget in [10000]:
             two_moons_nle(
                 simulation_budget=simulation_budget,
                 seed=seed,
