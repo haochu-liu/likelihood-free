@@ -55,9 +55,10 @@ if __name__ == "__main__":
     theta_mat = np.zeros((simulation_budget * 10, 3))
     x_mat = np.zeros((simulation_budget * 10, 9))
 
-    seeds = np.random.randint(0, 2**31 - 1, size=simulation_budget)
+    seeds = range(simulation_budget)
 
     output_file = data_path
+    np.savetxt(output_file / 'x_o.csv', x_o_numpy, delimiter=",")
     
     num_cores = 10
     print(f"Starting parallel execution on {num_cores} cores...")
