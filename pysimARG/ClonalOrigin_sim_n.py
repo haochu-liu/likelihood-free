@@ -35,43 +35,28 @@ def ClonalOrigin_sim_n(tree, rho_site, theta_site, L, delta, N,
     Returns
     -------
     np.ndarray
-        A 8-dimensional vector as the summary statistics of simulations.
+        A len(N) * 9 size matrix as the summary statistics of simulations.
     """
     if max(k_vec) > L:
         raise ValueError("Site distance cannot be greater than the number of sites!")
     if len(k_vec) != 3:
         raise ValueError("`k_vec` must be a list of three integer values!")
     
-    s_vec = np.full(8, np.nan)
+    desc_indices = np.argsort(N)[::-1]
+    N_max = int(N[desc_indices[0]])
+    
+    s_mat = np.full((len(N), 9), np.nan)
+    s_mat[:, 8] = N
     tree_width = tree.n
-    v_h = np.full(N * 3, np.nan)
-    v_s = np.full(N * 3, np.nan)
-    
-    # for j in range(3):
-    #     v_r = np.full(N, np.nan)
-    #     v_g3 = np.full(N, np.nan)
-        
-    #     for i in range(N):
-    #         arg = ARG(tree, rho_site, L, delta, k_vec[j])
-    #         node_site = add_mutation(arg, theta_site)
-    #         mat = node_site[:tree_width, :]
-            
-    #         v_r[i] = LD_r(mat)
-    #         v_g3[i] = G3_test(mat)
-    #         v_s[i + j * N] = np.any(mat[:, 0].astype(bool))
-        
-    #     s_vec[j] = np.mean(v_r)
-    #     s_vec[j + 3] = np.mean(v_g3)
-    
-    # s_vec[6] = np.mean(v_s)
+    v_h = np.full((3, N_max), np.nan)
+    v_s = np.full((3, N_max), np.nan)
+    v_r = np.full((3, N_max), np.nan)
+    v_g3 = np.full((3, N_max), np.nan)
 
     for j in range(3):
-        v_r = np.full(N, np.nan)
-        v_g3 = np.full(N, np.nan)
-
-        arg_list = [None] * N
-        log_weight_list = [None] * N
-        for i in range(N):
+        arg_list = [None] * N_max
+        log_weight_list = [None] * N_max
+        for i in range(N_max):
             ARG_i = ARG(tree, rho_site, L, delta, k_vec[j])
             arg_list[i] = ARG_i
             arg_1_length = np.sum(ARG_i.edge[ARG_i.edge_mat[:, 0] == 1, 2])
@@ -89,15 +74,26 @@ def ClonalOrigin_sim_n(tree, rho_site, theta_site, L, delta, N,
             node_site = add_mutation_truncated(arg_list[sampled_values[i]], theta_site)
             mat = node_site[:tree_width, :]
             
-            v_r[i] = LD_r(mat)
-            v_g3[i] = G3_test(mat)
-            v_h[i + j * N] = homoplasy_index(arg_list[sampled_values[i]], node_site)
-            v_s[i + j * N] = weights[sampled_values[i]]
-        
-        s_vec[j] = np.mean(v_r)
-        s_vec[j + 3] = np.mean(v_g3)
+            v_r[j, i] = LD_r(mat)
+            v_g3[j, i] = G3_test(mat)
+            v_h[j, i] = homoplasy_index(arg_list[sampled_values[i]], node_site)
+            v_s[j, i] = weights[sampled_values[i]]
     
-    s_vec[6] = np.mean(v_h)
-    s_vec[7] = np.mean(v_s)
+    for i in range(len(N)):
+        idx = desc_indices[i]
+        N_val = N[idx]
+        if i > 0:
+            choose_idx = np.random.randint(0, N_max, size=N_val)
+        else:
+            choose_idx = np.arange(N_val)
+
+        s_mat[idx, 0] = np.mean(v_r[0, choose_idx])
+        s_mat[idx, 1] = np.mean(v_r[1, choose_idx])
+        s_mat[idx, 2] = np.mean(v_r[2, choose_idx])
+        s_mat[idx, 3] = np.mean(v_g3[0, choose_idx])
+        s_mat[idx, 4] = np.mean(v_g3[1, choose_idx])
+        s_mat[idx, 5] = np.mean(v_g3[2, choose_idx])
+        s_mat[idx, 6] = np.mean(v_h[:, choose_idx])
+        s_mat[idx, 7] = np.mean(v_s[:, choose_idx])
     
-    return s_vec
+    return s_mat
