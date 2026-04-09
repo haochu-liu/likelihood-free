@@ -68,9 +68,9 @@ def ClonalOrigin_sim_n(tree, rho_site, theta_site, L, delta, N,
         weights = np.exp(shifted_log_p)
         probs = weights / np.sum(weights)
 
-        sampled_values = np.random.choice(N, size=N, replace=True, p=probs)
+        sampled_values = np.random.choice(N_max, size=N_max, replace=True, p=probs)
         
-        for i in range(N):
+        for i in range(N_max):
             node_site = add_mutation_truncated(arg_list[sampled_values[i]], theta_site)
             mat = node_site[:tree_width, :]
             
