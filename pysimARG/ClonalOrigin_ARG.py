@@ -2,6 +2,7 @@ import numpy as np
 from tree import tree
 from clonal_genealogy import ClonalTree
 from pair_simulator import pair_simulator
+from seq_simulator import seq_simulator
 
 
 class ARG(tree):
@@ -26,7 +27,8 @@ class ARG(tree):
         delta : float
             The mean of recombinant segment length (must be > 0).
         k : int
-            The distance between two sites.
+            The distance between two sites in pair simulator,
+            and the sequence length in sequence simulator.
         type: str
             The type of simulator used (pair or seq)
         
@@ -80,6 +82,8 @@ class ARG(tree):
     def _simulate(self, tree_obj, rho_site, L, delta, k, type):
         if type == "pair":
             pair_simulator(self, tree_obj, rho_site, L, delta, k)
+        elif type == "seq":
+            seq_simulator(self, tree_obj, rho_site, L, delta, k)
 
     def __repr__(self):
         return f"ARG(n={self.n}, rho={self.rho}, L={self.L}, delta={self.delta})"
