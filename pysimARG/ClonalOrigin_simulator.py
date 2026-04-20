@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.stats as stats
-from ClonalOrigin_pair import ARG
+from ClonalOrigin_ARG import ARG
 from add_mutation_truncated import add_mutation_truncated
 from G3_test import G3_test
 from LD_r import LD_r
