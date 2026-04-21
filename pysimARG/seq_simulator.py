@@ -23,13 +23,12 @@ def seq_simulator(ARG, tree_obj, rho_site, L, delta, k):
         if i == 1:
             R_new = np.random.poisson(rho_site * delta * tree_length / 2)
             R_old = 0
-        else:  # i == 2, ..., k
-            survive_index = np.where(recomb_edge[:n_recomb, 5] == 1)[0] if n_recomb > 0 else np.array([], dtype=int)
-            delta2 = np.sum((1 - 1/delta) ** np.arange(k))
-            R_new = np.random.poisson(rho_site * delta2 * tree_length / 2)
+        else: # i == 2, ..., k
+            survive_index = np.where(recomb_edge[:n_recomb, 5] == (i - 1))[0] if n_recomb > 0 else np.array([], dtype=int)
+            R_new = np.random.poisson(rho_site * tree_length / 2)
 
-            R_old = np.random.binomial(len(survive_index), (1 - 1/delta) ** k)
-            remain_index = np.random.choice(survive_index, R_old, replace=False)
+            R_old = np.random.binomial(1 * survive_index.size, (1 - 1 / delta))
+            remain_index = np.random.choice(survive_index, size=R_old, replace=False)
         
         if R_new > 0:
             # Expand matrix if needed
