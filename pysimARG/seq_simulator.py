@@ -19,11 +19,11 @@ def seq_simulator(ARG, tree_obj, rho_site, L, delta, k):
     n_recomb = 0
     remain_index = np.array([], dtype=int)
     
-    for i in range(1, 3):  # i = 1, 2
+    for i in range(1, k+1):  # i = 1, 2, ..., k
         if i == 1:
             R_new = np.random.poisson(rho_site * delta * tree_length / 2)
             R_old = 0
-        else:  # i == 2
+        else:  # i == 2, ..., k
             survive_index = np.where(recomb_edge[:n_recomb, 5] == 1)[0] if n_recomb > 0 else np.array([], dtype=int)
             delta2 = np.sum((1 - 1/delta) ** np.arange(k))
             R_new = np.random.poisson(rho_site * delta2 * tree_length / 2)
@@ -111,9 +111,9 @@ def seq_simulator(ARG, tree_obj, rho_site, L, delta, k):
     # Handle case with no recombination
     if n_recomb == 0:
         ARG.edge = clonal_edge
-        ARG.edge_mat = np.full((2 * (n - 1), 2), True)
+        ARG.edge_mat = np.full((2 * (n - 1), k), True)
         ARG.node_height = clonal_node_height
-        ARG.node_mat = np.full((2 * n - 1, 2), True)
+        ARG.node_mat = np.full((2 * n - 1, k), True)
         ARG.node_clonal = np.full(2 * n - 1, True)
         ARG.height = np.max(clonal_node_height)
         ARG.length = np.sum(clonal_edge[:, 2])
@@ -128,7 +128,7 @@ def seq_simulator(ARG, tree_obj, rho_site, L, delta, k):
 
     edge_matrix = np.full((edge_max, 3), np.nan)
     edge_mat_index = np.full(edge_max, np.nan)
-    node_mat = np.full((node_max, 2), np.nan)
+    node_mat = np.full((node_max, k), np.nan)
     node_info = np.full((node_max, 4), np.nan)
     # Columns: index, height, recomb, clonal
 
