@@ -250,7 +250,7 @@ def seq_simulator(ARG, tree_obj, rho_site, L, delta, k):
             node_mat[i + 1, x-1:y] = node_mat[leaf_index, x-1:y]
 
             # For the complement (-(x:y) in R means all except x:y)
-            mask = np.ones(2, dtype=bool)
+            mask = np.ones(node_mat.shape[1], dtype=bool)
             mask[x-1:y] = False
             node_mat[i, mask] = node_mat[leaf_index, mask]
 
