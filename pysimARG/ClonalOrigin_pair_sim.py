@@ -7,7 +7,7 @@ from LD_r import LD_r
 from homoplasy_index import homoplasy_index
 
 
-def ClonalOrigin_pair_simulator(tree, rho_site, theta_site, L, delta, N,
+def ClonalOrigin_pair_sim(tree, rho_site, theta_site, L, delta, N,
                                 k_vec=[50, 200, 2000]):
     """
     Simulate approximated ARG using ClonalOrigin with pair method.

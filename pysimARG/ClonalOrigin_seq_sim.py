@@ -7,7 +7,7 @@ from LD_r import LD_r
 from homoplasy_index import homoplasy_index
 
 
-def ClonalOrigin_seq_simulator(tree, rho_site, theta_site, L, delta, k_vec=[50, 200, 2000]):
+def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta, k_vec=[50, 200, 2000]):
     """
     Simulate approximated ARG using ClonalOrigin with sequential method.
     
