@@ -30,7 +30,6 @@ def add_mutation_truncated(arg, theta_site):
     node_site : np.ndarray incidence matrix
     """
     num_site = arg.node_mat.shape[1]
-    n_list = np.zeros(num_site, dtype=int)
     mutate_edge = list()
     mutate_site = list()
 
@@ -46,7 +45,6 @@ def add_mutation_truncated(arg, theta_site):
         local_length = arg.edge[local_edge, 2]
         # Truncated Poisson distribution
         local_n = truncated_poisson(theta_site * np.sum(local_length) / 2)
-        n_list[i] = local_n
         mutate_site.extend([i] * local_n)
         # Simulate edges
         probs = local_length / np.sum(local_length)
