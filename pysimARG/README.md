@@ -4,9 +4,13 @@ This is a small package that translate and modify R package [simARG](https://git
 
 `clonal_genealogy`: a subclass `ClonalTree` and simulation method for clonal genealogy tree.
 
-`ClonalOrigin_pair.py`: a subclass `ARG` and ClonalOrigin simulation method for pair of sites.
+`ClonalOrigin_ARG.py`: a subclass `ARG` and ClonalOrigin simulation method for pair of sites.
 
 `ClonalOrigin_nodes.py`: find the row index for recombination nodes in `ARG` simulator.
+
+`pair_simulator.py`: ClonalOrigin pair model called by `ARG`.
+
+`seq_simulator.py`: ClonalOrigin seq model called by `ARG`.
 
 `add_mutation.py`: simulate mutations for the ARG object.
 
@@ -20,4 +24,8 @@ This is a small package that translate and modify R package [simARG](https://git
 
 `homoplasy_index.py`: compute the homoplasy index for a given ARG and leaf node data.
 
-`ClonalOrigin_simulator.py`: simulate summary statistics by ClonalOrigin pair models with mutations.
+`ClonalOrigin_pair_sim.py`: simulate summary statistics by ClonalOrigin pair models with mutations.
+
+`ClonalOrigin_seq_sim.py`: simulate summary statistics by ClonalOrigin seq models with mutation.
+
+`discrete_uniform.py`: a function to simulate from discrete uniform in torch settings.
