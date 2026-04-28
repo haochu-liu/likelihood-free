@@ -28,18 +28,18 @@ tree = ClonalTree(n=15)
 
 rho_site = 0.02
 theta_site = 0.05
-L = 2000
-delta = 300
+L = 200
+delta = 30
 
-x_o = ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta, k_vec=[20, 50, 90])
+x_o = ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta)
 x_o = torch.tensor(x_o, device=torch_device)
 x_o = x_o.flatten()
 x_o_numpy = x_o.cpu().numpy()
 
 prior_rho = Uniform(low=torch.tensor([0.0]), high=torch.tensor([0.2]))
-prior_delta = Uniform(low=torch.tensor([1.0]), high=torch.tensor([500.0]))
+prior_delta = Uniform(low=torch.tensor([1.0]), high=torch.tensor([100.0]))
 prior_theta = Uniform(low=torch.tensor([0.0]), high=torch.tensor([0.2]))
-prior_L = DiscreteUniform(low=torch.tensor([100.0]), high=torch.tensor([10000.0]))
+prior_L = DiscreteUniform(low=torch.tensor([100.0]), high=torch.tensor([500.0]))
 
 prior = MultipleIndependent(
     dists=[prior_rho, prior_delta, prior_theta, prior_L],
@@ -53,8 +53,7 @@ def simulator(theta):
                                          theta[0].item(),
                                          theta[2].item(),
                                          int(theta[3].item()),
-                                         theta[1].item(),
-                                         k_vec=[20, 50, 90])
+                                         theta[1].item())
     summary_stats = torch.tensor(summary_stats, device=torch_device)
     return summary_stats
 
