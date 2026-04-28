@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats as stats
 from ClonalOrigin_ARG import ARG
-from add_mutation_truncated import add_mutation_truncated
+from add_mutation_truncated import add_mutation
 from G3_test import G3_test
 from LD_r import LD_r
 from homoplasy_index import homoplasy_index
@@ -44,7 +44,8 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta, k_vec=[50, 200, 2
     tree_width = tree.n
 
     ARG_sim = ARG(tree, rho_site, L, delta, L, "seq")
-    node_site = add_mutation_truncated(ARG_sim, theta_site)
+    node_site = add_mutation(ARG_sim, theta_site)
+    mat = node_site[:tree_width, :]
 
     # Summary statistics LD r and G3 test
     for i in range(len(k_vec)):
@@ -62,11 +63,10 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta, k_vec=[50, 200, 2
     s_vec[2 * len(k_vec)] = homoplasy_index(ARG_sim, node_site)
 
     # Summary statistic proportion of segregating sites
-    log_weight = 0
-    for i in range(ARG_sim.edge_mat.shape[1]):
-        arg_i_length = np.sum(ARG_sim.edge[ARG_sim.edge_mat[:, i] == 1, 2])
-        log_weight += stats.expon.logcdf(arg_i_length, scale=1/(theta_site/2))
-    s_vec[2 * len(k_vec) + 1] = np.exp(log_weight) / L
+    has_true = mat.any(axis=0)
+    has_false = ~mat.all(axis=0)
+    count_S = (has_true & has_false).sum()
+    s_vec[2 * len(k_vec) + 1] = count_S / L
 
     s_vec[2 * len(k_vec) + 2] = L
     
