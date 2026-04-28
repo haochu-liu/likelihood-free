@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats as stats
 from ClonalOrigin_ARG import ARG
-from add_mutation_truncated import add_mutation
+from add_mutation import add_mutation
 from G3_test import G3_test
 from LD_r import LD_r
 from homoplasy_index import homoplasy_index
@@ -61,8 +61,8 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
                     ld_far += LD_r(mat[:, idx_pair])
                     g3_far += G3_test(mat[:, idx_pair])
         
-        s_near = (int(L/2) + 1) * (int(L/2)) / 2
-        s_far = L * (L - 1) / 2 - s_near
+        s_far = (int(L/2) + 1) * (int(L/2)) / 2
+        s_near = L * (L - 1) / 2 - s_far
         s_vec[0] = ld_near / s_near
         s_vec[1] = ld_far / s_far
         s_vec[2] = g3_near / s_near
