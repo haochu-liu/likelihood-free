@@ -1,0 +1,41 @@
+import numpy as np
+
+
+def G4_test(mat):
+    """
+    Four-gamete test.
+    
+    Compute the number of combinations that have patterns 00, 01, 10, 11.
+    
+    Parameters
+    ----------
+    mat : np.ndarray
+        An incidence matrix with two columns.
+    
+    Returns
+    -------
+    bool
+        True if all four patterns (00, 01, 10, 11) are present, False otherwise.
+    """
+    if mat.shape[1] != 2:
+        raise ValueError("`mat` must have two columns.")
+    if mat.shape[0] < 3:
+        raise ValueError("`mat` must have at least 3 rows.")
+    
+    col1 = mat[:, 0].astype(bool)
+    col2 = mat[:, 1].astype(bool)
+    
+    # Count pattern 00: first column False, second column False
+    num00 = np.sum(~col1 & ~col2)
+    # Count pattern 01: first column False, second column True
+    num01 = np.sum(~col1 & col2)
+    # Count pattern 10: first column True, second column False
+    num10 = np.sum(col1 & ~col2)
+    # Count pattern 11: both columns True
+    num11 = np.sum(col1 & col2)
+    
+    # Check if all patterns are present (non-zero counts)
+    if  num00 > 0 and num01 > 0 and num10 > 0 and num11 > 0:
+        return True
+    else:
+        return False

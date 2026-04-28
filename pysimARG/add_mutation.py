@@ -20,9 +20,11 @@ def add_mutation(arg, theta_site):
     n_mutations = np.random.poisson(theta * arg.length / 2)
     
     # Initialize node_site matrix (boolean)
-    node_site = np.zeros(
-        (arg.node_mat.shape[0], arg.node_mat.shape[1]), dtype=bool
-    )
+    # node_site = np.zeros(
+    #     (arg.node_mat.shape[0], arg.node_mat.shape[1]), dtype=bool
+    # )
+    root_node = np.random.choice([True, False], size=arg.node_mat.shape[1])
+    node_site = np.tile(root_node, (arg.node_mat.shape[0], 1))
 
     # If there is no mutation
     if n_mutations == 0:

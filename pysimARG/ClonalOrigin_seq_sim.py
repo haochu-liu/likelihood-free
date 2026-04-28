@@ -2,7 +2,7 @@ import numpy as np
 import scipy.stats as stats
 from ClonalOrigin_ARG import ARG
 from add_mutation import add_mutation
-from G3_test import G3_test
+from G4_test import G4_test
 from LD_r import LD_r
 from homoplasy_index import homoplasy_index
 
@@ -47,8 +47,8 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     has_false = ~mat.all(axis=0)
     idx_seg = np.where(has_true & has_false)[0]
 
-    # Summary statistics LD r and G3 test
-    ld_near, ld_far, g3_near, g3_far = 0, 0, 0, 0
+    # Summary statistics LD r and G4 test
+    ld_near, ld_far, g4_near, g4_far = 0, 0, 0, 0
     if idx_seg.size >= 2:
         for i in range(idx_seg.size - 1):
             for j in range(i + 1, idx_seg.size):
@@ -56,17 +56,17 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
                 idx_pair = [idx_seg[i], idx_seg[j]]
                 if dist_ij < L/2:
                     ld_near += LD_r(mat[:, idx_pair])
-                    g3_near += G3_test(mat[:, idx_pair])
+                    g4_near += G4_test(mat[:, idx_pair])
                 else:
                     ld_far += LD_r(mat[:, idx_pair])
-                    g3_far += G3_test(mat[:, idx_pair])
+                    g4_far += G4_test(mat[:, idx_pair])
         
         s_far = (int(L/2) + 1) * (int(L/2)) / 2
         s_near = L * (L - 1) / 2 - s_far
         s_vec[0] = ld_near / s_near
         s_vec[1] = ld_far / s_far
-        s_vec[2] = g3_near / s_near
-        s_vec[3] = g3_far / s_far
+        s_vec[2] = g4_near / s_near
+        s_vec[3] = g4_far / s_far
     else:
         s_vec[:4] = 0
     
