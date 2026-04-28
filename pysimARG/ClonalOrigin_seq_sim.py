@@ -7,7 +7,7 @@ from LD_r import LD_r
 from homoplasy_index import homoplasy_index
 
 
-def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta, k_vec=[50, 200, 2000]):
+def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     """
     Simulate approximated ARG using ClonalOrigin with sequential method.
     
@@ -26,48 +26,58 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta, k_vec=[50, 200, 2
         The number of sites.
     delta : float
         The mean of recombinant segment length.
-    k_vec : list of int in ascending order, optional
-        An ascending list of three distance values between two sites. Default is [50, 200, 2000].
     
     Returns
     -------
     np.ndarray
-        A 8-dimensional vector as the summary statistics of simulations.
+        A 7-dimensional vector as the summary statistics of simulations.
     """
-    if max(k_vec) >= L:
-        raise ValueError("Site distance cannot be greater or equal to the number of sites!")
-    if not np.all(np.sort(k_vec) == k_vec):
-        raise ValueError("`k_vec` must be in ascending order!")
-    
-    s_size = int(2 * len(k_vec) + 3)
-    s_vec = np.full(s_size, np.nan)
+    if not isinstance(L, int):
+        raise ValueError("`L` must be a single integer!")
+
+    s_vec = np.full(7, np.nan)
     tree_width = tree.n
 
     ARG_sim = ARG(tree, rho_site, L, delta, L, "seq")
     node_site = add_mutation(ARG_sim, theta_site)
     mat = node_site[:tree_width, :]
 
-    # Summary statistics LD r and G3 test
-    for i in range(len(k_vec)):
-        mat_num = node_site.shape[1] - k_vec[i]
-        v_r = np.full(mat_num, np.nan)
-        v_g3 = np.full(mat_num, np.nan)
-        for j in range(mat_num):
-            mat = node_site[:tree_width, [j, j+k_vec[0]]]
-            v_r[j] = LD_r(mat)
-            v_g3[j] = G3_test(mat)
-        s_vec[i] = np.mean(v_r)
-        s_vec[i + len(k_vec)] = np.mean(v_g3)
-    
-    # Summary statistic homoplasy index
-    s_vec[2 * len(k_vec)] = homoplasy_index(ARG_sim, node_site)
-
-    # Summary statistic proportion of segregating sites
+    # Identify segregating sites
     has_true = mat.any(axis=0)
     has_false = ~mat.all(axis=0)
-    count_S = (has_true & has_false).sum()
-    s_vec[2 * len(k_vec) + 1] = count_S / L
+    idx_seg = np.where(has_true & has_false)[0]
 
-    s_vec[2 * len(k_vec) + 2] = L
+    # Summary statistics LD r and G3 test
+    ld_near, ld_far, g3_near, g3_far = 0, 0, 0, 0
+    if idx_seg.size >= 2:
+        for i in range(idx_seg.size - 1):
+            for j in range(i + 1, idx_seg.size):
+                dist_ij = idx_seg[j] - idx_seg[i]
+                idx_pair = [idx_seg[i], idx_seg[j]]
+                if dist_ij < L/2:
+                    ld_near += LD_r(mat[:, idx_pair])
+                    g3_near += G3_test(mat[:, idx_pair])
+                else:
+                    ld_far += LD_r(mat[:, idx_pair])
+                    g3_far += G3_test(mat[:, idx_pair])
+        
+        s_near = (int(L/2) + 1) * (int(L/2)) / 2
+        s_far = L * (L - 1) / 2 - s_near
+        s_vec[0] = ld_near / s_near
+        s_vec[1] = ld_far / s_far
+        s_vec[2] = g3_near / s_near
+        s_vec[3] = g3_far / s_far
+    else:
+        s_vec[:4] = 0
+    
+    # Summary statistic homoplasy index
+    s_vec[4] = homoplasy_index(ARG_sim, node_site)
+
+    # Summary statistic proportion of segregating sites
+    count_S = idx_seg.size
+    s_vec[5] = count_S / L
+
+    # Add the length of sequence as a summary statistic
+    s_vec[6] = L
     
     return s_vec
