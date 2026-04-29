@@ -1,4 +1,5 @@
 import numpy as np
+from Bio import Phylo
 import torch
 from torch.distributions import Uniform
 from sbi.utils.user_input_checks import MultipleIndependent
@@ -19,12 +20,23 @@ sys.path.append(str(pysimARG_path))
 from clonal_genealogy import ClonalTree
 from ClonalOrigin_seq_sim import ClonalOrigin_seq_sim
 from discrete_uniform import DiscreteUniform
+from newick_to_tree import newick_to_tree
 
 torch_device = "cpu"
 
 
 np.random.seed(100)
 tree = ClonalTree(n=15)
+
+# Load phylo tree and convert to ClonalTree format
+phylo_tree = Phylo.read("../data/SimBac/clonal_frame.nwk", "newick")
+Phylo.draw_ascii(phylo_tree)
+
+edge, node_height = newick_to_tree(phylo_tree)
+tree.edge = edge
+tree.node_height = node_height
+tree.height = np.max(node_height)
+tree.length = np.sum(edge[:, 2])
 
 rho_site = 0.02
 theta_site = 0.05
