@@ -29,7 +29,7 @@ np.random.seed(100)
 tree = ClonalTree(n=15)
 
 # Load phylo tree and convert to ClonalTree format
-phylo_tree = Phylo.read("../data/SimBac/clonal_frame.nwk", "newick")
+phylo_tree = Phylo.read(data_path /"SimBac/clonal_frame.nwk", "newick")
 Phylo.draw_ascii(phylo_tree)
 
 edge, node_height = newick_to_tree(phylo_tree)

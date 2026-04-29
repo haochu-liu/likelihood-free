@@ -41,5 +41,6 @@ def newick_to_tree(tree):
 
     edge = np.array(edge)
     edge[:, :2] = index_mapping[np.int64(edge[:, :2])]
+    edge[:, :2] += 1
 
     return edge, node_height[sort_idx]
