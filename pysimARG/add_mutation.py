@@ -32,7 +32,9 @@ def add_mutation(arg, theta_site):
     
     # If there are mutations
     # Sample edges with probability proportional to edge length
-    edge_probs = arg.edge[:, 2] / arg.length
+    edge_probs = arg.edge[:, 2]
+    edge_probs = np.clip(edge_probs, a_min=0, a_max=None)
+    edge_probs = edge_probs / np.sum(edge_probs)
     mutate_edge = np.random.choice(len(arg.edge), n_mutations, replace=True, p=edge_probs)
     # Sample sites uniformly (0-indexed)
     mutate_site = np.random.choice(arg.node_mat.shape[1], n_mutations, replace=True)
