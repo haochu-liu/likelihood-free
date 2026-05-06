@@ -4,7 +4,7 @@ from localtree_simbac import get_tree_at_position
 from newick_to_tree import newick_to_tree
 
 
-def homoplasy_index(blocks, node_site, start_pos, L):
+def homoplasy_index_simbac(blocks, node_site, start_pos, L):
     """
     Calculate the homoplasy index for an ARG with mutations.
 
@@ -40,7 +40,7 @@ def homoplasy_index(blocks, node_site, start_pos, L):
 
     local_pos = start_pos
 
-    for i in range(L):
+    for idx in range(L):
         # Get local tree at this site
         if not start <= local_pos <= end:
             local_tree, start, end = get_tree_at_position(blocks, local_pos)
@@ -51,7 +51,7 @@ def homoplasy_index(blocks, node_site, start_pos, L):
         # Compute minimum possible changes
         leaf_states = node_site[:, local_pos - 1]  # Convert to 0-indexed
         if np.any(leaf_states) and not np.all(leaf_states):
-            m_vec[i] = 1
+            m_vec[idx] = 1
 
         # Compute actual changes using Fitch algorithm
         s_site = 0
@@ -79,7 +79,7 @@ def homoplasy_index(blocks, node_site, start_pos, L):
                 # Intersection is not empty -> no mutation
                 site_dict[parent_node] = intersec
 
-        s_vec[i] = s_site
+        s_vec[idx] = s_site
         local_pos += 1
 
     # Calculate homoplasy index
