@@ -26,27 +26,17 @@ torch_device = "cpu"
 
 
 np.random.seed(100)
-tree = ClonalTree(n=15)
+clonal_tree = ClonalTree(n=10)
 
 # Load phylo tree and convert to ClonalTree format
-phylo_tree = Phylo.read(data_path /"SimBac/clonal_frame.nwk", "newick")
+phylo_tree = Phylo.read(data_path / "SimBac/clonal_frame.nwk", "newick")
 Phylo.draw_ascii(phylo_tree)
 
 edge, node_height = newick_to_tree(phylo_tree)
-tree.edge = edge
-tree.node_height = node_height
-tree.height = np.max(node_height)
-tree.length = np.sum(edge[:, 2])
-
-rho_site = 0.02
-theta_site = 0.05
-L = 200
-delta = 30
-
-x_o = ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta)
-x_o = torch.tensor(x_o, device=torch_device)
-x_o = x_o.flatten()
-x_o_numpy = x_o.cpu().numpy()
+clonal_tree.edge = edge
+clonal_tree.node_height = node_height
+clonal_tree.height = np.max(node_height)
+clonal_tree.length = np.sum(edge[:, 2])
 
 prior_rho = Uniform(low=torch.tensor([0.0]), high=torch.tensor([0.2]))
 prior_delta = Uniform(low=torch.tensor([1.0]), high=torch.tensor([100.0]))
@@ -61,7 +51,7 @@ prior = MultipleIndependent(
 
 def simulator(theta):
     theta = theta.reshape(-1)
-    summary_stats = ClonalOrigin_seq_sim(tree,
+    summary_stats = ClonalOrigin_seq_sim(clonal_tree,
                                          theta[0].item(),
                                          theta[2].item(),
                                          int(theta[3].item()),
@@ -88,6 +78,5 @@ if __name__ == "__main__":
 
     # Reset directory and save simulation results
     output_file = data_path
-    np.savetxt(output_file / 'x_o.csv', x_o_numpy, delimiter=",")
-    np.savetxt(output_file / 'theta.csv', theta.cpu().numpy(), delimiter=",")
-    np.savetxt(output_file / 'x.csv', x.cpu().numpy(), delimiter=",")
+    np.savetxt(output_file / 'theta_example.csv', theta.cpu().numpy(), delimiter=",")
+    np.savetxt(output_file / 'x_example.csv', x.cpu().numpy(), delimiter=",")
