@@ -1,8 +1,7 @@
 import numpy as np
-from localtree import LocalTree
 
 
-def homoplasy_index(arg, node_site):
+def homoplasy_index(tree, node_site):
     """
     Calculate the homoplasy index for an ARG with mutations.
 
@@ -12,8 +11,8 @@ def homoplasy_index(arg, node_site):
 
     Parameters
     ----------
-    arg : ARG
-        An ARG object (from ClonalOrigin_pair).
+    tree : ClonalTree
+        A clonal tree object representing the clonal genealogy for the ARG.
     node_site : np.ndarray
         Node-site incidence matrix (boolean), typically from add_mutation().
         Shape: (n_nodes, n_sites)
@@ -23,15 +22,14 @@ def homoplasy_index(arg, node_site):
     float
         The homoplasy index, ranging from 0 (no homoplasy) to 1 (maximum homoplasy).
     """
-    n_leaf = arg.n
-    n_site = arg.node_mat.shape[1]
+    n_leaf = tree.n
+    n_site = node_site.shape[1]
     m_vec = np.zeros(n_site, dtype=int)
     s_vec = np.zeros(n_site, dtype=int)
 
     for site_loc in range(n_site):
-        # Get local tree at this site
-        arg_site = LocalTree(arg, site_loc)
-        node_vec = arg_site.node_index.astype(int)
+        # Initialize node states
+        node_vec = np.arange(1, 2*n_leaf)
         node_site_vec = node_site[node_vec - 1, site_loc]  # Convert to 0-indexed
 
         # Compute minimum possible changes
@@ -49,10 +47,10 @@ def homoplasy_index(arg, node_site):
         # Process internal nodes
         for i in range(n_leaf, len(node_vec)):
             parent_node = node_vec[i]
-            node_indices = np.where(arg_site.edge[:, 0] == parent_node)[0]
+            node_indices = np.where(tree.edge[:, 0] == parent_node)[0]
             if len(node_indices) == 2:
                 # Coalescent structure (two children)
-                children_node = arg_site.edge[node_indices, 1].astype(int)
+                children_node = tree.edge[node_indices, 1].astype(int)
                 child_1_states = site_dict[children_node[0]]
                 child_2_states = site_dict[children_node[1]]
 
@@ -67,7 +65,7 @@ def homoplasy_index(arg, node_site):
 
             elif len(node_indices) == 1:
                 # Recombination structure (single child)
-                children_node = arg_site.edge[node_indices, 1].astype(int)
+                children_node = tree.edge[node_indices, 1].astype(int)
                 site_dict[parent_node] = site_dict[children_node[0]]
 
         s_vec[site_loc] = s_site
