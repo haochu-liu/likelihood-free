@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.stats as stats
 from ClonalOrigin_ARG import ARG
 from add_mutation import add_mutation
 from G4_test import G4_test
@@ -30,12 +29,12 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     Returns
     -------
     np.ndarray
-        A 7-dimensional vector as the summary statistics of simulations.
+        A 19-dimensional vector as the summary statistics of simulations.
     """
     if not isinstance(L, int):
         raise ValueError("`L` must be a single integer!")
 
-    s_vec = np.full(7, np.nan)
+    s_vec = np.full(19, np.nan)
     tree_width = tree.n
 
     ARG_sim = ARG(tree, rho_site, L, delta, L, "seq")
@@ -48,7 +47,10 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     idx_seg = np.where(has_true & has_false)[0]
 
     # Summary statistics LD r and G4 test
+    seg_near, seg_far = 0, 0
+    seg_20_50, seg_50_80 = 0, 0
     ld_near, ld_far, g4_near, g4_far = 0, 0, 0, 0
+    ld_20_50, ld_50_80, g4_20_50, g4_50_80 = 0, 0, 0, 0
     if idx_seg.size >= 2:
         for i in range(idx_seg.size - 1):
             for j in range(i + 1, idx_seg.size):
@@ -57,27 +59,50 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
                 if dist_ij < L/2:
                     ld_near += LD_r(mat[:, idx_pair])
                     g4_near += G4_test(mat[:, idx_pair])
+                    seg_near += 1
                 else:
                     ld_far += LD_r(mat[:, idx_pair])
                     g4_far += G4_test(mat[:, idx_pair])
+                    seg_far += 1
+                if 20 <= dist_ij < 50:
+                    ld_20_50 += LD_r(mat[:, idx_pair])
+                    g4_20_50 += G4_test(mat[:, idx_pair])
+                    seg_20_50 += 1
+                if 50 <= dist_ij <= 80:
+                    ld_50_80 += LD_r(mat[:, idx_pair])
+                    g4_50_80 += G4_test(mat[:, idx_pair])
+                    seg_50_80 += 1
         
-        s_far = (int(L/2) + 1) * (int(L/2)) / 2
-        s_near = L * (L - 1) / 2 - s_far
-        s_vec[0] = ld_near / s_near
-        s_vec[1] = ld_far / s_far
-        s_vec[2] = g4_near / s_near
-        s_vec[3] = g4_far / s_far
+        s_vec[0] = ld_near
+        s_vec[1] = ld_far
+        s_vec[2] = g4_near
+        s_vec[3] = g4_far
+
+        s_vec[4] = ld_near / seg_near if seg_near > 0 else 0
+        s_vec[5] = ld_far /seg_far if seg_far > 0 else 0
+        s_vec[6] = g4_near / seg_near if seg_near > 0 else 0
+        s_vec[7] = g4_far / seg_far if seg_far > 0 else 0
+
+        s_vec[8] = ld_20_50
+        s_vec[9] = ld_50_80
+        s_vec[10] = g4_20_50
+        s_vec[11] = g4_50_80
+
+        s_vec[12] = ld_20_50 / seg_20_50 if seg_20_50 > 0 else 0
+        s_vec[13] = ld_50_80 / seg_50_80 if seg_50_80 > 0 else 0
+        s_vec[14] = g4_20_50 / seg_20_50 if seg_20_50 > 0 else 0
+        s_vec[15] = g4_50_80 / seg_50_80 if seg_50_80 > 0 else 0
     else:
-        s_vec[:4] = 0
+        s_vec[:16] = 0
     
     # Summary statistic homoplasy index
-    s_vec[4] = homoplasy_index(ARG_sim, node_site)
+    s_vec[16] = homoplasy_index(tree, node_site)
 
     # Summary statistic proportion of segregating sites
     count_S = idx_seg.size
-    s_vec[5] = count_S / L
+    s_vec[17] = count_S / L
 
     # Add the length of sequence as a summary statistic
-    s_vec[6] = L
+    s_vec[18] = L
     
     return s_vec
