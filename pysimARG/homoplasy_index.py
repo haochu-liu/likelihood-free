@@ -30,10 +30,7 @@ def homoplasy_index(tree, node_site):
     for site_loc in range(n_site):
         # Initialize node states
         node_vec = np.arange(1, 2*n_leaf)
-        node_site_vec = node_site[node_vec - 1, site_loc]  # Convert to 0-indexed
-
-        # Compute minimum possible changes
-        leaf_states = node_site_vec[:n_leaf]
+        leaf_states = node_site[:n_leaf, site_loc]
         if np.any(leaf_states) and not np.all(leaf_states):
             m_vec[site_loc] = 1
 
