@@ -91,7 +91,7 @@ def ClonalOrigin_pair_sim(tree, rho_site, theta_site, L, delta, N,
             
             v_r[i] = LD_r(mat)
             v_g3[i] = G3_test(mat)
-            v_h[i + j * N] = homoplasy_index(arg_list[sampled_values[i]], node_site)
+            v_h[i + j * N] = homoplasy_index(tree, node_site)
             v_s[i + j * N] = weights[sampled_values[i]]
         
         s_vec[j] = np.mean(v_r)

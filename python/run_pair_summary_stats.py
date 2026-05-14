@@ -12,21 +12,21 @@ data_path = project_root / 'data'
 
 sys.path.append(str(pysimARG_path))
 from clonal_genealogy import ClonalTree
-from ClonalOrigin_seq_sim import ClonalOrigin_seq_sim
+from ClonalOrigin_pair_sim import ClonalOrigin_pair_sim
 from newick_to_tree import newick_to_tree
 
 
 def sim_rho(x_val, tree, theta, L, delta):
-    return ClonalOrigin_seq_sim(tree, x_val, theta, L, delta)
+    return ClonalOrigin_pair_sim(tree, x_val, theta, L, delta)
 
 def sim_delta(x_val, tree, rho, theta, L):
-    return ClonalOrigin_seq_sim(tree, rho, theta, L, x_val)
+    return ClonalOrigin_pair_sim(tree, rho, theta, L, x_val)
 
 def sim_theta(x_val, tree, rho, L, delta):
-    return ClonalOrigin_seq_sim(tree, rho, x_val, L, delta)
+    return ClonalOrigin_pair_sim(tree, rho, x_val, L, delta)
 
 def sim_L(x_val, tree, rho, theta, delta):
-    return ClonalOrigin_seq_sim(tree, rho, theta, int(x_val), delta)
+    return ClonalOrigin_pair_sim(tree, rho, theta, int(x_val), delta)
 
 
 if __name__ == '__main__':
@@ -78,10 +78,10 @@ if __name__ == '__main__':
     print("Saving files to data directory...")
     data_path.mkdir(parents=True, exist_ok=True) 
 
-    np.savetxt(data_path / 'x_seq.csv', x_mat, delimiter=",")
-    np.savetxt(data_path / 'rho_site_seq.csv', rho_site_mat, delimiter=",")
-    np.savetxt(data_path / 'delta_seq.csv', delta_mat, delimiter=",")
-    np.savetxt(data_path / 'theta_site_seq.csv', theta_site_mat, delimiter=",")
-    np.savetxt(data_path / 'L_seq.csv', L_mat, delimiter=",")
+    np.savetxt(data_path / 'x_pair.csv', x_mat, delimiter=",")
+    np.savetxt(data_path / 'rho_site_pair.csv', rho_site_mat, delimiter=",")
+    np.savetxt(data_path / 'delta_pair.csv', delta_mat, delimiter=",")
+    np.savetxt(data_path / 'theta_site_pair.csv', theta_site_mat, delimiter=",")
+    np.savetxt(data_path / 'L_pair.csv', L_mat, delimiter=",")
     
     print("Simulation and saves complete!")
