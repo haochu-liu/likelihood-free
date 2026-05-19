@@ -54,8 +54,10 @@ def simulator(theta):
     summary_stats = ClonalOrigin_pair_sim(clonal_tree,
                                          theta[0].item(),
                                          theta[2].item(),
+                                         2000,
+                                         theta[1].item(),
                                          int(theta[3].item()),
-                                         theta[1].item())
+                                         k_vec=[50, 200, 2000])
     summary_stats = torch.tensor(summary_stats, device=torch_device)
     return summary_stats
 

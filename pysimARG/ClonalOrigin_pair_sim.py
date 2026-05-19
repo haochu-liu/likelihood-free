@@ -8,7 +8,7 @@ from homoplasy_index import homoplasy_index
 
 
 def ClonalOrigin_pair_sim(tree, rho_site, theta_site, L, delta, N,
-                                k_vec=[50, 200, 2000]):
+                          k_vec=[50, 200, 2000]):
     """
     Simulate approximated ARG using ClonalOrigin with pair method.
     
@@ -42,7 +42,7 @@ def ClonalOrigin_pair_sim(tree, rho_site, theta_site, L, delta, N,
     if len(k_vec) != 3:
         raise ValueError("`k_vec` must be a list of three integer values!")
     
-    s_vec = np.full(8, np.nan)
+    s_vec = np.full(9, np.nan)
     tree_width = tree.n
     v_h = np.full(N * 3, np.nan)
     v_s = np.full(N * 3, np.nan)
@@ -99,5 +99,6 @@ def ClonalOrigin_pair_sim(tree, rho_site, theta_site, L, delta, N,
     
     s_vec[6] = np.mean(v_h)
     s_vec[7] = np.mean(v_s)
+    s_vec[8] = N
     
     return s_vec
