@@ -45,25 +45,19 @@ def homoplasy_index(tree, node_site):
         for i in range(n_leaf, len(node_vec)):
             parent_node = node_vec[i]
             node_indices = np.where(tree.edge[:, 0] == parent_node)[0]
-            if len(node_indices) == 2:
-                # Coalescent structure (two children)
-                children_node = tree.edge[node_indices, 1].astype(int)
-                child_1_states = site_dict[children_node[0]]
-                child_2_states = site_dict[children_node[1]]
 
-                intersec = child_1_states & child_2_states
-                if len(intersec) == 0:
-                    # Intersection is empty -> mutation occurred
-                    site_dict[parent_node] = child_1_states | child_2_states
-                    s_site += 1
-                else:
-                    # Intersection is not empty -> no mutation
-                    site_dict[parent_node] = intersec
+            children_node = tree.edge[node_indices, 1].astype(int)
+            child_1_states = site_dict[children_node[0]]
+            child_2_states = site_dict[children_node[1]]
 
-            elif len(node_indices) == 1:
-                # Recombination structure (single child)
-                children_node = tree.edge[node_indices, 1].astype(int)
-                site_dict[parent_node] = site_dict[children_node[0]]
+            intersec = child_1_states & child_2_states
+            if len(intersec) == 0:
+                # Intersection is empty -> mutation occurred
+                site_dict[parent_node] = child_1_states | child_2_states
+                s_site += 1
+            else:
+                # Intersection is not empty -> no mutation
+                site_dict[parent_node] = intersec
 
         s_vec[site_loc] = s_site
 

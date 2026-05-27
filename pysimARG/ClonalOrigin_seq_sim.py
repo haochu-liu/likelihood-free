@@ -29,12 +29,12 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     Returns
     -------
     np.ndarray
-        A 19-dimensional vector as the summary statistics of simulations.
+        A 30-dimensional vector as the summary statistics of simulations.
     """
     if not isinstance(L, int):
         raise ValueError("`L` must be a single integer!")
 
-    s_vec = np.full(19, np.nan)
+    s_vec = np.full(30, np.nan)
     tree_width = tree.n
 
     ARG_sim = ARG(tree, rho_site, L, delta, L, "seq")
