@@ -29,8 +29,7 @@ def Kelly_Z(mat):
                 idx_pair = [idx_seg[i], idx_seg[j]]
                 r_sq = LD(mat[:, idx_pair])['r_square']
                 r_squares.append(r_sq)
-    
-    if len(r_squares) == 0:
+    else:
         return 0.0
     
     return np.mean(r_squares)
