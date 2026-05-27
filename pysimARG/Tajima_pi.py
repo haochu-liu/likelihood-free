@@ -24,7 +24,7 @@ def Tajima_pi(mat, Wakeley=False):
     n = mat.shape[0]
 
     pi_list = []
-    for i in range(n):
+    for i in range(n-1):
         for j in range(i + 1, n):
             pi_list.append(np.sum(mat[i] != mat[j]))
 
