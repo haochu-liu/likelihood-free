@@ -2,8 +2,13 @@ import numpy as np
 from ClonalOrigin_ARG import ARG
 from add_mutation import add_mutation
 from G4_test import G4_test
-from LD_r import LD_r
+from LD import LD
 from homoplasy_index import homoplasy_index
+from Watterson_theta import Watterson_theta
+from Tajima_pi import Tajima_pi
+from Tajima_D import Tajima_D
+from Wall_BQ import Wall_BQ
+from Hudson_Rm import Hudson_Rm
 
 
 def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
@@ -29,12 +34,12 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     Returns
     -------
     np.ndarray
-        A 30-dimensional vector as the summary statistics of simulations.
+        A 44-dimensional vector as the summary statistics of simulations.
     """
     if not isinstance(L, int):
         raise ValueError("`L` must be a single integer!")
 
-    s_vec = np.full(30, np.nan)
+    s_vec = np.full(44, np.nan)
     tree_width = tree.n
 
     ARG_sim = ARG(tree, rho_site, L, delta, L, "seq")
@@ -49,60 +54,122 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     # Summary statistics LD r and G4 test
     seg_near, seg_far = 0, 0
     seg_20_50, seg_50_80 = 0, 0
-    ld_near, ld_far, g4_near, g4_far = 0, 0, 0, 0
-    ld_20_50, ld_50_80, g4_20_50, g4_50_80 = 0, 0, 0, 0
+    D_near, D_far, D_prime_near, D_prime_far, r2_near, r2_far = 0, 0, 0, 0, 0, 0
+    g4_near, g4_far = 0, 0
+    D_20_50, D_50_80, D_prime_20_50, D_prime_50_80, r2_20_50, r2_50_80 = 0, 0, 0, 0, 0, 0
+    g4_20_50, g4_50_80 = 0, 0
+    r_squares = []
     if idx_seg.size >= 2:
         for i in range(idx_seg.size - 1):
             for j in range(i + 1, idx_seg.size):
                 dist_ij = idx_seg[j] - idx_seg[i]
                 idx_pair = [idx_seg[i], idx_seg[j]]
+
+                LD_result = LD(mat[:, idx_pair])
+                r_sq = LD_result['r_square']
+                r_squares.append(r_sq)
+
                 if dist_ij < L/2:
-                    ld_near += LD_r(mat[:, idx_pair])
+                    D_near += LD_result['D']
+                    D_prime_near += LD_result['D_prime']
+                    r2_near += LD_result['r_square']
                     g4_near += G4_test(mat[:, idx_pair])
                     seg_near += 1
                 else:
-                    ld_far += LD_r(mat[:, idx_pair])
+                    D_far += LD_result['D']
+                    D_prime_far += LD_result['D_prime']
+                    r2_far += LD_result['r_square']
                     g4_far += G4_test(mat[:, idx_pair])
                     seg_far += 1
                 if 20 <= dist_ij < 50:
-                    ld_20_50 += LD_r(mat[:, idx_pair])
+                    D_20_50 += LD_result['D']
+                    D_prime_20_50 += LD_result['D_prime']
+                    r2_20_50 += LD_result['r_square']
                     g4_20_50 += G4_test(mat[:, idx_pair])
                     seg_20_50 += 1
                 if 50 <= dist_ij <= 80:
-                    ld_50_80 += LD_r(mat[:, idx_pair])
+                    D_50_80 += LD_result['D']
+                    D_prime_50_80 += LD_result['D_prime']
+                    r2_50_80 += LD_result['r_square']
                     g4_50_80 += G4_test(mat[:, idx_pair])
                     seg_50_80 += 1
         
-        s_vec[0] = ld_near
-        s_vec[1] = ld_far
-        s_vec[2] = g4_near
-        s_vec[3] = g4_far
+        s_vec[0] = D_near
+        s_vec[1] = D_far
+        s_vec[2] = D_prime_near
+        s_vec[3] = D_prime_far
+        s_vec[4] = r2_near
+        s_vec[5] = r2_far
 
-        s_vec[4] = ld_near / seg_near if seg_near > 0 else 0
-        s_vec[5] = ld_far /seg_far if seg_far > 0 else 0
-        s_vec[6] = g4_near / seg_near if seg_near > 0 else 0
-        s_vec[7] = g4_far / seg_far if seg_far > 0 else 0
+        s_vec[6] = g4_near
+        s_vec[7] = g4_far
 
-        s_vec[8] = ld_20_50
-        s_vec[9] = ld_50_80
-        s_vec[10] = g4_20_50
-        s_vec[11] = g4_50_80
+        s_vec[8] = D_near / seg_near if seg_near > 0 else 0
+        s_vec[9] = D_far / seg_far if seg_far > 0 else 0
+        s_vec[10] = D_prime_near / seg_near if seg_near > 0 else 0
+        s_vec[11] = D_prime_far / seg_far if seg_far > 0 else 0
+        s_vec[12] = r2_near / seg_near if seg_near > 0 else 0
+        s_vec[13] = r2_far / seg_far if seg_far > 0 else 0
 
-        s_vec[12] = ld_20_50 / seg_20_50 if seg_20_50 > 0 else 0
-        s_vec[13] = ld_50_80 / seg_50_80 if seg_50_80 > 0 else 0
-        s_vec[14] = g4_20_50 / seg_20_50 if seg_20_50 > 0 else 0
-        s_vec[15] = g4_50_80 / seg_50_80 if seg_50_80 > 0 else 0
+        s_vec[14] = g4_near / seg_near if seg_near > 0 else 0
+        s_vec[15] = g4_far / seg_far if seg_far > 0 else 0
+
+        s_vec[16] = D_20_50
+        s_vec[17] = D_50_80
+        s_vec[18] = D_prime_20_50
+        s_vec[19] = D_prime_50_80
+        s_vec[20] = r2_20_50
+        s_vec[21] = r2_50_80
+
+        s_vec[22] = g4_20_50
+        s_vec[23] = g4_50_80
+
+        s_vec[24] = D_20_50 / seg_20_50 if seg_20_50 > 0 else 0
+        s_vec[25] = D_50_80 / seg_50_80 if seg_50_80 > 0 else 0
+        s_vec[26] = D_prime_20_50 / seg_20_50 if seg_20_50 > 0 else 0
+        s_vec[27] = D_prime_50_80 / seg_50_80 if seg_50_80 > 0 else 0
+        s_vec[28] = r2_20_50 / seg_20_50 if seg_20_50 > 0 else 0
+        s_vec[29] = r2_50_80 / seg_50_80 if seg_50_80 > 0 else 0
+
+        s_vec[30] = g4_20_50 / seg_20_50 if seg_20_50 > 0 else 0
+        s_vec[31] = g4_50_80 / seg_50_80 if seg_50_80 > 0 else 0
     else:
-        s_vec[:16] = 0
+        s_vec[:32] = 0
+        s_vec[42] = 0 # Kelly's Zns estimator
     
     # Summary statistic homoplasy index
-    s_vec[16] = homoplasy_index(tree, node_site)
+    s_vec[32] = homoplasy_index(tree, node_site)
+
+    # Summary statistic clade homoplasy index
+    s_vec[33] = clade_homoplasy(tree, node_site)
 
     # Summary statistic proportion of segregating sites
     count_S = idx_seg.size
-    s_vec[17] = count_S / L
+    s_vec[34] = count_S / L
+
+    # Watterson's theta estimator
+    s_vec[35] = Watterson_theta(mat, count_S)
+
+    # Tajima's pi estimators
+    tajima_dict = Tajima_pi(mat, Wakeley=True)
+    s_vec[36] = tajima_dict['pi']
+    s_vec[37] = tajima_dict['pi2']
+
+    # Tajima's D statistic
+    s_vec[38] = Tajima_D(mat, s_vec[36], s_vec[35], count_S)
+
+    # Wall's B and Q statistics
+    wall_dict = Wall_BQ(mat[:, idx_seg])
+    s_vec[39] = wall_dict['B']
+    s_vec[40] = wall_dict['Q']
+
+    # Hudson's Rm estimator
+    s_vec[41] = Hudson_Rm(mat)
+
+    # Kelly's Zns estimator
+    s_vec[42] = np.mean(r_squares)
 
     # Add the length of sequence as a summary statistic
-    s_vec[18] = L
+    s_vec[43] = L
     
     return s_vec
