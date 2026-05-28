@@ -41,3 +41,21 @@ This is a small package that translate and modify R package [simARG](https://git
 `fasta_to_bool.py`: convert `.fasta` sequences to a boolean matrix.
 
 `newick_to_tree.py`: convert a Newick tree to a ClonalTree object.
+
+`Watterson_theta.py`: compute Watterson's theta estimator.
+
+`Tajima_pi.py`: compute Tajima's pi and Wakeley's pi^2.
+
+`Tajima_D.py`: compute Tajima's D as a normalized difference between Tajima's pi and Watterson's theta.
+
+`LD.py`: compute D, D', r^2 for linkage disequilibrium.
+
+`Kelly_Z.py`: compute Kelly's Z_nS for the given sequence (repeat the same loop in `seq_sim`).
+
+`Hudson_Rm.py`: compute Hudson's R_M estimator as the minimal number of recombinations
+
+`Wall_BQ.py`: compute Wall's B and Q statistics.
+
+`exp_regression.py`: fit an exponential regression model to the given data and provide coefficients.
+
+`clade_homoplasy.py`: _incomplete_
