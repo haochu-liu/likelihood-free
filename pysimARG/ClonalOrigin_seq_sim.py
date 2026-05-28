@@ -11,6 +11,8 @@ from Tajima_D import Tajima_D
 from Wall_BQ import Wall_BQ
 from Hudson_Rm import Hudson_Rm
 from exp_regression import exp_regression
+import warnings
+warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 
 def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
@@ -177,8 +179,11 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     if len(r_squares) >= 2:
         df = pd.DataFrame({'x': distances, 'y': r_squares})
         mean_df = df.groupby('x')['y'].mean().reset_index()
-        coeff = exp_regression(np.array(mean_df['x']), np.array(mean_df['y']))
-        s_vec[42:45] = coeff
+        try:
+            coeff = exp_regression(np.array(mean_df['x']), np.array(mean_df['y']))
+            s_vec[42:45] = coeff
+        except RuntimeError as e:
+            s_vec[42:45] = 0
     else:
         s_vec[42:45] = 0
 
