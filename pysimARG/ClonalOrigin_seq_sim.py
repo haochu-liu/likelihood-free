@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from ClonalOrigin_ARG import ARG
 from add_mutation import add_mutation
 from G4_test import G4_test
@@ -9,6 +10,7 @@ from Tajima_pi import Tajima_pi
 from Tajima_D import Tajima_D
 from Wall_BQ import Wall_BQ
 from Hudson_Rm import Hudson_Rm
+from exp_regression import exp_regression
 
 
 def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
@@ -34,12 +36,12 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     Returns
     -------
     np.ndarray
-        A 44-dimensional vector as the summary statistics of simulations.
+        A 46-dimensional vector as the summary statistics of simulations.
     """
     if not isinstance(L, int):
         raise ValueError("`L` must be a single integer!")
 
-    s_vec = np.full(44, np.nan)
+    s_vec = np.full(46, np.nan).astype(float)
     tree_width = tree.n
 
     ARG_sim = ARG(tree, rho_site, L, delta, L, "seq")
@@ -59,6 +61,7 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     D_20_50, D_50_80, D_prime_20_50, D_prime_50_80, r2_20_50, r2_50_80 = 0, 0, 0, 0, 0, 0
     g4_20_50, g4_50_80 = 0, 0
     r_squares = []
+    distances = []
     if idx_seg.size >= 2:
         for i in range(idx_seg.size - 1):
             for j in range(i + 1, idx_seg.size):
@@ -68,6 +71,7 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
                 LD_result = LD(mat[:, idx_pair])
                 r_sq = LD_result['r_square']
                 r_squares.append(r_sq)
+                distances.append(dist_ij)
 
                 if dist_ij < L/2:
                     D_near += LD_result['D']
@@ -141,35 +145,44 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     s_vec[32] = homoplasy_index(tree, node_site)
 
     # Summary statistic clade homoplasy index
-    s_vec[33] = clade_homoplasy(tree, node_site)
+    # s_vec[33] = clade_homoplasy(tree, node_site)
 
     # Summary statistic proportion of segregating sites
     count_S = idx_seg.size
-    s_vec[34] = count_S / L
+    s_vec[33] = count_S / L
 
     # Watterson's theta estimator
-    s_vec[35] = Watterson_theta(mat, count_S)
+    s_vec[34] = Watterson_theta(mat, count_S)
 
     # Tajima's pi estimators
     tajima_dict = Tajima_pi(mat, Wakeley=True)
-    s_vec[36] = tajima_dict['pi']
-    s_vec[37] = tajima_dict['pi2']
+    s_vec[35] = tajima_dict['pi']
+    s_vec[36] = tajima_dict['pi2']
 
     # Tajima's D statistic
-    s_vec[38] = Tajima_D(mat, s_vec[36], s_vec[35], count_S)
+    s_vec[37] = Tajima_D(mat, s_vec[35], s_vec[34], count_S)
 
     # Wall's B and Q statistics
     wall_dict = Wall_BQ(mat[:, idx_seg])
-    s_vec[39] = wall_dict['B']
-    s_vec[40] = wall_dict['Q']
+    s_vec[38] = wall_dict['B']
+    s_vec[39] = wall_dict['Q']
 
     # Hudson's Rm estimator
-    s_vec[41] = Hudson_Rm(mat)
+    s_vec[40] = Hudson_Rm(mat)
 
     # Kelly's Zns estimator
-    s_vec[42] = np.mean(r_squares)
+    s_vec[41] = np.mean(r_squares)
+
+    # Regression coefficient of r^2 on distance
+    if len(r_squares) >= 2:
+        df = pd.DataFrame({'x': distances, 'y': r_squares})
+        mean_df = df.groupby('x')['y'].mean().reset_index()
+        coeff = exp_regression(np.array(mean_df['x']), np.array(mean_df['y']))
+        s_vec[42:45] = coeff
+    else:
+        s_vec[42:45] = 0
 
     # Add the length of sequence as a summary statistic
-    s_vec[43] = L
+    s_vec[45] = L
     
     return s_vec
