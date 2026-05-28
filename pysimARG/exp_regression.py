@@ -29,6 +29,7 @@ def exp_regression(x, y):
     tuple
         Optimal parameters (a, b, c) for the fitted model.
     """
-    initial_guess = [1.0, 1.0, np.min(y)] 
-    popt, pcov = curve_fit(shifted_exponential, x, y, p0=initial_guess)
+    initial_guess = [1.0, 1.0, np.min(y)]
+    x_scaled = x - np.min(x)
+    popt, pcov = curve_fit(shifted_exponential, x_scaled, y, p0=initial_guess)
     return tuple(popt)
