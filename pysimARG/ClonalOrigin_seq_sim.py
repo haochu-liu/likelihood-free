@@ -21,6 +21,7 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     
     Simulate pairs of sites in the ClonalOrigin approximation from a given clonal tree.
     Provide summary statistics for pairs in three different distances.
+    Kelly's Zns and Hudson's Rm computation are integrated.
     
     Parameters
     ----------
@@ -62,42 +63,51 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     g4_near, g4_far = 0, 0
     D_20_50, D_50_80, D_prime_20_50, D_prime_50_80, r2_20_50, r2_50_80 = 0, 0, 0, 0, 0, 0
     g4_20_50, g4_50_80 = 0, 0
+
     r_squares = []
     distances = []
+    incompatible_intervals = []
+
     if idx_seg.size >= 2:
         for i in range(idx_seg.size - 1):
             for j in range(i + 1, idx_seg.size):
                 dist_ij = idx_seg[j] - idx_seg[i]
                 idx_pair = [idx_seg[i], idx_seg[j]]
 
+                # Compute LD statistics
                 LD_result = LD(mat[:, idx_pair])
                 r_sq = LD_result['r_square']
                 r_squares.append(r_sq)
                 distances.append(dist_ij)
 
+                # Compute G4 test
+                g4_result = G4_test(mat[:, idx_pair])
+                if g4_result:
+                    incompatible_intervals.append((idx_seg[i], idx_seg[j]))
+
                 if dist_ij < L/2:
                     D_near += LD_result['D']
                     D_prime_near += LD_result['D_prime']
                     r2_near += LD_result['r_square']
-                    g4_near += G4_test(mat[:, idx_pair])
+                    g4_near += g4_result
                     seg_near += 1
                 else:
                     D_far += LD_result['D']
                     D_prime_far += LD_result['D_prime']
                     r2_far += LD_result['r_square']
-                    g4_far += G4_test(mat[:, idx_pair])
+                    g4_far += g4_result
                     seg_far += 1
                 if 20 <= dist_ij < 50:
                     D_20_50 += LD_result['D']
                     D_prime_20_50 += LD_result['D_prime']
                     r2_20_50 += LD_result['r_square']
-                    g4_20_50 += G4_test(mat[:, idx_pair])
+                    g4_20_50 += g4_result
                     seg_20_50 += 1
                 if 50 <= dist_ij <= 80:
                     D_50_80 += LD_result['D']
                     D_prime_50_80 += LD_result['D_prime']
                     r2_50_80 += LD_result['r_square']
-                    g4_50_80 += G4_test(mat[:, idx_pair])
+                    g4_50_80 += g4_result
                     seg_50_80 += 1
         
         s_vec[0] = D_near
@@ -147,7 +157,7 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     s_vec[32] = homoplasy_index(tree, node_site)
 
     # Summary statistic clade homoplasy index
-    # s_vec[33] = clade_homoplasy(tree, node_site)
+    # s_vec[k] = clade_homoplasy(tree, node_site)
 
     # Summary statistic proportion of segregating sites
     count_S = idx_seg.size
@@ -170,7 +180,20 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     s_vec[39] = wall_dict['Q']
 
     # Hudson's Rm estimator
-    s_vec[40] = Hudson_Rm(mat)
+    if not incompatible_intervals:
+        s_vec[40] = 0
+
+    incompatible_intervals.sort(key=lambda x: x[1])
+    
+    rm_count = 0
+    last_cut = -1
+    
+    for start, end in incompatible_intervals:
+        if start > last_cut:
+            last_cut = end - 1
+            rm_count += 1
+
+    s_vec[40] = rm_count
 
     # Kelly's Zns estimator
     s_vec[41] = np.mean(r_squares)
