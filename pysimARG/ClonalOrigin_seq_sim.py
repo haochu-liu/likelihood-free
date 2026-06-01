@@ -9,7 +9,6 @@ from Watterson_theta import Watterson_theta
 from Tajima_pi import Tajima_pi
 from Tajima_D import Tajima_D
 from Wall_BQ import Wall_BQ
-from Hudson_Rm import Hudson_Rm
 from exp_regression import exp_regression
 import warnings
 warnings.filterwarnings('ignore', category=RuntimeWarning)

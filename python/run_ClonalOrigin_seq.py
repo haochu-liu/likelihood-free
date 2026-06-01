@@ -26,7 +26,7 @@ torch_device = "cpu"
 
 
 np.random.seed(100)
-clonal_tree = ClonalTree(n=10)
+clonal_tree = ClonalTree(n=30)
 
 # Load phylo tree and convert to ClonalTree format
 phylo_tree = Phylo.read(data_path / "SimBac/clonal_frame.nwk", "newick")
