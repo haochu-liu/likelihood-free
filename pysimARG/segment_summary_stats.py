@@ -70,25 +70,25 @@ def segment_summary_stats(tree, seg_mat):
                     incompatible_intervals.append((idx_seg[i], idx_seg[j]))
 
                 if dist_ij < L/2:
-                    D_near += LD_result['D']
+                    D_near += abs(LD_result['D'])
                     D_prime_near += LD_result['D_prime']
                     r2_near += LD_result['r_square']
                     g4_near += g4_result
                     seg_near += 1
                 else:
-                    D_far += LD_result['D']
+                    D_far += abs(LD_result['D'])
                     D_prime_far += LD_result['D_prime']
                     r2_far += LD_result['r_square']
                     g4_far += g4_result
                     seg_far += 1
                 if 20 <= dist_ij < 50:
-                    D_20_50 += LD_result['D']
+                    D_20_50 += abs(LD_result['D'])
                     D_prime_20_50 += LD_result['D_prime']
                     r2_20_50 += LD_result['r_square']
                     g4_20_50 += g4_result
                     seg_20_50 += 1
                 if 50 <= dist_ij <= 80:
-                    D_50_80 += LD_result['D']
+                    D_50_80 += abs(LD_result['D'])
                     D_prime_50_80 += LD_result['D_prime']
                     r2_50_80 += LD_result['r_square']
                     g4_50_80 += g4_result
