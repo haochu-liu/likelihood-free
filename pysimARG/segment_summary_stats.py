@@ -1,7 +1,5 @@
 import numpy as np
 import pandas as pd
-from ClonalOrigin_ARG import ARG
-from add_mutation import add_mutation
 from G4_test import G4_test
 from LD import LD
 from homoplasy_index import homoplasy_index
@@ -30,20 +28,16 @@ def segment_summary_stats(tree, seg_mat):
     np.ndarray
         A 46-dimensional vector as the summary statistics of simulations.
     """
-
-    if not isinstance(L, int):
-        raise ValueError("`L` must be a single integer!")
+    tree_width = tree.n
+    if tree_width != seg_mat.shape[0]:
+        raise ValueError("Inconsistent number of sequences between tree and genetic matrix!")
+    L = seg_mat.shape[1]
 
     s_vec = np.full(46, np.nan).astype(float)
-    tree_width = tree.n
-
-    ARG_sim = ARG(tree, rho_site, L, delta, L, "seq")
-    node_site = add_mutation(ARG_sim, theta_site)
-    mat = node_site[:tree_width, :]
 
     # Identify segregating sites
-    has_true = mat.any(axis=0)
-    has_false = ~mat.all(axis=0)
+    has_true = seg_mat.any(axis=0)
+    has_false = ~seg_mat.all(axis=0)
     idx_seg = np.where(has_true & has_false)[0]
 
     # Summary statistics LD r and G4 test
@@ -65,13 +59,13 @@ def segment_summary_stats(tree, seg_mat):
                 idx_pair = [idx_seg[i], idx_seg[j]]
 
                 # Compute LD statistics
-                LD_result = LD(mat[:, idx_pair])
+                LD_result = LD(seg_mat[:, idx_pair])
                 r_sq = LD_result['r_square']
                 r_squares.append(r_sq)
                 distances.append(dist_ij)
 
                 # Compute G4 test
-                g4_result = G4_test(mat[:, idx_pair])
+                g4_result = G4_test(seg_mat[:, idx_pair])
                 if g4_result:
                     incompatible_intervals.append((idx_seg[i], idx_seg[j]))
 
@@ -144,7 +138,7 @@ def segment_summary_stats(tree, seg_mat):
         s_vec[42] = 0 # Kelly's Zns estimator
     
     # Summary statistic homoplasy index
-    s_vec[32] = homoplasy_index(tree, node_site)
+    s_vec[32] = homoplasy_index(tree, seg_mat)
 
     # Summary statistic clade homoplasy index
     # s_vec[k] = clade_homoplasy(tree, node_site)
@@ -154,18 +148,18 @@ def segment_summary_stats(tree, seg_mat):
     s_vec[33] = count_S / L
 
     # Watterson's theta estimator
-    s_vec[34] = Watterson_theta(mat, count_S)
+    s_vec[34] = Watterson_theta(seg_mat, count_S)
 
     # Tajima's pi estimators
-    tajima_dict = Tajima_pi(mat, Wakeley=True)
+    tajima_dict = Tajima_pi(seg_mat, Wakeley=True)
     s_vec[35] = tajima_dict['pi']
     s_vec[36] = tajima_dict['pi2']
 
     # Tajima's D statistic
-    s_vec[37] = Tajima_D(mat, s_vec[35], s_vec[34], count_S)
+    s_vec[37] = Tajima_D(seg_mat, s_vec[35], s_vec[34], count_S)
 
     # Wall's B and Q statistics
-    wall_dict = Wall_BQ(mat[:, idx_seg])
+    wall_dict = Wall_BQ(seg_mat[:, idx_seg])
     s_vec[38] = wall_dict['B']
     s_vec[39] = wall_dict['Q']
 
