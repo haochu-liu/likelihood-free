@@ -183,7 +183,7 @@ def segment_summary_stats(tree, seg_mat):
     s_vec[41] = np.mean(r_squares)
 
     # Regression coefficient of r^2 on distance
-    if len(r_squares) >= 2:
+    if len(r_squares) >= 4: # Ensure enough data points for regression
         df = pd.DataFrame({'x': distances, 'y': r_squares})
         mean_df = df.groupby('x')['y'].mean().reset_index()
         try:
