@@ -12,3 +12,8 @@ env/
 sbi-logs/
 python/sbi_logs/
 python/__pycache__/
+pysimARG/__pycache__/
+
+# --- General ---
+data/
+output/
