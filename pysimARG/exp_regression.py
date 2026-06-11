@@ -1,5 +1,6 @@
 import numpy as np
-from scipy.optimize import curve_fit
+import warnings
+from scipy.optimize import curve_fit, OptimizeWarning
 
 
 def shifted_exponential(x, a, b, c):
@@ -31,5 +32,13 @@ def exp_regression(x, y):
     """
     initial_guess = [1.0, 1.0, np.min(y)]
     x_scaled = x - np.min(x)
-    popt, pcov = curve_fit(shifted_exponential, x_scaled, y, p0=initial_guess)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", OptimizeWarning)
+        popt, pcov = curve_fit(
+            shifted_exponential,
+            x_scaled,
+            y,
+            p0=initial_guess
+        )
     return tuple(popt)
