@@ -33,7 +33,8 @@ def newick_to_tree(tree):
 
     edge = np.array(edge)
     edge[:, :2] = index_mapping[np.int64(edge[:, :2])]
-    edge[:, :2] += 1
+    index_difference = 1 - np.min(edge[:, :2])
+    edge[:, :2] += index_difference
     edge = edge[edge[:, 0].argsort()]
 
     height_to_root = np.zeros(counter - 1)
