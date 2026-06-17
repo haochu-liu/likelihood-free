@@ -135,7 +135,7 @@ def segment_summary_stats(tree, seg_mat):
         s_vec[31] = g4_50_80 / seg_50_80 if seg_50_80 > 0 else 0
     else:
         s_vec[:32] = 0
-        s_vec[42] = 0 # Kelly's Zns estimator
+        s_vec[41] = 0 # Kelly's Zns estimator
     
     # Summary statistic homoplasy index
     s_vec[32] = homoplasy_index(tree, seg_mat)
