@@ -133,6 +133,9 @@ def segment_summary_stats(tree, seg_mat):
 
         s_vec[30] = g4_20_50 / seg_20_50 if seg_20_50 > 0 else 0
         s_vec[31] = g4_50_80 / seg_50_80 if seg_50_80 > 0 else 0
+
+        # Kelly's Zns estimator
+        s_vec[41] = np.mean(r_squares)
     else:
         s_vec[:32] = 0
         s_vec[41] = 0 # Kelly's Zns estimator
@@ -178,9 +181,6 @@ def segment_summary_stats(tree, seg_mat):
             rm_count += 1
 
     s_vec[40] = rm_count
-
-    # Kelly's Zns estimator
-    s_vec[41] = np.mean(r_squares)
 
     # Regression coefficient of r^2 on distance
     if len(r_squares) >= 4: # Ensure enough data points for regression
