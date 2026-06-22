@@ -3,7 +3,7 @@ import numpy as np
 from Bio import SeqIO
 
 
-def extract_blast_segments(blast_df, fasta_path, query_id, subject_ids):
+def extract_blast_segment(blast_df, fasta_path, query_id, subject_ids):
     """
     Extracts sequence segments from a FASTA file based on BLAST output.
     Return a np array of extracted sequences from subject genomes.
