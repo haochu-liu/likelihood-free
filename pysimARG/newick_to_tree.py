@@ -13,7 +13,7 @@ def newick_to_tree(tree):
         counter += 1
 
     terminal_indices = [leaf.node_index for leaf in tree.get_terminals()]
-    next_index = max(terminal_indices) + 1 if terminal_indices else 1
+    next_index = len(terminal_indices) if terminal_indices else 1
 
     for clade in tree.find_clades(terminal=False, order='postorder'):
         clade.node_index = next_index
