@@ -41,9 +41,9 @@ if __name__ == "__main__":
 
     seed = 1
     np.random.seed(seed)
-    prior_rho = np.random.uniform(0, 0.1, size=100)
-    prior_theta = np.random.uniform(0, 0.05, size=100)
-    prior_L = np.random.randint(20, 10000, size=100)
+    prior_rho = np.random.uniform(0, 0.1, size=40)
+    prior_theta = np.random.uniform(0, 0.001, size=40)
+    prior_L = np.random.randint(20, 10000, size=40)
     prior_param = np.column_stack((prior_rho, prior_theta, prior_L))
 
     np.savetxt(output_file / 'theta_test.csv', prior_param, delimiter=",")
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     chunk_size = 10
     total_sims = len(tasks)
     
-    with ProcessPoolExecutor(max_workers=8) as executor, tqdm(total=total_sims, desc="Running Simulations") as pbar:
+    with ProcessPoolExecutor(max_workers=4) as executor, tqdm(total=total_sims, desc="Running Simulations") as pbar:
         for chunk_start in range(0, total_sims, chunk_size):
             chunk_tasks = tasks[chunk_start : chunk_start + chunk_size]
             chunk_results = []
