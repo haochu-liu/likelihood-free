@@ -63,33 +63,36 @@ def process_mcmc(i, x_obs_torch, density_estimator, prior, theta_dim, fixed_dim,
 
 
 if __name__ == "__main__":
-    # Plot the Bacillus clonal tree
-    phylo_tree = Phylo.read(str(data_path / "bacillus" / "bacillus.nwk"), "newick")
+    # Plot the staph clonal tree
+    phylo_tree = Phylo.read(str(data_path / "staph" / "saureus_clonal.nwk"), "newick")
     Phylo.draw_ascii(phylo_tree)
 
     # Load the observed data and simulation data
-    x_obs_df = pd.read_csv(str(data_path / "bacillus" / "bacillus_block_summary_stats.csv"), header=None)
+    x_obs_df = pd.read_csv(str(data_path / "staph" / "core_gene_summary_stats.csv"), index_col=0)
     x_obs_np = x_obs_df.to_numpy()
+
+    no_signal_id = np.where(x_obs_np[:, 33] == 0)[0]
+    x_obs_np = np.delete(x_obs_np, no_signal_id, axis=0)
     x_obs_torch = torch.tensor(x_obs_np, device=torch_device)
     x_obs_torch = x_obs_torch.to(torch.float32)
 
-    theta1 = np.loadtxt(str(data_path / "bacillus" / "ClonalOrigin_sim" / "change_theta" / "theta1.csv"), delimiter=",")
-    x1 = np.loadtxt(str(data_path / "bacillus" / "ClonalOrigin_sim" / "change_theta" / "x1.csv"), delimiter=",")
-    theta2 = np.loadtxt(str(data_path / "bacillus" / "ClonalOrigin_sim" / "change_theta" / "theta2.csv"), delimiter=",")
-    x2 = np.loadtxt(str(data_path / "bacillus" / "ClonalOrigin_sim" / "change_theta" / "x2.csv"), delimiter=",")
-    theta3 = np.loadtxt(str(data_path / "bacillus" / "ClonalOrigin_sim" / "change_theta" / "theta3.csv"), delimiter=",")
-    x3 = np.loadtxt(str(data_path / "bacillus" / "ClonalOrigin_sim" / "change_theta" / "x3.csv"), delimiter=",")
-    theta4 = np.loadtxt(str(data_path / "bacillus" / "ClonalOrigin_sim" / "change_theta" / "theta4.csv"), delimiter=",")
-    x4 = np.loadtxt(str(data_path / "bacillus" / "ClonalOrigin_sim" / "change_theta" / "x4.csv"), delimiter=",")
-    theta5 = np.loadtxt(str(data_path / "bacillus" / "ClonalOrigin_sim" / "change_theta" / "theta5.csv"), delimiter=",")
-    x5 = np.loadtxt(str(data_path / "bacillus" / "ClonalOrigin_sim" / "change_theta" / "x5.csv"), delimiter=",")
+    theta1 = np.loadtxt(str(data_path / "staph" / "ClonalOrigin_sim" / "change_theta" / "theta1.csv"), delimiter=",")
+    x1 = np.loadtxt(str(data_path / "staph" / "ClonalOrigin_sim" / "change_theta" / "x1.csv"), delimiter=",")
+    theta2 = np.loadtxt(str(data_path / "staph" / "ClonalOrigin_sim" / "change_theta" / "theta2.csv"), delimiter=",")
+    x2 = np.loadtxt(str(data_path / "staph" / "ClonalOrigin_sim" / "change_theta" / "x2.csv"), delimiter=",")
+    theta3 = np.loadtxt(str(data_path / "staph" / "ClonalOrigin_sim" / "change_theta" / "theta3.csv"), delimiter=",")
+    x3 = np.loadtxt(str(data_path / "staph" / "ClonalOrigin_sim" / "change_theta" / "x3.csv"), delimiter=",")
+    theta4 = np.loadtxt(str(data_path / "staph" / "ClonalOrigin_sim" / "change_theta" / "theta4.csv"), delimiter=",")
+    x4 = np.loadtxt(str(data_path / "staph" / "ClonalOrigin_sim" / "change_theta" / "x4.csv"), delimiter=",")
+    theta5 = np.loadtxt(str(data_path / "staph" / "ClonalOrigin_sim" / "change_theta" / "theta5.csv"), delimiter=",")
+    x5 = np.loadtxt(str(data_path / "staph" / "ClonalOrigin_sim" / "change_theta" / "x5.csv"), delimiter=",")
     x = np.vstack([x1, x2, x3, x4, x5])
     theta = np.vstack([theta1, theta2, theta3, theta4, theta5])
 
     print("Load training...")
 
     checkpoint = torch.load(
-        str(data_path / "bacillus" / "trained_npe_density_estimator.pt"),
+        str(data_path / "staph" / "trained_npe_density_estimator.pt"),
         map_location=torch_device,
         weights_only=False,  # may be needed in newer PyTorch versions
     )
@@ -112,8 +115,8 @@ if __name__ == "__main__":
     print("Begin sampling...")
 
     theta_dim = prior.event_shape[0]
-    fixed_dim = 1                     # Dimensional index for theta
-    fixed_value = 0.04755576699972153 # Fixed value for theta
+    fixed_dim = 1                      # Dimensional index for theta
+    fixed_value = 0.001823019701987505 # Fixed value for theta
 
     dims_to_sample = [d for d in range(theta_dim) if d != fixed_dim]
 
@@ -143,4 +146,4 @@ if __name__ == "__main__":
     
     print("End sampling.")
 
-    np.save(str(data_path / "bacillus" / "conditional_posterior_samples.npy"), theta_conditional)
+    np.save(str(data_path / "staph" / "conditional_posterior_samples.npy"), theta_conditional)
