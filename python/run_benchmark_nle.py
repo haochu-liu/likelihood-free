@@ -90,13 +90,49 @@ def multidim_coverage95(theta_est_post, theta_test_numpy):
     return joint_coverage_95
 
 
-def mean_error(theta_est_post, theta_test_numpy):
+def marginal_coverage95(theta_est_post, theta_test_numpy):
+    print("\nMarginal 1D Coverage Metrics (95% Interval):")
+    print("-" * 40)
+
+    lower_bounds = np.percentile(theta_est_post, 2.5, axis=1)
+    upper_bounds = np.percentile(theta_est_post, 97.5, axis=1)
+    is_covered = (theta_test_numpy >= lower_bounds) & (theta_test_numpy <= upper_bounds)
+    marginal_coverages = np.mean(is_covered, axis=0)
+
+    for d, coverage in enumerate(marginal_coverages):
+        print(f"Dimension {d} Coverage: {coverage * 100:.1f}%")
+    print("-" * 40)
+    
+    return marginal_coverages
+
+
+def L2_error(theta_est_post, theta_test_numpy):
     post_mean_error = np.full((theta_est_post.shape[0]), np.nan)
     for i in range(theta_est_post.shape[0]):
         post_mean = np.mean(theta_est_post[i, :, :], axis=0)
         error = post_mean - theta_test_numpy[i, :]
         post_mean_error[i] = np.linalg.norm(error)
     return post_mean_error
+
+
+def mahalanobis_error(theta_est_post, theta_test_numpy):
+    maha_errors = np.full((theta_est_post.shape[0]), np.nan)
+    for i in range(theta_est_post.shape[0]):
+        samples = theta_est_post[i]
+        truth = theta_test_numpy[i]
+        post_mean = np.mean(samples, axis=0)
+        cov_matrix = np.cov(samples, rowvar=False)
+
+        try:
+            inv_cov = np.linalg.inv(cov_matrix)
+        except np.linalg.LinAlgError:
+            print(f"Warning: Singular covariance matrix at index {i}, returning NaN.")
+            continue
+        
+        diff = post_mean - truth
+        maha_dist_sq = np.dot(np.dot(diff, inv_cov), diff)
+        maha_errors[i] = np.sqrt(maha_dist_sq)
+    return maha_errors
 
 
 def sample_one_posterior(j):
@@ -169,8 +205,9 @@ if __name__ == "__main__":
 
     nle_sbc_D = np.full((3, len(budgets)), np.nan)
     nle_sbc_p_values = np.full((3, len(budgets)), np.nan)
-    nle_coverage_results = np.full((2, len(budgets)), np.nan)
-    nle_mean_error_results = np.full((theta_test.shape[0], len(budgets), 2), np.nan)
+    nle_multidim_coverage_results = np.full((2, len(budgets)), np.nan)
+    nle_marginal_coverage_results = np.full((3, len(budgets), 2), np.nan)
+    nle_mean_error_results = np.full((theta_test.shape[0], len(budgets), 4), np.nan)
 
     torch.set_num_threads(1)
     n_jobs = 4
@@ -209,23 +246,25 @@ if __name__ == "__main__":
         ranks = torch.sum(is_less_than_truth, dim=1)
 
         ks_results, p_values = SBC_KStest(ranks, num_posterior_samples, parameter_labels)
-        coverage_95_with_L = multidim_coverage95(theta_est_post, theta_test_numpy)
-        coverage_95_without_L = multidim_coverage95(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
-        mean_error_with_L = mean_error(theta_est_post, theta_test_numpy)
-        mean_error_without_L = mean_error(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
-
         nle_sbc_D[:, i] = ks_results
         nle_sbc_p_values[:, i] = p_values
-        nle_coverage_results[0, i] = coverage_95_with_L
-        nle_coverage_results[1, i] = coverage_95_without_L
-        nle_mean_error_results[:, i, 0] = mean_error_with_L
-        nle_mean_error_results[:, i, 1] = mean_error_without_L
+
+        nle_multidim_coverage_results[0, i] = multidim_coverage95(theta_est_post, theta_test_numpy)
+        nle_multidim_coverage_results[1, i] = multidim_coverage95(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
+        nle_marginal_coverage_results[:, i, 0] = marginal_coverage95(theta_est_post, theta_test_numpy)
+        nle_marginal_coverage_results[:, i, 1] = marginal_coverage95(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
+
+        nle_mean_error_results[:, i, 0] = L2_error(theta_est_post, theta_test_numpy)
+        nle_mean_error_results[:, i, 1] = L2_error(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
+        nle_mean_error_results[:, i, 2] = mahalanobis_error(theta_est_post, theta_test_numpy)
+        nle_mean_error_results[:, i, 3] = mahalanobis_error(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
 
         print(f"Save results for n={n_sim}")
 
         np.savetxt(str(data_path / "benchmark" / "nle_sbc_D.csv"), nle_sbc_D, delimiter=",")
         np.savetxt(str(data_path / "benchmark" / "nle_sbc_p_values.csv"), nle_sbc_p_values, delimiter=",")
-        np.savetxt(str(data_path / "benchmark" / "nle_coverage_results.csv"), nle_coverage_results, delimiter=",")
+        np.save(str(data_path / "benchmark" / "nle_multidim_coverage_results.npy"), nle_multidim_coverage_results)
+        np.save(str(data_path / "benchmark" / "nle_marginal_coverage_results.npy"), nle_marginal_coverage_results)
         np.save(str(data_path / "benchmark" / "nle_mean_error_results.npy"), nle_mean_error_results)
 
         print("-" * 50)

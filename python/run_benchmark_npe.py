@@ -7,7 +7,7 @@ import os
 import warnings
 from torch.distributions import Uniform
 from sbi.utils.user_input_checks import MultipleIndependent
-from sbi.inference import NRE_B
+from sbi.inference import NPE_C
 import sys
 from pathlib import Path
 current_path = Path(__file__).resolve()
@@ -146,17 +146,20 @@ def sample_one_posterior(j):
 
 
 if __name__ == "__main__":
+    drop_col = range(16, 32)
     theta_test = np.loadtxt(str(data_path / 'ClonalOrigin' / 'rho_and_theta' / 'theta_sbc.csv'), delimiter=",")
     x_test = np.loadtxt(str(data_path / 'ClonalOrigin' / 'rho_and_theta' / 'x_sbc.csv'), delimiter=",")
 
-    print(theta_test.shape, x_test.shape)
     theta_test = torch.tensor(theta_test, device=torch_device)
     theta_test = theta_test.to(torch.float32)
     theta_test_numpy = theta_test.cpu().numpy()
 
+    x_test = np.delete(x_test, drop_col, axis=1)
     x_test = torch.tensor(x_test, device=torch_device)
     x_test = x_test.to(torch.float32)
     x_test_numpy = x_test.cpu().numpy()
+
+    print(theta_test.shape, x_test.shape)
 
     nan_row = np.where(np.isnan(x_test_numpy))[0]
     theta_test = theta_test[~np.isnan(x_test_numpy).any(axis=1)]
@@ -175,6 +178,7 @@ if __name__ == "__main__":
     x4 = np.loadtxt(str(data_path / 'ClonalOrigin' / 'rho_and_theta' / 'x4.csv'), delimiter=",")
 
     x = np.vstack([x1, x2, x3, x4])
+    x = np.delete(x, drop_col, axis=1)
     theta = np.vstack([theta1, theta2, theta3, theta4])
 
     drop_indices = np.unique(np.concatenate([np.where(np.isnan(x))[0], np.where(np.isinf(x))[0]]))
@@ -203,11 +207,11 @@ if __name__ == "__main__":
         device=torch_device
     )
 
-    nre_sbc_D = np.full((3, len(budgets)), np.nan)
-    nre_sbc_p_values = np.full((3, len(budgets)), np.nan)
-    nre_multidim_coverage_results = np.full((2, len(budgets)), np.nan)
-    nre_marginal_coverage_results = np.full((3, len(budgets), 2), np.nan)
-    nre_mean_error_results = np.full((theta_test.shape[0], len(budgets), 4), np.nan)
+    npe_sbc_D = np.full((3, len(budgets)), np.nan)
+    npe_sbc_p_values = np.full((3, len(budgets)), np.nan)
+    npe_multidim_coverage_results = np.full((2, len(budgets)), np.nan)
+    npe_marginal_coverage_results = np.full((3, len(budgets), 2), np.nan)
+    npe_mean_error_results = np.full((theta_test.shape[0], len(budgets), 4), np.nan)
 
     torch.set_num_threads(1)
     n_jobs = 4
@@ -219,15 +223,15 @@ if __name__ == "__main__":
         x_train = x[:n_sim]
         theta_train = theta[:n_sim]
 
-        print(f"\nTraining NRE with {n_sim} simulations")
+        print(f"\nTraining NLE with {n_sim} simulations")
         
-        inference_benchmark = NRE_B(prior=prior, classifier="resnet", device=torch_device)
+        inference_benchmark = NPE_C(prior=prior, density_estimator="nsf", device=torch_device)
         density_estimator_benchmark = inference_benchmark.append_simulations(theta_train, x_train).train(
             max_num_epochs=500, learning_rate=learning_rate
         )
         posterior_benchmark = inference_benchmark.build_posterior(density_estimator_benchmark)
 
-        print(f"Sampling posterior for NRE, n={n_sim}")
+        print(f"Sampling posterior for NLE, n={n_sim}")
 
         samples = Parallel(n_jobs=n_jobs, backend="threading")(
             delayed(sample_one_posterior)(j)
@@ -235,7 +239,7 @@ if __name__ == "__main__":
         )
         theta_est_post = np.stack(samples, axis=0)
         
-        print(f"Calculating metrics for NRE, n={n_sim}")
+        print(f"Calculating metrics for NLE, n={n_sim}")
 
         sbc_results = []
         parameter_labels = [r"for $\rho_s$", r"for $\theta_s$", r"for L"]
@@ -246,25 +250,25 @@ if __name__ == "__main__":
         ranks = torch.sum(is_less_than_truth, dim=1)
 
         ks_results, p_values = SBC_KStest(ranks, num_posterior_samples, parameter_labels)
-        nre_sbc_D[:, i] = ks_results
-        nre_sbc_p_values[:, i] = p_values
+        npe_sbc_D[:, i] = ks_results
+        npe_sbc_p_values[:, i] = p_values
 
-        nre_multidim_coverage_results[0, i] = multidim_coverage95(theta_est_post, theta_test_numpy)
-        nre_multidim_coverage_results[1, i] = multidim_coverage95(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
-        nre_marginal_coverage_results[:, i, 0] = marginal_coverage95(theta_est_post, theta_test_numpy)
-        nre_marginal_coverage_results[:, i, 1] = marginal_coverage95(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
+        npe_multidim_coverage_results[0, i] = multidim_coverage95(theta_est_post, theta_test_numpy)
+        npe_multidim_coverage_results[1, i] = multidim_coverage95(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
+        npe_marginal_coverage_results[:, i, 0] = marginal_coverage95(theta_est_post, theta_test_numpy)
+        npe_marginal_coverage_results[:, i, 1] = marginal_coverage95(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
 
-        nre_mean_error_results[:, i, 0] = L2_error(theta_est_post, theta_test_numpy)
-        nre_mean_error_results[:, i, 1] = L2_error(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
-        nre_mean_error_results[:, i, 2] = mahalanobis_error(theta_est_post, theta_test_numpy)
-        nre_mean_error_results[:, i, 3] = mahalanobis_error(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
+        npe_mean_error_results[:, i, 0] = L2_error(theta_est_post, theta_test_numpy)
+        npe_mean_error_results[:, i, 1] = L2_error(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
+        npe_mean_error_results[:, i, 2] = mahalanobis_error(theta_est_post, theta_test_numpy)
+        npe_mean_error_results[:, i, 3] = mahalanobis_error(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
 
         print(f"Save results for n={n_sim}")
 
-        np.savetxt(str(data_path / "benchmark" / "nre_sbc_D.csv"), nre_sbc_D, delimiter=",")
-        np.savetxt(str(data_path / "benchmark" / "nre_sbc_p_values.csv"), nre_sbc_p_values, delimiter=",")
-        np.save(str(data_path / "benchmark" / "nre_multidim_coverage_results.npy"), nre_multidim_coverage_results)
-        np.save(str(data_path / "benchmark" / "nre_marginal_coverage_results.npy"), nre_marginal_coverage_results)
-        np.save(str(data_path / "benchmark" / "nre_mean_error_results.npy"), nre_mean_error_results)
+        np.savetxt(str(data_path / "benchmark" / "npe_sbc_D.csv"), npe_sbc_D, delimiter=",")
+        np.savetxt(str(data_path / "benchmark" / "npe_sbc_p_values.csv"), npe_sbc_p_values, delimiter=",")
+        np.save(str(data_path / "benchmark" / "npe_multidim_coverage_results.npy"), npe_multidim_coverage_results)
+        np.save(str(data_path / "benchmark" / "npe_marginal_coverage_results.npy"), npe_marginal_coverage_results)
+        np.save(str(data_path / "benchmark" / "npe_mean_error_results.npy"), npe_mean_error_results)
 
         print("-" * 50)
