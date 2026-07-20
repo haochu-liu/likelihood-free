@@ -135,16 +135,6 @@ def mahalanobis_error(theta_est_post, theta_test_numpy):
     return maha_errors
 
 
-def sample_one_posterior(j):
-    theta_post = posterior_benchmark.sample(
-        (num_posterior_samples,),
-        x=x_test[j, :],
-        num_chains=1,
-        show_progress_bars=False,
-    )
-    return theta_post.detach().cpu().numpy()
-
-
 if __name__ == "__main__":
     drop_col = range(16, 32)
     theta_test = np.loadtxt(str(data_path / 'ClonalOrigin' / 'rho_and_theta' / 'theta_sbc.csv'), delimiter=",")
@@ -214,7 +204,6 @@ if __name__ == "__main__":
     npe_mean_error_results = np.full((theta_test.shape[0], len(budgets), 4), np.nan)
 
     torch.set_num_threads(1)
-    n_jobs = 4
     for i in range(len(budgets)):
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -223,7 +212,7 @@ if __name__ == "__main__":
         x_train = x[:n_sim]
         theta_train = theta[:n_sim]
 
-        print(f"\nTraining NLE with {n_sim} simulations")
+        print(f"\nTraining NPE with {n_sim} simulations")
         
         inference_benchmark = NPE_C(prior=prior, density_estimator="nsf", device=torch_device)
         density_estimator_benchmark = inference_benchmark.append_simulations(theta_train, x_train).train(
@@ -231,15 +220,15 @@ if __name__ == "__main__":
         )
         posterior_benchmark = inference_benchmark.build_posterior(density_estimator_benchmark)
 
-        print(f"Sampling posterior for NLE, n={n_sim}")
+        print(f"Sampling posterior for NPE, n={n_sim}")
 
-        samples = Parallel(n_jobs=n_jobs, backend="threading")(
-            delayed(sample_one_posterior)(j)
-            for j in tqdm(range(theta_test.shape[0]), desc="Sampling posterior")
-        )
-        theta_est_post = np.stack(samples, axis=0)
+        theta_est_post = np.full((theta_test.shape[0], num_posterior_samples, 3), np.nan)
+        for j in tqdm(range(theta_test.shape[0]), desc="Sampling posterior"):
+            theta_post = posterior_benchmark.sample((num_posterior_samples,), x=x_test[j, :],
+                                                    show_progress_bars=False)
+            theta_est_post[j, :, :] = theta_post.detach().numpy()
         
-        print(f"Calculating metrics for NLE, n={n_sim}")
+        print(f"Calculating metrics for NPE, n={n_sim}")
 
         sbc_results = []
         parameter_labels = [r"for $\rho_s$", r"for $\theta_s$", r"for L"]
@@ -256,7 +245,7 @@ if __name__ == "__main__":
         npe_multidim_coverage_results[0, i] = multidim_coverage95(theta_est_post, theta_test_numpy)
         npe_multidim_coverage_results[1, i] = multidim_coverage95(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
         npe_marginal_coverage_results[:, i, 0] = marginal_coverage95(theta_est_post, theta_test_numpy)
-        npe_marginal_coverage_results[:, i, 1] = marginal_coverage95(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
+        npe_marginal_coverage_results[:2, i, 1] = marginal_coverage95(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
 
         npe_mean_error_results[:, i, 0] = L2_error(theta_est_post, theta_test_numpy)
         npe_mean_error_results[:, i, 1] = L2_error(theta_est_post[:, :, :2], theta_test_numpy[:, :2])
