@@ -1,0 +1,89 @@
+# Model Tuning workflow
+
+## Fixed setting
+
+* NPE
+* Clonal tree
+* Training data: 10000
+* Testing data: 1000
+
+## Performance measures
+
+* Keep the top three to next stage (usually)
+* Validation negative log likelihood
+* SBC p-values
+* Distance between posterior mean and true values
+
+## Hyperparameters and detailed methods
+
+### Input Dim
+
+Always exclude LD and G4 measures under 100 bp.
+
+* Input dim: full, no exact LD and G4, no prop LD and G4, no exact + prop LD and G4
+
+### Summary NN
+
+* Hidden layers: 2, 3, 4
+* Hidden units: 32, 48, 64, 128, 256
+* Output dim: $2+1, 2\times2+1, 2\times4+1, 2\times8+1$
+
+### Normalizing flow
+
+* Density estimator: NSF, MAF
+* Number of transforms: 3, 5, 8
+* Hidden features: 30, 50, 80, 120
+* Spline bins (NSF): 5, 10, 20
+
+### NPE training
+
+* Learning rate: 0.0001, 0.0005, 0.001
+* Weight decay: $0, 10^{-6}, 10^{-5}, 10^{-4}$
+* Stop after epochs: 10, 20, 30
+* Training batch size: 100, 200, 300
+* Clip max norm: None, 1, 5, 8
+
+## Stage 1
+
+Baseline model config, use the default setting for normalizing flow and training:
+* Input dim: full
+* Hidden layers: 2
+* Hidden units: 48
+* Output dim: $2\times2+1$
+* Density estimator: NSF
+* Number of transforms: 5
+* Hidden features: 50
+* Spline bins (NSF): 10
+* Learning rate: 0.0005
+* Weight decay: $0$
+* Stop after epochs: 120
+* Training batch size: 200
+* Clip max norm: 5
+
+## Stage 2
+
+Input dim
+
+## Stage 3
+
+Output dim
+
+## Stage 4
+
+Hidden layers and units
+
+## Stage 5
+
+NSF or MAF
+
+## Stage 6
+
+Config for normalizing flow: number of transforms, hidden features, spline bins
+
+Broad search: 1 run; top 10 find top 3: 5 runs
+
+## Stage 7
+
+NPE training setting: learning rate, weight decay, stop after epochs, training batch size, clip max norm
+
+Broad search: 1 run; top 10 find top 3: 5 runs
