@@ -42,6 +42,19 @@ Always exclude LD and G4 measures under 100 bp.
 * Training batch size: 100, 200, 300
 * Clip max norm: None, 1, 5, 8
 
+## Stage 0
+
+Basic model with no summary NN:
+* Density estimator: NSF
+* Number of transforms: 5
+* Hidden features: 50
+* Spline bins (NSF): 10
+* Learning rate: 0.0005
+* Weight decay: $0$
+* Stop after epochs: 20
+* Training batch size: 200
+* Clip max norm: 5
+
 ## Stage 1
 
 Baseline model config, use the default setting for normalizing flow and training:
@@ -55,7 +68,7 @@ Baseline model config, use the default setting for normalizing flow and training
 * Spline bins (NSF): 10
 * Learning rate: 0.0005
 * Weight decay: $0$
-* Stop after epochs: 120
+* Stop after epochs: 20
 * Training batch size: 200
 * Clip max norm: 5
 
