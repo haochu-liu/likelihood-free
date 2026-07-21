@@ -24,7 +24,7 @@ Always exclude LD and G4 measures under 100 bp.
 
 ### Summary NN
 
-* Hidden layers: 2, 3, 4
+* Hidden layers: 1, 2, 3, 4
 * Hidden units: 32, 48, 64, 128, 256
 * Output dim: $2+1, 2\times2+1, 2\times4+1, 2\times8+1$
 
@@ -64,13 +64,19 @@ Baseline model config, use the default setting for normalizing flow and training
 
 Input dim
 
+Find the best one, if all simular, choose full dim.
+
 ## Stage 3
 
 Output dim
 
+Find the best two, pass to the next stage.
+
 ## Stage 4
 
 Hidden layers and units
+
+Broad search: 1 run; top 8 find top 3: 5 runs. Find the best three, pass to the next stage.
 
 ## Stage 5
 
@@ -80,10 +86,10 @@ NSF or MAF
 
 Config for normalizing flow: number of transforms, hidden features, spline bins
 
-Broad search: 1 run; top 10 find top 3: 5 runs
+Broad search: 1 run; top 8 find top 3: 5 runs
 
 ## Stage 7
 
 NPE training setting: learning rate, weight decay, stop after epochs, training batch size, clip max norm
 
-Broad search: 1 run; top 10 find top 3: 5 runs
+Broad search: 1 run; top 8 find top 3: 5 runs
