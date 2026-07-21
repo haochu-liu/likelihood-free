@@ -9,8 +9,7 @@
 
 ## Performance measures
 
-* Keep the top three to next stage (usually)
-* Validation negative log likelihood
+* Validation negative log likelihood (main)
 * SBC p-values
 * Distance between posterior mean and true values
 
@@ -81,6 +80,8 @@ Broad search: 1 run; top 8 find top 3: 5 runs. Find the best three, pass to the 
 ## Stage 5
 
 NSF or MAF
+
+Find the best one.
 
 ## Stage 6
 
