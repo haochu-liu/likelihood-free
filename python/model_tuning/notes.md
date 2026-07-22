@@ -99,6 +99,11 @@ Hidden layers and units
 
 Broad search: 1 run; top 8 find top 3: 5 runs. Find the best three, pass to the next stage.
 
+**DONE - best three:**
+1. Output: 2+1, layers: 1, units: 128
+2. Output: 2+1, layers: 4, units: 256
+3. Output: 2+1, layers: 4, units: 48
+
 ## Stage 5
 
 NSF or MAF
