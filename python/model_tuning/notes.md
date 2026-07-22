@@ -110,6 +110,8 @@ NSF or MAF
 
 Find the best one.
 
+**DONE - choose NSF**
+
 ## Stage 6
 
 Config for normalizing flow: number of transforms, hidden features, spline bins
