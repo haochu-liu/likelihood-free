@@ -19,7 +19,7 @@
 
 Always exclude LD and G4 measures under 100 bp.
 
-* Input dim: full, no exact LD and G4, no prop LD and G4, no exact + prop LD and G4
+* Input dim: full, no exact LD and G4, no prop LD and G4
 
 ### Summary NN
 
@@ -55,6 +55,8 @@ Basic model with no summary NN:
 * Training batch size: 200
 * Clip max norm: 5
 
+**DONE**
+
 ## Stage 1
 
 Baseline model config, use the default setting for normalizing flow and training:
@@ -72,11 +74,16 @@ Baseline model config, use the default setting for normalizing flow and training
 * Training batch size: 200
 * Clip max norm: 5
 
+**DONE**
+
+
 ## Stage 2
 
 Input dim
 
 Find the best one, if all simular, choose full dim.
+
+**DONE - choose full dim**
 
 ## Stage 3
 
