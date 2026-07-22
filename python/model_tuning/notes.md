@@ -91,6 +91,8 @@ Output dim
 
 Find the best two, pass to the next stage.
 
+**DONE - choose $2+1, 2\times2+1$**
+
 ## Stage 4
 
 Hidden layers and units
