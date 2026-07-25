@@ -37,8 +37,7 @@ Always exclude LD and G4 measures under 100 bp.
 ### NPE training
 
 * Learning rate: 0.0001, 0.0005, 0.001
-* Weight decay: $0, 10^{-6}, 10^{-5}, 10^{-4}$
-* Stop after epochs: 10, 20, 30
+* Stop after epochs: 10, 20, 25
 * Training batch size: 100, 200, 300
 * Clip max norm: None, 1, 5, 8
 
@@ -118,8 +117,14 @@ Config for normalizing flow: number of transforms, hidden features, spline bins
 
 Broad search: 1 run; top 8 find top 3: 5 runs
 
+**DONE - best three:**
+
+1. Stage 5 output dimension 2, hidden layers 1, hidden units 128. Stage 6 transforms 8, features 30, bins 5.
+2. Stage 5 output dimension 2, hidden layers 4, hidden units 48. Stage 6 transforms 8, features 50, bins 10.
+3. Stage 5 output dimension 2, hidden layers 1, hidden units 128. Stage 6 transforms 8, features 50, bins 10.
+
 ## Stage 7
 
-NPE training setting: learning rate, weight decay, stop after epochs, training batch size, clip max norm
+NPE training setting: learning rate, stop after epochs, training batch size, clip max norm
 
 Broad search: 1 run; top 8 find top 3: 5 runs
