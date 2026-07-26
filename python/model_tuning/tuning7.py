@@ -118,8 +118,8 @@ if __name__ == "__main__":
     stage6_num_outputs = 2
     stage6_num_transforms = 8
     stage6_array = np.array([[1, 128, 30, 5],
-                             [4, 48,  50, 10],
-                             [1, 128, 50, 10]])
+                             [4, 256, 30, 20],
+                             [4,  48, 50, 10]])
     print(stage6_array)
 
     stage6_indices = [0, 1, 2]

@@ -120,8 +120,8 @@ Broad search: 1 run; top 8 find top 3: 5 runs
 **DONE - best three:**
 
 1. Stage 5 output dimension 2, hidden layers 1, hidden units 128. Stage 6 transforms 8, features 30, bins 5.
-2. Stage 5 output dimension 2, hidden layers 4, hidden units 48. Stage 6 transforms 8, features 50, bins 10.
-3. Stage 5 output dimension 2, hidden layers 1, hidden units 128. Stage 6 transforms 8, features 50, bins 10.
+2. Stage 5 output dimension 2, hidden layers 4, hidden units 256. Stage 6 transforms 8, features 30, bins 20.
+3. Stage 5 output dimension 2, hidden layers 4, hidden units 48. Stage 6 transforms 8, features 50, bins 10.
 
 ## Stage 7
 
