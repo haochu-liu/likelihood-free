@@ -128,3 +128,9 @@ Broad search: 1 run; top 8 find top 3: 5 runs
 NPE training setting: learning rate, stop after epochs, training batch size, clip max norm
 
 Broad search: 1 run; top 8 find top 3: 5 runs
+
+**DONE - best one:**
+
+* Output dimension 2, hidden layers 1, hidden units 128.
+* Transforms 8, features 30, bins 5.
+* Learning rate 0.0001, stop epoch 20, training batch size 100, clip max norm None.

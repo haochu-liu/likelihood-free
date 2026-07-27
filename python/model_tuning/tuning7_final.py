@@ -139,10 +139,10 @@ if __name__ == "__main__":
     stage7_nll_final = np.full((len(seeds), 8), np.nan)
 
     print("Loading tuning7.py results...")
-    stage7_p_values = np.load('../../data/NPE_tuning/stage7_p_values.npy')
-    stage7_D_stats = np.load('../../data/NPE_tuning/stage7_D_stats.npy')
-    stage7_maha_errors = np.load('../../data/NPE_tuning/stage7_maha_errors.npy')
-    stage7_nll = np.load('../../data/NPE_tuning/stage7_nll.npy')
+    stage7_p_values = np.load(str(data_path / 'NPE_tuning/stage7_p_values.npy'))
+    stage7_D_stats = np.load(str(data_path / 'NPE_tuning/stage7_D_stats.npy'))
+    stage7_maha_errors = np.load(str(data_path / 'NPE_tuning/stage7_maha_errors.npy'))
+    stage7_nll = np.load(str(data_path / 'NPE_tuning/stage7_nll.npy'))
 
     indices = np.argpartition(stage7_nll, 8)[:8]
     print(indices)
