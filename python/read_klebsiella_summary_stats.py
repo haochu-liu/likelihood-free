@@ -35,15 +35,15 @@ clonal_tree.length = np.sum(clonal_edge[:, 2])
 rand_seg_df = pd.read_csv(str(data_path / "klebsiella" / "rand_seg_info.csv"))
 print(rand_seg_df.head())
 
-rand_seg1000_summary = np.full((2000, 46), np.nan)
+rand_seg4000_summary = np.full((2000, 46), np.nan)
 
 for i in tqdm(range(2000), desc="Processing genome segments"):
-    start_pos = rand_seg_df.loc[i, 'Start_pos']
-    end_pos = rand_seg_df.loc[i, 'End_pos']
+    start_pos = rand_seg_df.loc[2000+i, 'Start_pos']
+    end_pos = rand_seg_df.loc[2000+i, 'End_pos']
     
     seg_matrix = bool_mat[:, start_pos-1:end_pos]  # Adjust for 0-based indexing
     summary_stats = segment_summary_stats(clonal_tree, seg_matrix)
-    rand_seg1000_summary[i, :] = summary_stats
+    rand_seg4000_summary[i, :] = summary_stats
 
     if (i + 1) % 100 == 0:
-        np.savetxt(str(data_path / "klebsiella" / "rand_seg1000.csv"), rand_seg1000_summary, delimiter=",")
+        np.savetxt(str(data_path / "klebsiella" / "rand_seg4000.csv"), rand_seg4000_summary, delimiter=",")
