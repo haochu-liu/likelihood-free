@@ -199,7 +199,8 @@ class HotspotHMMResult:
         ax_prob.set_ylim(-0.03, 1.03)
         ax_prob.set_ylabel("P(hotspot)")
         ax_prob.grid(alpha=0.2)
-        ax_prob.legend(frameon=False, loc="best")
+        if probability_threshold is not None:
+            ax_prob.legend(frameon=False, loc="best")
 
         ax_state.step(x, state, where="mid", color="#333333", linewidth=1.3)
         ax_state.scatter(x, state, c=colors, s=22, zorder=3)

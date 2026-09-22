@@ -1,13 +1,14 @@
 """Difference-of-Gaussians hotspot detection for irregularly spaced genes.
 
-The detector treats gene-level log rates as a one-dimensional genomic signal.
-It subtracts a broad Gaussian smoother (background) from a narrow Gaussian
-smoother (local signal), then propagates NPE uncertainty by applying the
-filter to posterior draws.
+The detector treats gene-level rates on their original scale as a
+one-dimensional genomic signal. It subtracts a broad Gaussian smoother
+(background) from a narrow Gaussian smoother (local signal), then propagates
+NPE uncertainty by applying the filter to posterior draws.
 
-This is an exploratory posterior-stability method, not a formally coherent
-chromosome-level Bayesian model. Calibrate detection thresholds using
-end-to-end chromosomes simulated under a no-hotspot model.
+Filtering is linear on the raw-rate scale. Hotspot evidence is defined by the
+ratio of the narrow raw-rate smoother to the broad raw-rate smoother. Rates are
+rescaled internally only for numerical stability; returned rates and
+differences remain in the original units.
 """
 
 from __future__ import annotations
@@ -42,7 +43,7 @@ def _weighted_gaussian_matrix(
 
 @dataclass
 class DoGHotspotResult:
-    """Results from uncertainty-aware Difference-of-Gaussians filtering."""
+    """Results from uncertainty-aware raw-rate DoG filtering."""
 
     positions_bp: np.ndarray
     posterior_rate_median: np.ndarray
@@ -50,9 +51,12 @@ class DoGHotspotResult:
     posterior_rate_upper: np.ndarray
     narrow_rate_median: np.ndarray
     broad_rate_median: np.ndarray
-    dog_log_enrichment_median: np.ndarray
-    dog_log_enrichment_lower: np.ndarray
-    dog_log_enrichment_upper: np.ndarray
+    dog_rate_difference_median: np.ndarray
+    dog_rate_difference_lower: np.ndarray
+    dog_rate_difference_upper: np.ndarray
+    local_fold_enrichment_median: np.ndarray
+    local_fold_enrichment_lower: np.ndarray
+    local_fold_enrichment_upper: np.ndarray
     hotspot_probability: np.ndarray
     hotspot_call: np.ndarray
     narrow_effective_n: np.ndarray
@@ -62,11 +66,6 @@ class DoGHotspotResult:
     min_fold_enrichment: float
     probability_threshold: float
     sort_order: np.ndarray
-
-    @property
-    def local_fold_enrichment_median(self) -> np.ndarray:
-        """Median narrow-scale/broad-scale fold enrichment."""
-        return np.exp(self.dog_log_enrichment_median)
 
     def segments(self, max_gap_bp: Optional[float] = None) -> list[dict]:
         """Return contiguous called regions, optionally split across large gaps."""
@@ -103,9 +102,14 @@ class DoGHotspotResult:
                         "end_position_bp": float(self.positions_bp[i]),
                         "n_genes": i - start + 1,
                         "peak_probability": float(self.hotspot_probability[sl].max()),
-                        "median_probability": float(np.median(self.hotspot_probability[sl])),
+                        "median_probability": float(
+                            np.median(self.hotspot_probability[sl])
+                        ),
                         "peak_fold_enrichment": float(
                             self.local_fold_enrichment_median[sl].max()
+                        ),
+                        "peak_rate_difference": float(
+                            self.dog_rate_difference_median[sl].max()
                         ),
                     }
                 )
@@ -118,11 +122,12 @@ class DoGHotspotResult:
         position_unit_bp: float = 1e6,
         position_unit_name: str = "Mb",
         max_gap_bp: Optional[float] = None,
+        rate_axis_log: bool = False,
         figsize: tuple[float, float] = (12.0, 9.0),
         save_path: Optional[str] = None,
         dpi: int = 300,
     ):
-        """Plot gene rates, DoG enrichment, and hotspot probability."""
+        """Plot raw gene rates, raw-rate DoG enrichment, and hotspot probability."""
         import matplotlib.pyplot as plt
 
         if position_unit_bp <= 0:
@@ -179,19 +184,29 @@ class DoGHotspotResult:
             linewidth=1.7,
             label=f"Broad background ({self.broad_bandwidth_bp / 1e3:g} kb)",
         )
-        ax_rate.set_yscale("linear")
+        if rate_axis_log:
+            ax_rate.set_yscale("log")
         ax_rate.set_ylabel(rate_label)
-        ax_rate.set_title("Uncertainty-aware Difference-of-Gaussians hotspot detection")
+        ax_rate.set_title(
+            "Uncertainty-aware raw-rate Difference-of-Gaussians hotspot detection"
+        )
         ax_rate.grid(alpha=0.2)
         ax_rate.legend(frameon=False, ncol=3, fontsize=9)
 
-        fold_median = np.exp(self.dog_log_enrichment_median)
-        fold_lower = np.exp(self.dog_log_enrichment_lower)
-        fold_upper = np.exp(self.dog_log_enrichment_upper)
         ax_dog.fill_between(
-            x, fold_lower, fold_upper, color="#7f7f7f", alpha=0.22, label="95% interval"
+            x,
+            self.local_fold_enrichment_lower,
+            self.local_fold_enrichment_upper,
+            color="#7f7f7f",
+            alpha=0.22,
+            label="95% interval",
         )
-        ax_dog.plot(x, fold_median, color="#7b3294", linewidth=1.6)
+        ax_dog.plot(
+            x,
+            self.local_fold_enrichment_median,
+            color="#7b3294",
+            linewidth=1.6,
+        )
         ax_dog.axhline(1.0, color="#555555", linestyle=":", linewidth=1.0)
         ax_dog.axhline(
             self.min_fold_enrichment,
@@ -229,14 +244,16 @@ class DoGHotspotResult:
         ax_prob.grid(alpha=0.2)
         ax_prob.legend(frameon=False, loc="upper right")
 
-        fig.subplots_adjust(left=0.10, right=0.98, bottom=0.08, top=0.94, hspace=0.08)
+        fig.subplots_adjust(
+            left=0.10, right=0.98, bottom=0.08, top=0.94, hspace=0.08
+        )
         if save_path is not None:
             fig.savefig(save_path, dpi=dpi, bbox_inches="tight")
         return fig, axes
 
 
-class DoGHotspotDetector:
-    """Detect local rate elevations relative to a broad genomic background.
+class DifferenceOfGaussiansHotspotDetector:
+    """Detect local raw-rate elevations relative to a broad genomic background.
 
     Parameters
     ----------
@@ -248,13 +265,14 @@ class DoGHotspotDetector:
         narrow bandwidth, commonly by a factor of 4 to 10.
     min_fold_enrichment
         A location is considered enriched in a posterior draw when the
-        narrow smoother exceeds the broad smoother by at least this factor.
+        narrow raw-rate smoother exceeds the broad smoother by this factor.
     probability_threshold
         Minimum posterior-draw frequency used to call a hotspot.
-    residual_log_sd
-        Extra log-rate variability added to each gene's posterior variance
-        when constructing smoothing weights. This prevents very precise genes
-        from dominating their neighborhoods.
+    residual_rate_sd
+        Extra raw-rate standard deviation, in the same units as the rates,
+        added to each gene's posterior variance when constructing smoothing
+        weights. This prevents very precise genes from dominating their
+        neighborhoods. Use zero to weight only by NPE posterior variance.
     min_effective_genes
         Locations with fewer than this effective number of genes in either
         smoother are not called, although their scores remain available.
@@ -270,7 +288,7 @@ class DoGHotspotDetector:
         broad_bandwidth_bp: float,
         min_fold_enrichment: float = 1.5,
         probability_threshold: float = 0.90,
-        residual_log_sd: float = 0.20,
+        residual_rate_sd: float = 0.0,
         min_effective_genes: float = 2.0,
         max_posterior_draws: Optional[int] = 5000,
         random_state: Optional[int] = 0,
@@ -283,8 +301,8 @@ class DoGHotspotDetector:
             raise ValueError("min_fold_enrichment must exceed 1")
         if not 0 < probability_threshold < 1:
             raise ValueError("probability_threshold must be between 0 and 1")
-        if residual_log_sd < 0:
-            raise ValueError("residual_log_sd cannot be negative")
+        if residual_rate_sd < 0:
+            raise ValueError("residual_rate_sd cannot be negative")
         if min_effective_genes <= 0:
             raise ValueError("min_effective_genes must be positive")
         if max_posterior_draws is not None and max_posterior_draws < 2:
@@ -294,7 +312,7 @@ class DoGHotspotDetector:
         self.broad_bandwidth_bp = float(broad_bandwidth_bp)
         self.min_fold_enrichment = float(min_fold_enrichment)
         self.probability_threshold = float(probability_threshold)
-        self.residual_log_sd = float(residual_log_sd)
+        self.residual_rate_sd = float(residual_rate_sd)
         self.min_effective_genes = float(min_effective_genes)
         self.max_posterior_draws = max_posterior_draws
         self.random_state = random_state
@@ -303,24 +321,23 @@ class DoGHotspotDetector:
         self,
         positions_bp: ArrayLike,
         posterior_draws: ArrayLike,
-        rates_are_log: bool = False,
     ) -> DoGHotspotResult:
-        """Apply the DoG filter to gene-level posterior draws.
+        """Apply the DoG filter directly to raw gene-level posterior draws.
 
         Parameters
         ----------
         positions_bp
-            One genomic coordinate per gene, typically gene midpoint.
+            One genomic coordinate per gene, typically the gene midpoint.
         posterior_draws
-            Array with shape (n_draws, n_genes). Pass joint NPE draws for one
-            parameter at a time, preserving each gene's posterior uncertainty.
-        rates_are_log
-            Set True if posterior_draws already contain natural-log rates.
+            Positive raw-rate array with shape (n_draws, n_genes). Pass joint
+            NPE draws for one parameter at a time, preserving each gene's
+            posterior uncertainty.
 
         Returns
         -------
         DoGHotspotResult
-            Arrays are sorted by genomic position.
+            Arrays are sorted by genomic position and expressed in the input
+            rate units.
         """
         positions = np.asarray(positions_bp, dtype=float)
         draws = np.asarray(posterior_draws, dtype=float)
@@ -337,8 +354,8 @@ class DoGHotspotDetector:
             raise ValueError("positions_bp and posterior_draws must be finite")
         if len(np.unique(positions)) != len(positions):
             raise ValueError("Gene positions must be unique")
-        if not rates_are_log and np.any(draws <= 0):
-            raise ValueError("Rates must be positive when rates_are_log=False")
+        if np.any(draws <= 0):
+            raise ValueError("posterior_draws must contain positive raw rates")
 
         order = np.argsort(positions)
         positions = positions[order]
@@ -354,10 +371,17 @@ class DoGHotspotDetector:
             )
             draws = draws[selected]
 
-        log_draws = draws if rates_are_log else np.log(draws)
-        posterior_log_variance = np.var(log_draws, axis=0, ddof=1)
+        # Rescaling avoids numerical problems for rates such as 1e-8. Because
+        # the smoothers are linear, scaling does not change fold enrichment.
+        rate_scale = float(np.median(draws))
+        if not np.isfinite(rate_scale) or rate_scale <= 0:
+            raise ValueError("Could not determine a positive internal rate scale")
+        scaled_draws = draws / rate_scale
+        residual_scaled_sd = self.residual_rate_sd / rate_scale
+
+        posterior_rate_variance_scaled = np.var(scaled_draws, axis=0, ddof=1)
         precision = 1.0 / (
-            posterior_log_variance + self.residual_log_sd**2 + _EPS
+            posterior_rate_variance_scaled + residual_scaled_sd**2 + _EPS
         )
 
         narrow_matrix, narrow_effective_n = _weighted_gaussian_matrix(
@@ -367,12 +391,14 @@ class DoGHotspotDetector:
             positions, positions, self.broad_bandwidth_bp, precision
         )
 
-        narrow_log_draws = log_draws @ narrow_matrix.T
-        broad_log_draws = log_draws @ broad_matrix.T
-        dog_draws = narrow_log_draws - broad_log_draws
+        narrow_scaled_draws = scaled_draws @ narrow_matrix.T
+        broad_scaled_draws = scaled_draws @ broad_matrix.T
+        dog_scaled_draws = narrow_scaled_draws - broad_scaled_draws
+        fold_draws = narrow_scaled_draws / np.maximum(broad_scaled_draws, _EPS)
 
-        threshold = np.log(self.min_fold_enrichment)
-        hotspot_probability = np.mean(dog_draws > threshold, axis=0)
+        hotspot_probability = np.mean(
+            fold_draws > self.min_fold_enrichment, axis=0
+        )
         adequate_support = (
             (narrow_effective_n >= self.min_effective_genes)
             & (broad_effective_n >= self.min_effective_genes)
@@ -381,20 +407,29 @@ class DoGHotspotDetector:
             hotspot_probability >= self.probability_threshold
         ) & adequate_support
 
-        rate_draws = np.exp(log_draws)
-        rate_q = np.quantile(rate_draws, [0.025, 0.5, 0.975], axis=0)
-        dog_q = np.quantile(dog_draws, [0.025, 0.5, 0.975], axis=0)
+        narrow_rate_draws = narrow_scaled_draws * rate_scale
+        broad_rate_draws = broad_scaled_draws * rate_scale
+        dog_rate_draws = dog_scaled_draws * rate_scale
+
+        rate_q = np.quantile(draws, [0.025, 0.5, 0.975], axis=0)
+        narrow_q = np.quantile(narrow_rate_draws, [0.025, 0.5, 0.975], axis=0)
+        broad_q = np.quantile(broad_rate_draws, [0.025, 0.5, 0.975], axis=0)
+        dog_q = np.quantile(dog_rate_draws, [0.025, 0.5, 0.975], axis=0)
+        fold_q = np.quantile(fold_draws, [0.025, 0.5, 0.975], axis=0)
 
         return DoGHotspotResult(
             positions_bp=positions,
             posterior_rate_median=rate_q[1],
             posterior_rate_lower=rate_q[0],
             posterior_rate_upper=rate_q[2],
-            narrow_rate_median=np.exp(np.median(narrow_log_draws, axis=0)),
-            broad_rate_median=np.exp(np.median(broad_log_draws, axis=0)),
-            dog_log_enrichment_median=dog_q[1],
-            dog_log_enrichment_lower=dog_q[0],
-            dog_log_enrichment_upper=dog_q[2],
+            narrow_rate_median=narrow_q[1],
+            broad_rate_median=broad_q[1],
+            dog_rate_difference_median=dog_q[1],
+            dog_rate_difference_lower=dog_q[0],
+            dog_rate_difference_upper=dog_q[2],
+            local_fold_enrichment_median=fold_q[1],
+            local_fold_enrichment_lower=fold_q[0],
+            local_fold_enrichment_upper=fold_q[2],
             hotspot_probability=hotspot_probability,
             hotspot_call=hotspot_call,
             narrow_effective_n=narrow_effective_n,
@@ -405,39 +440,4 @@ class DoGHotspotDetector:
             probability_threshold=self.probability_threshold,
             sort_order=order,
         )
-
-
-def simulate_example(
-    n_genes: int = 260,
-    n_posterior_draws: int = 3000,
-    chromosome_length_bp: float = 30e6,
-    random_state: int = 7,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Simulate irregular gene positions and uncertain gene-level rate posteriors."""
-    rng = np.random.default_rng(random_state)
-    positions = np.sort(rng.uniform(0, chromosome_length_bp, n_genes))
-
-    # Slowly varying background plus two local elevations of different widths.
-    broad_background = (
-        np.log(1.0)
-        + 0.18 * np.sin(2.0 * np.pi * positions / chromosome_length_bp)
-        + 0.10 * np.cos(4.0 * np.pi * positions / chromosome_length_bp)
-    )
-    hotspot_1 = np.log(3.2) * np.exp(
-        -0.5 * ((positions - 8.5e6) / 0.40e6) ** 2
-    )
-    hotspot_2 = np.log(2.3) * np.exp(
-        -0.5 * ((positions - 21.5e6) / 0.85e6) ** 2
-    )
-    true_log_rate = broad_background + hotspot_1 + hotspot_2
-
-    # Mimic heterogeneous NPE uncertainty and slight gene-level estimation error.
-    posterior_log_sd = rng.uniform(0.12, 0.38, n_genes)
-    posterior_center = true_log_rate + rng.normal(0.0, 0.10, n_genes)
-    log_draws = rng.normal(
-        posterior_center[None, :],
-        posterior_log_sd[None, :],
-        size=(n_posterior_draws, n_genes),
-    )
-    return positions, np.exp(log_draws), np.exp(true_log_rate)
 
