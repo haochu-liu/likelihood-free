@@ -123,7 +123,10 @@ class HotspotHMMResult:
         state = self.viterbi_state.astype(int)
         p_hot = self.hotspot_probability
         rate_sd = np.sqrt(self.rate_variance)
-        lower = np.maximum(self.rate_mean - 1.96 * rate_sd, np.finfo(float).tiny)
+        lower = np.maximum(
+            self.rate_mean - 1.96 * rate_sd,
+            np.finfo(float).tiny,
+        )
         upper = self.rate_mean + 1.96 * rate_sd
 
         colors = np.where(state == 1, "#d62728", "#4c78a8")
@@ -140,12 +143,26 @@ class HotspotHMMResult:
         edges[1:-1] = (x[:-1] + x[1:]) / 2.0
         edges[0] = x[0] - (x[1] - x[0]) / 2.0
         edges[-1] = x[-1] + (x[-1] - x[-2]) / 2.0
+
         for i, is_hot in enumerate(state):
             if is_hot:
                 for ax in axes:
-                    ax.axvspan(edges[i], edges[i + 1], color="#d62728", alpha=0.10, lw=0)
+                    ax.axvspan(
+                        edges[i],
+                        edges[i + 1],
+                        color="#d62728",
+                        alpha=0.10,
+                        lw=0,
+                    )
 
-        ax_rate.vlines(x, lower, upper, color=colors, alpha=0.38, linewidth=1.0)
+        ax_rate.vlines(
+            x,
+            lower,
+            upper,
+            color=colors,
+            alpha=0.38,
+            linewidth=1.0,
+        )
         ax_rate.scatter(
             x,
             self.rate_mean,
@@ -160,25 +177,19 @@ class HotspotHMMResult:
             color="#4c78a8",
             linestyle="--",
             linewidth=1.4,
-            label="Estimated background mean",
         )
         ax_rate.axhline(
             self.hotspot_mean,
             color="#d62728",
             linestyle="--",
             linewidth=1.4,
-            label="Estimated hotspot mean",
         )
         ax_rate.set_ylabel(rate_label)
-        ax_rate.set_title(
-            f"Hidden Markov Model Hotspot Detection"
-            # f"({self.fold_enrichment:.2f}x estimated enrichment)"
-        )
         ax_rate.grid(alpha=0.2)
-        ax_rate.legend(frameon=False, loc="best")
 
         ax_prob.plot(x, p_hot, color="#222222", linewidth=1.2)
         ax_prob.scatter(x, p_hot, c=colors, s=22, zorder=3)
+
         if probability_threshold is not None:
             ax_prob.fill_between(
                 x,
@@ -194,37 +205,98 @@ class HotspotHMMResult:
                 color="#d62728",
                 linestyle="--",
                 linewidth=1.1,
-                label=f"Calling threshold = {probability_threshold:.2f}",
             )
+
         ax_prob.set_ylim(-0.03, 1.03)
         ax_prob.set_ylabel("P(hotspot)")
         ax_prob.grid(alpha=0.2)
-        if probability_threshold is not None:
-            ax_prob.legend(frameon=False, loc="best")
 
         ax_state.step(x, state, where="mid", color="#333333", linewidth=1.3)
         ax_state.scatter(x, state, c=colors, s=22, zorder=3)
         ax_state.set_yticks([0, 1], labels=["Background", "Hotspot"])
         ax_state.set_ylim(-0.45, 1.45)
-        ax_state.set_ylabel("Viterbi")
+        ax_state.set_ylabel("Status")
         ax_state.set_xlabel(f"Chromosome position ({position_unit_name})")
         ax_state.grid(axis="x", alpha=0.2)
 
-        state_legend = [
+        # Build one shared legend for all dashed lines and scatter categories.
+        legend_handles = [
             Line2D(
-                [0], [0], marker="o", color="none", markerfacecolor="#4c78a8",
-                markeredgecolor="white", markersize=7, label="Background gene"
+                [0],
+                [0],
+                color="#4c78a8",
+                linestyle="--",
+                linewidth=1.4,
+                label="Estimated background mean",
             ),
             Line2D(
-                [0], [0], marker="o", color="none", markerfacecolor="#d62728",
-                markeredgecolor="white", markersize=7, label="Hotspot gene"
+                [0],
+                [0],
+                color="#d62728",
+                linestyle="--",
+                linewidth=1.4,
+                label="Estimated hotspot mean",
             ),
         ]
-        ax_state.legend(handles=state_legend, frameon=False, loc="upper right", ncol=2)
 
+        if probability_threshold is not None:
+            legend_handles.append(
+                Line2D(
+                    [0],
+                    [0],
+                    color="#d62728",
+                    linestyle="--",
+                    linewidth=1.1,
+                    label=f"Calling threshold = {probability_threshold:.2f}",
+                )
+            )
+
+        legend_handles.extend(
+            [
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    linestyle="none",
+                    markerfacecolor="#4c78a8",
+                    markeredgecolor="white",
+                    markersize=7,
+                    label="Background gene",
+                ),
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    linestyle="none",
+                    markerfacecolor="#d62728",
+                    markeredgecolor="white",
+                    markersize=7,
+                    label="Hotspot gene",
+                ),
+            ]
+        )
+
+        fig.suptitle(
+            "Hidden Markov Model Hotspot Detection",
+            y=0.985,
+        )
+        fig.legend(
+            handles=legend_handles,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 0.955),
+            ncol=len(legend_handles),
+            frameon=False,
+            columnspacing=1.4,
+            handletextpad=0.6,
+        )
+
+        # Reserve space above the first subplot for the title and shared legend.
+        fig.subplots_adjust(top=0.875)
         fig.align_ylabels(axes)
+
         if save_path is not None:
             fig.savefig(save_path, bbox_inches="tight", format=format)
+
         return fig, axes
 
 

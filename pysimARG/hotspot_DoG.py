@@ -167,7 +167,7 @@ class DoGHotspotResult:
         position_unit_name: str = "Mb",
         max_gap_bp: Optional[float] = None,
         rate_axis_log: bool = False,
-        figsize: tuple[float, float] = (12.0, 9.0),
+        figsize: tuple[float, float] = (14.0, 9.0),
         save_path: Optional[str] = None,
         format: str = "pdf",
     ):
@@ -251,18 +251,41 @@ class DoGHotspotResult:
         if rate_axis_log:
             ax_rate.set_yscale("log")
         ax_rate.set_ylabel(rate_label)
-        ax_rate.set_title("Difference-of-Gaussians hotspot detection")
+        ax_rate.set_title("Difference-of-Gaussians Hotspot Detection")
         ax_rate.grid(alpha=0.2)
-        ax_rate.legend(frameon=False, ncol=3, fontsize=9)
+        ax_rate.legend(
+            frameon=False,
+            loc="center left",
+            bbox_to_anchor=(1.01, 0.5),
+            borderaxespad=0.0,
+            fontsize=9,
+        )
 
         fold_median = np.exp(self.dog_log_enrichment_median)
         fold_lower = np.exp(self.dog_log_enrichment_lower)
         fold_upper = np.exp(self.dog_log_enrichment_upper)
         ax_dog.fill_between(
-            x, fold_lower, fold_upper, color="#7f7f7f", alpha=0.22, label="95% interval"
+            x,
+            fold_lower,
+            fold_upper,
+            color="#7f7f7f",
+            alpha=0.22,
+            label="95% interval",
         )
-        ax_dog.plot(x, fold_median, color="#7b3294", linewidth=1.6)
-        ax_dog.axhline(1.0, color="#555555", linestyle=":", linewidth=1.0)
+        ax_dog.plot(
+            x,
+            fold_median,
+            color="#7b3294",
+            linewidth=1.6,
+            label="Median fold enrichment",
+        )
+        ax_dog.axhline(
+            1.0,
+            color="#555555",
+            linestyle=":",
+            linewidth=1.0,
+            label="No enrichment",
+        )
         ax_dog.axhline(
             self.min_fold_enrichment,
             color="#d62728",
@@ -273,10 +296,27 @@ class DoGHotspotResult:
         ax_dog.set_yscale("linear")
         ax_dog.set_ylabel("Local / broad\nfold enrichment")
         ax_dog.grid(alpha=0.2)
-        ax_dog.legend(frameon=False, loc="upper right")
+        ax_dog.legend(
+            frameon=False,
+            loc="center left",
+            bbox_to_anchor=(1.01, 0.5),
+            borderaxespad=0.0,
+            fontsize=9,
+        )
 
-        ax_prob.plot(x, self.hotspot_probability, color="#222222", linewidth=1.4)
-        ax_prob.scatter(x, self.hotspot_probability, c=colors, s=18, zorder=3)
+        ax_prob.plot(
+            x,
+            self.hotspot_probability,
+            color="#222222",
+            linewidth=1.4,
+        )
+        ax_prob.scatter(
+            x,
+            self.hotspot_probability,
+            c=colors,
+            s=18,
+            zorder=3,
+        )
         ax_prob.fill_between(
             x,
             self.probability_threshold,
@@ -291,18 +331,34 @@ class DoGHotspotResult:
             color="#d62728",
             linestyle="--",
             linewidth=1.2,
-            label=f"Calling threshold = {self.probability_threshold:g}",
+            label=f"Threshold = {self.probability_threshold:g}",
         )
         ax_prob.set_ylim(-0.03, 1.03)
         ax_prob.set_ylabel("P(enrichment\nexceeds threshold)")
         ax_prob.set_xlabel(f"Chromosome position ({position_unit_name})")
         ax_prob.grid(alpha=0.2)
-        ax_prob.legend(frameon=False, loc="upper right")
+        ax_prob.legend(
+            frameon=False,
+            loc="center left",
+            bbox_to_anchor=(1.01, 0.5),
+            borderaxespad=0.0,
+            fontsize=9,
+        )
         ax_prob.set_xlim(0.0, chromosome_end)
 
-        fig.subplots_adjust(left=0.10, right=0.98, bottom=0.08, top=0.94, hspace=0.08)
+        # Reserve the right side of the figure for subplot-specific legends.
+        fig.subplots_adjust(
+            left=0.10,
+            right=0.76,
+            bottom=0.08,
+            top=0.94,
+            hspace=0.08,
+        )
+        fig.align_ylabels(axes)
+
         if save_path is not None:
             fig.savefig(save_path, bbox_inches="tight", format=format)
+
         return fig, axes
 
 
