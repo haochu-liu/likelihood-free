@@ -169,7 +169,7 @@ class DoGHotspotResult:
         rate_axis_log: bool = False,
         figsize: tuple[float, float] = (12.0, 9.0),
         save_path: Optional[str] = None,
-        dpi: int = 300,
+        format: str = "pdf",
     ):
         """Plot gene rates, DoG enrichment, and hotspot probability."""
         import matplotlib.pyplot as plt
@@ -251,7 +251,7 @@ class DoGHotspotResult:
         if rate_axis_log:
             ax_rate.set_yscale("log")
         ax_rate.set_ylabel(rate_label)
-        ax_rate.set_title("Uncertainty-aware Difference-of-Gaussians hotspot detection")
+        ax_rate.set_title("Difference-of-Gaussians hotspot detection")
         ax_rate.grid(alpha=0.2)
         ax_rate.legend(frameon=False, ncol=3, fontsize=9)
 
@@ -302,7 +302,7 @@ class DoGHotspotResult:
 
         fig.subplots_adjust(left=0.10, right=0.98, bottom=0.08, top=0.94, hspace=0.08)
         if save_path is not None:
-            fig.savefig(save_path, dpi=dpi, bbox_inches="tight")
+            fig.savefig(save_path, bbox_inches="tight", format=format)
         return fig, axes
 
 

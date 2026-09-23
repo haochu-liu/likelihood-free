@@ -108,7 +108,7 @@ class HotspotHMMResult:
         probability_threshold: float = None,
         figsize: tuple[float, float] = (12.0, 8.0),
         save_path: Optional[str] = None,
-        dpi: int = 300,
+        format: str = "pdf",
     ):
         """Plot raw-rate posterior moments, hotspot probabilities, and states."""
         if probability_threshold is not None and not 0.0 <= probability_threshold <= 1.0:
@@ -171,8 +171,8 @@ class HotspotHMMResult:
         )
         ax_rate.set_ylabel(rate_label)
         ax_rate.set_title(
-            f"Distance-aware raw-rate HMM: background vs hotspot "
-            f"({self.fold_enrichment:.2f}x estimated enrichment)"
+            f"Hidden Markov Model Hotspot Detection"
+            # f"({self.fold_enrichment:.2f}x estimated enrichment)"
         )
         ax_rate.grid(alpha=0.2)
         ax_rate.legend(frameon=False, loc="best")
@@ -224,7 +224,7 @@ class HotspotHMMResult:
 
         fig.align_ylabels(axes)
         if save_path is not None:
-            fig.savefig(save_path, dpi=dpi, bbox_inches="tight")
+            fig.savefig(save_path, bbox_inches="tight", format=format)
         return fig, axes
 
 
