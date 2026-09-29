@@ -165,6 +165,7 @@ class DoGHotspotResult:
         rate_label: str = "Recombination rate",
         position_unit_bp: float = 1e6,
         position_unit_name: str = "Mb",
+        position_end_bp: Optional[float] = None,
         max_gap_bp: Optional[float] = None,
         rate_axis_log: bool = False,
         figsize: tuple[float, float] = (14.0, 9.0),
@@ -177,7 +178,12 @@ class DoGHotspotResult:
         if position_unit_bp <= 0:
             raise ValueError("position_unit_bp must be positive")
 
+        if position_end_bp is not None and np.any(position_end_bp < self.positions_bp):
+            raise ValueError("position_end_bp must be greater than gene starting positions")
+
         x = self.positions_bp / position_unit_bp
+        if position_end_bp is not None:
+            y = position_end_bp / position_unit_bp
         fig, axes = plt.subplots(
             3,
             1,
@@ -192,17 +198,14 @@ class DoGHotspotResult:
         chromosome_end = self.chromosome_length_bp / position_unit_bp
         for segment in self.segments(max_gap_bp=max_gap_bp):
             i0, i1 = segment["start_index"], segment["end_index"]
+            left = x[i0]
+            if position_end_bp is not None:
+                right = y[i1]
+            else:
+                right = x[i1]
             if segment["wraps_origin"]:
-                left = 0.5 * (x[i0 - 1] + x[i0])
-                right = 0.5 * (x[i1] + x[i1 + 1])
                 spans = [(left, chromosome_end), (0.0, right)]
             else:
-                left = x[i0] if i0 == 0 else 0.5 * (x[i0 - 1] + x[i0])
-                right = (
-                    x[i1]
-                    if i1 == len(x) - 1
-                    else 0.5 * (x[i1] + x[i1 + 1])
-                )
                 spans = [(left, right)]
 
             for span_left, span_right in spans:
