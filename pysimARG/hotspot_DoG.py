@@ -168,6 +168,7 @@ class DoGHotspotResult:
         position_unit_bp: float = 1e6,
         position_unit_name: str = "Mb",
         max_gap_bp: Optional[float] = None,
+        hotspot_padding_bp: float = 100_000,
         rate_axis_log: bool = False,
         figsize: tuple[float, float] = (14.0, 9.0),
         save_path: Optional[str] = None,
@@ -192,19 +193,15 @@ class DoGHotspotResult:
         # Shade called regions on all panels, including regions crossing
         # the circular chromosome origin.
         chromosome_end = self.chromosome_length_bp / position_unit_bp
+        padding_dist = hotspot_padding_bp / position_unit_bp
         for segment in self.segments(max_gap_bp=max_gap_bp):
             i0, i1 = segment["start_index"], segment["end_index"]
+            left = max(0.0, x[i0] - padding_dist)
+            right = min(chromosome_end, x[i1] + padding_dist)
+
             if segment["wraps_origin"]:
-                left = 0.5 * (x[i0 - 1] + x[i0])
-                right = 0.5 * (x[i1] + x[i1 + 1])
                 spans = [(left, chromosome_end), (0.0, right)]
             else:
-                left = x[i0] if i0 == 0 else 0.5 * (x[i0 - 1] + x[i0])
-                right = (
-                    x[i1]
-                    if i1 == len(x) - 1
-                    else 0.5 * (x[i1] + x[i1 + 1])
-                )
                 spans = [(left, right)]
 
             for span_left, span_right in spans:
@@ -223,8 +220,9 @@ class DoGHotspotResult:
             self.posterior_rate_lower,
             self.posterior_rate_upper,
             color=colors,
-            alpha=0.28,
-            linewidth=0.8,
+            alpha=0.25,
+            zorder=1,
+            linewidth=0.5,
         )
         ax_rate.scatter(
             x,
@@ -232,22 +230,25 @@ class DoGHotspotResult:
             c=colors,
             s=18,
             edgecolor="white",
-            linewidth=0.3,
-            zorder=3,
+            alpha=0.8,
+            linewidth=0.25,
+            zorder=2,
             label="Gene posterior median",
         )
         ax_rate.plot(
             x,
             self.narrow_rate_median,
             color="#e68613",
-            linewidth=1.7,
+            linewidth=1.5,
+            zorder=4,
             label=f"Narrow smoother ({self.narrow_bandwidth_bp / 1e3:g} kb)",
         )
         ax_rate.plot(
             x,
             self.broad_rate_median,
             color="#222222",
-            linewidth=1.7,
+            linewidth=1.5,
+            zorder=3,
             label=f"Broad background ({self.broad_bandwidth_bp / 1e3:g} kb)",
         )
         if rate_axis_log:
@@ -272,6 +273,7 @@ class DoGHotspotResult:
             fold_upper,
             color="#7f7f7f",
             alpha=0.22,
+            zorder=1,
             label="95% interval",
         )
         ax_dog.plot(
@@ -279,6 +281,7 @@ class DoGHotspotResult:
             fold_median,
             color="#7b3294",
             linewidth=1.6,
+            zorder=2,
             label="Median fold enrichment",
         )
         ax_dog.axhline(
@@ -286,6 +289,7 @@ class DoGHotspotResult:
             color="#555555",
             linestyle=":",
             linewidth=1.0,
+            zorder=3,
             label="No enrichment",
         )
         ax_dog.axhline(
@@ -293,6 +297,7 @@ class DoGHotspotResult:
             color="#d62728",
             linestyle="--",
             linewidth=1.2,
+            zorder=4,
             label=f"Minimum enrichment = {self.min_fold_enrichment:g}x",
         )
         ax_dog.set_yscale("linear")
@@ -311,28 +316,22 @@ class DoGHotspotResult:
             self.hotspot_probability,
             color="#222222",
             linewidth=1.4,
+            zorder=1,
         )
         ax_prob.scatter(
             x,
             self.hotspot_probability,
             c=colors,
             s=18,
-            zorder=3,
-        )
-        ax_prob.fill_between(
-            x,
-            self.probability_threshold,
-            self.hotspot_probability,
-            where=self.hotspot_probability >= self.probability_threshold,
-            color="#d62728",
-            alpha=0.28,
-            interpolate=True,
+            linewidth=0.25,
+            zorder=2,
         )
         ax_prob.axhline(
             self.probability_threshold,
             color="#d62728",
             linestyle="--",
             linewidth=1.2,
+            zorder=3,
             label=f"Threshold = {self.probability_threshold:g}",
         )
         ax_prob.set_ylim(-0.03, 1.03)
