@@ -168,7 +168,7 @@ class DoGHotspotResult:
         position_unit_bp: float = 1e6,
         position_unit_name: str = "Mb",
         max_gap_bp: Optional[float] = None,
-        hotspot_padding_bp: float = 100_000,
+        hotspot_padding_bp: float = 10_000,
         rate_axis_log: bool = False,
         figsize: tuple[float, float] = (14.0, 9.0),
         save_path: Optional[str] = None,
@@ -249,7 +249,7 @@ class DoGHotspotResult:
             color="#222222",
             linewidth=1.5,
             zorder=3,
-            label=f"Broad background ({self.broad_bandwidth_bp / 1e3:g} kb)",
+            label=f"Broad smoother ({self.broad_bandwidth_bp / 1e3:g} kb)",
         )
         if rate_axis_log:
             ax_rate.set_yscale("log")
