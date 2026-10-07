@@ -58,10 +58,14 @@ This is a small package that translate and modify R package [simARG](https://git
 
 `exp_regression.py`: fit an exponential regression model to the given data and provide coefficients.
 
-`clade_homoplasy.py`: _incomplete_
-
 `segment_summary_stats.py`: provide summary statistics given a gene matrix.
 
-`extract_blast_Segment.py`: extracts sequence segments from a FASTA file based on BLAST output.
+`extract_blast_Segment.py`: extract sequence segments from a FASTA file based on BLAST output.
 
-`evaluate_posterior_metrics.py`: computes evaluation metrics for posterior samples across multiple runs.
+`evaluate_posterior_metrics.py`: compute evaluation metrics for posterior samples across multiple runs.
+
+`LeaveLengthOut_NN.py`: provide embedding network for SBI while keeping length dimension out.
+
+`hotspot_DoG.py`: a tool to detect hotspot candidates using DoG.
+
+`hotspot_HMM.py`: a tool to detect hotspot candidates using HMM.
