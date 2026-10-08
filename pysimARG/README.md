@@ -4,7 +4,7 @@ This is a small package that translate and modify R package [simARG](https://git
 
 `tree.py`: define a parental class for tree structures.
 
-`clonal_genealogy`: a subclass `ClonalTree` and simulation method for clonal genealogy tree.
+`clonal_genealogy.py`: a subclass `ClonalTree` and simulation method for clonal genealogy tree.
 
 `ClonalOrigin_ARG.py`: a subclass `ARG` and ClonalOrigin simulation with pair or seq model.
 
@@ -29,8 +29,6 @@ This is a small package that translate and modify R package [simARG](https://git
 `LD_r.py`: compute the square of correlation coefficient for LD.
 
 `homoplasy_index.py`: compute the homoplasy index for a given ARG and leaf node data.
-
-`homoplasy_index_simbac.py`: compute the homoplasy index from SimBac simulated data.
 
 `ClonalOrigin_pair_sim.py`: simulate summary statistics by ClonalOrigin pair models with mutations.
 
@@ -60,7 +58,7 @@ This is a small package that translate and modify R package [simARG](https://git
 
 `segment_summary_stats.py`: provide summary statistics given a gene matrix.
 
-`extract_blast_Segment.py`: extract sequence segments from a FASTA file based on BLAST output.
+`extract_blast_segment.py`: extract sequence segments from a FASTA file based on BLAST output.
 
 `evaluate_posterior_metrics.py`: compute evaluation metrics for posterior samples across multiple runs.
 
@@ -69,3 +67,16 @@ This is a small package that translate and modify R package [simARG](https://git
 `hotspot_DoG.py`: a tool to detect hotspot candidates using DoG.
 
 `hotspot_HMM.py`: a tool to detect hotspot candidates using HMM.
+
+## Simulation functions
+
+`ClonalTree`
+-> `clonal_genealogy.py`, `tree.py`
+
+
+
+`ClonalOrigin_seq_sim`
+-> `ClonalOrigin_ARG.py`, `add_mutation.py`, `segment_summary_stats.py`,
+   `seq_simulator.py`, `ClonalOrigin_nodes.py`,
+   `G4_test.py`, `LD.py`, `homoplasy_index.py`, `Watterson_theta.py`,
+   `Tajima_pi.py`, `Tajima_D.py`, `Wall_BQ.py`, `exp_regression.py`
