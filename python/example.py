@@ -1,5 +1,4 @@
 import numpy as np
-from Bio import Phylo
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from tqdm import tqdm
@@ -27,10 +26,6 @@ def run_sim(params, clonal_tree):
 if __name__ == "__main__":
     np.random.seed(100)
     clonal_tree = ClonalTree(n=27)
-
-    # Load phylo tree and convert to ClonalTree format
-    phylo_tree = Phylo.read(str(data_path / "ecoli" / "ecoli_clonal.nwk"), "newick")
-    Phylo.draw_ascii(phylo_tree)
 
     clonal_edge = np.loadtxt(str(data_path / "ecoli" / "clonal_edge.csv"), delimiter=",", dtype=float)
     clonal_node_height = np.loadtxt(str(data_path / "ecoli" / "clonal_node_height.csv"), delimiter=",", dtype=float)

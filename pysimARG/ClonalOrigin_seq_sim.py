@@ -36,7 +36,7 @@ def ClonalOrigin_seq_sim(tree, rho_site, theta_site, L, delta):
     tree_width = tree.n
 
     # Simulate ARG and add mutations
-    ARG_sim = ARG(tree, rho_site, L, delta, L, "seq")
+    ARG_sim = ARG(tree, rho_site, L, delta, L)
     node_site = add_mutation(ARG_sim, theta_site)
     # mat = node_site[:tree_width, :]
     mat = node_site[:tree_width, :] != node_site[0]

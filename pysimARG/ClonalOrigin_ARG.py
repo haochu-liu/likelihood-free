@@ -1,7 +1,6 @@
 import numpy as np
 from tree import tree
 from clonal_genealogy import ClonalTree
-from pair_simulator import pair_simulator
 from seq_simulator import seq_simulator
 
 
@@ -12,7 +11,7 @@ class ARG(tree):
     Simulate coalescent and recombination events by ClonalOrigin algorithm at two sites.
     """
     
-    def __init__(self, tree_obj, rho_site, L, delta, k, type):
+    def __init__(self, tree_obj, rho_site, L, delta, k):
         """
         Initialize an ARG by simulating recombination on a clonal tree.
         
@@ -29,13 +28,9 @@ class ARG(tree):
         k : int
             The distance between two sites in pair simulator,
             and the sequence length in sequence simulator.
-        type: str
-            The type of simulator used (pair or seq)
         
         Attributes
         ----------
-        type : str
-            The type of simulator used (pair or seq)
         edge : np.ndarray
             Edge matrix with columns [node1, node2, length].
         edge_mat : np.ndarray
@@ -66,8 +61,6 @@ class ARG(tree):
             raise ValueError("`k` must be a single integer!")
         if delta <= 0:
             raise ValueError("`delta` must be greater than zero!")
-        if not (type == "seq" or type == "pair"):
-            raise ValueError("`type` must be a string equal to 'pair' or 'seq'.")
         
         n = tree_obj.n
         super().__init__(n)
@@ -75,15 +68,11 @@ class ARG(tree):
         self.rho = L * rho_site
         self.L = L
         self.delta = delta
-        self.type = type
         
-        self._simulate(tree_obj, rho_site, L, delta, k, type)
+        self._simulate(tree_obj, rho_site, L, delta, k)
     
-    def _simulate(self, tree_obj, rho_site, L, delta, k, type):
-        if type == "pair":
-            pair_simulator(self, tree_obj, rho_site, L, delta, k)
-        elif type == "seq":
-            seq_simulator(self, tree_obj, rho_site, L, delta, k)
+    def _simulate(self, tree_obj, rho_site, L, delta, k):
+        seq_simulator(self, tree_obj, rho_site, L, delta, k)
 
     def __repr__(self):
         return f"ARG(n={self.n}, rho={self.rho}, L={self.L}, delta={self.delta})"
@@ -91,7 +80,6 @@ class ARG(tree):
     def to_dict(self):
         """Returns the ARG as a dictionary, similar to the R list output."""
         return {
-            "type": self.type,
             "edge": self.edge,
             "edge_mat": self.edge_mat,
             "node_height": self.node_height,

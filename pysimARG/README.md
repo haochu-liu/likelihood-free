@@ -73,10 +73,9 @@ This is a small package that translate and modify R package [simARG](https://git
 `ClonalTree`
 -> `clonal_genealogy.py`, `tree.py`
 
-
-
-`ClonalOrigin_seq_sim`
+`ClonalOrigin_seq_sim.py`
 -> `ClonalOrigin_ARG.py`, `add_mutation.py`, `segment_summary_stats.py`,
    `seq_simulator.py`, `ClonalOrigin_nodes.py`,
    `G4_test.py`, `LD.py`, `homoplasy_index.py`, `Watterson_theta.py`,
    `Tajima_pi.py`, `Tajima_D.py`, `Wall_BQ.py`, `exp_regression.py`
+
