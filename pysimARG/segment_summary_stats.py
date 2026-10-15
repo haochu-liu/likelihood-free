@@ -121,7 +121,7 @@ def segment_summary_stats(tree, seg_mat):
     s_vec[20] = tajima_dict['pi2']
 
     # Tajima's D statistic
-    s_vec[21] = Tajima_D(seg_mat, s_vec[35], s_vec[34], count_S)
+    s_vec[21] = Tajima_D(seg_mat, s_vec[19], s_vec[18], count_S)
 
     # Wall's B and Q statistics
     wall_dict = Wall_BQ(seg_mat[:, idx_seg])
