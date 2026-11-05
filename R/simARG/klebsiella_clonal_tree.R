@@ -32,9 +32,9 @@ edge_full[, 1:2] = edge
 edge_full[, 3] = t2$edge.length
 edge_full <- edge_full[order(edge_full[, 1]), ]
 
-write.table(edge_full, file="data/klebsiella/clonal_edge_new.csv",
+write.table(edge_full, file="data/klebsiella/clonal_edge.csv",
             sep = ",", row.names=FALSE, col.names=FALSE)
-write.table(node_height, file="data/klebsiella/clonal_node_height_new.csv",
+write.table(node_height, file="data/klebsiella/clonal_node_height.csv",
             sep = ",", row.names=FALSE, col.names=FALSE)
 write.table(t2$tip.label, file="data/klebsiella/tip_names.csv",
             sep = ",", row.names=FALSE, col.names=FALSE)
